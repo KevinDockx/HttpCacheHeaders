@@ -24,5 +24,69 @@ namespace Microsoft.Extensions.DependencyInjection
             services.Add(ServiceDescriptor.Singleton<IValidationValueStore, InMemoryValidationValueStore>());
             return services;
         }
+
+        public static IServiceCollection AddHttpCacheHeaders(this IServiceCollection services,
+      Action<ExpirationModelOptions> configureExpirationModelOptions)
+        {
+            if (services == null)
+            {
+                throw new ArgumentNullException(nameof(services));
+            }
+
+            if (configureExpirationModelOptions == null)
+            {
+                throw new ArgumentNullException(nameof(configureExpirationModelOptions));
+            }
+
+            services.Configure(configureExpirationModelOptions);
+            services.AddHttpCacheHeaders();
+
+            return services;
+        }
+
+        public static IServiceCollection AddHttpCacheHeaders(this IServiceCollection services,
+         Action<ValidationModelOptions> configureValidationModelOptions)
+        {
+            if (services == null)
+            {
+                throw new ArgumentNullException(nameof(services));
+            }
+
+            if (configureValidationModelOptions == null)
+            {
+                throw new ArgumentNullException(nameof(configureValidationModelOptions));
+            }
+
+            services.Configure(configureValidationModelOptions);
+            services.AddHttpCacheHeaders();
+
+            return services;
+        }
+
+        public static IServiceCollection AddHttpCacheHeaders(this IServiceCollection services,
+         Action<ExpirationModelOptions> configureExpirationModelOptions,
+         Action<ValidationModelOptions> configureValidationModelOptions)
+        {
+            if (services == null)
+            {
+                throw new ArgumentNullException(nameof(services));
+            }
+
+            if (configureExpirationModelOptions == null)
+            {
+                throw new ArgumentNullException(nameof(configureExpirationModelOptions));
+            }
+
+            if (configureValidationModelOptions == null)
+            {
+                throw new ArgumentNullException(nameof(configureValidationModelOptions));
+            }
+
+            services.Configure(configureExpirationModelOptions);
+            services.Configure(configureValidationModelOptions);
+            services.AddHttpCacheHeaders();
+
+            return services;
+        }
     }
 }
