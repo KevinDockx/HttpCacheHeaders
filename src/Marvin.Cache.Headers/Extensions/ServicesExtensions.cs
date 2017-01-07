@@ -22,36 +22,7 @@ namespace Microsoft.Extensions.DependencyInjection
             }
 
             services.Add(ServiceDescriptor.Singleton<IValidationValueStore, InMemoryValidationValueStore>());
-            services.Add(ServiceDescriptor.Singleton(new ExpirationModelOptions()));
-            services.Add(ServiceDescriptor.Singleton(new ValidationModelOptions()));
-
             return services;
         }
-
-        public static IServiceCollection AddHttpCacheHeaders(this IServiceCollection services,
-            Action<ExpirationModelOptions> configureExpirationModelOptions, 
-            Action<ValidationModelOptions> configureValidationModelOptions)
-        {
-            if (services == null)
-            {
-                throw new ArgumentNullException(nameof(services));
-            }
-
-            if (configureExpirationModelOptions == null)
-            {
-                throw new ArgumentNullException(nameof(configureExpirationModelOptions));
-            }
-
-            if (configureValidationModelOptions == null)
-            {
-                throw new ArgumentNullException(nameof(configureValidationModelOptions));
-            }
-
-            services.Add(ServiceDescriptor.Singleton<IValidationValueStore, InMemoryValidationValueStore>());
-            services.Add(ServiceDescriptor.Singleton(configureExpirationModelOptions));
-            services.Add(ServiceDescriptor.Singleton(configureValidationModelOptions));
-
-            return services;
-        }         
     }
 }

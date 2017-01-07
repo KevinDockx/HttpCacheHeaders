@@ -4,6 +4,7 @@
 using Marvin.Cache.Headers.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Microsoft.Net.Http.Headers;
 using System;
 using System.Collections.Generic;
@@ -32,8 +33,8 @@ namespace Marvin.Cache.Headers
             RequestDelegate next, 
             IValidationValueStore store,
             ILoggerFactory loggerFactory,
-            ValidationModelOptions validationModelOptions,
-            ExpirationModelOptions expirationModelOptions)
+            IOptions<ExpirationModelOptions> expirationModelOptions,
+            IOptions<ValidationModelOptions> validationModelOptions)
         {
             if (next == null)
             {
@@ -62,8 +63,8 @@ namespace Marvin.Cache.Headers
 
             _next = next;
             _store = store;
-            _expirationModelOptions = expirationModelOptions;
-            _validationModelOptions = validationModelOptions;
+            _expirationModelOptions = expirationModelOptions.Value;
+            _validationModelOptions = validationModelOptions.Value;
             _logger = loggerFactory.CreateLogger<HttpCacheHeadersMiddleware>();
         }
 
@@ -392,17 +393,21 @@ namespace Marvin.Cache.Headers
 
             // set expiration header (remove milliseconds)
             headers[HeaderNames.Expires] =
-                 DateTimeOffset.UtcNow.AddSeconds(600).ToString("r", CultureInfo.InvariantCulture);
+                 DateTimeOffset.UtcNow.AddSeconds(_expirationModelOptions.MaxAge)
+                 .ToString("r", CultureInfo.InvariantCulture);
 
             var cacheControlHeaderValue = string.Format(
                    CultureInfo.InvariantCulture,
-                   "{0}{1}max-age={2}{3}s-maxage={4}",
-                   "public",
-                   // cacheControlHeaderValue != null ? "," : null,
-                   ",",
-                   600,
-                   ",",
-                   600);
+                   "{0},max-age={1}{2}{3}{4}{5}{6}{7}{8}",
+                   _expirationModelOptions.CacheLocation.ToString().ToLowerInvariant(),
+                   _expirationModelOptions.MaxAge,
+                   _expirationModelOptions.SharedMaxAge == null ? null : ",s-maxage=",
+                   _expirationModelOptions.SharedMaxAge,
+                   _expirationModelOptions.AddNoStoreDirective ? ",no-store" : null,
+                   _expirationModelOptions.AddNoTransformDirective ? ",no-transform" : null,
+                   _validationModelOptions.AddNoCache ? ",no-cache" : null,
+                   _validationModelOptions.AddMustRevalidate ? ",must-revalidate" : null,
+                   _validationModelOptions.AddProxyRevalidate ? ",proxy-revalidate" : null);
 
             headers[HeaderNames.CacheControl] = cacheControlHeaderValue;
         }
