@@ -3,6 +3,7 @@
 
 using Marvin.Cache.Headers.Interfaces;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 using Microsoft.Net.Http.Headers;
 using System;
 using System.Collections.Generic;
@@ -23,11 +24,47 @@ namespace Marvin.Cache.Headers
  
         private IEnumerable<string> VaryBy = new List<string>() { "Accept", "Accept-Language" };
         private readonly IValidationValueStore _store;
+        private readonly ILogger _logger;
+        private readonly ValidationModelOptions _validationModelOptions;
+        private readonly ExpirationModelOptions _expirationModelOptions;
 
-        public HttpCacheHeadersMiddleware(RequestDelegate next, IValidationValueStore store)
+        public HttpCacheHeadersMiddleware(
+            RequestDelegate next, 
+            IValidationValueStore store,
+            ILoggerFactory loggerFactory,
+            ValidationModelOptions validationModelOptions,
+            ExpirationModelOptions expirationModelOptions)
         {
+            if (next == null)
+            {
+                throw new ArgumentNullException(nameof(next));
+            }
+
+            if (store == null)
+            {
+                throw new ArgumentNullException(nameof(store));
+            }
+
+            if (loggerFactory == null)
+            {
+                throw new ArgumentNullException(nameof(loggerFactory));
+            }
+
+            if (validationModelOptions == null)
+            {
+                throw new ArgumentNullException(nameof(validationModelOptions));
+            }
+
+            if (expirationModelOptions == null)
+            {
+                throw new ArgumentNullException(nameof(expirationModelOptions));
+            }
+
             _next = next;
             _store = store;
+            _expirationModelOptions = expirationModelOptions;
+            _validationModelOptions = validationModelOptions;
+            _logger = loggerFactory.CreateLogger<HttpCacheHeadersMiddleware>();
         }
 
         public async Task Invoke(HttpContext httpContext)
