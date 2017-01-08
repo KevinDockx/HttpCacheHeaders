@@ -22,15 +22,13 @@ namespace Marvin.Cache.Headers
         // RequestDelegate is the middleware delegate that should be called
         // after this middleware delegate is finished
         private readonly RequestDelegate _next;
- 
-        private IEnumerable<string> VaryBy = new List<string>() { "Accept", "Accept-Language" };
         private readonly IValidationValueStore _store;
         private readonly ILogger _logger;
         private readonly ValidationModelOptions _validationModelOptions;
         private readonly ExpirationModelOptions _expirationModelOptions;
 
         public HttpCacheHeadersMiddleware(
-            RequestDelegate next, 
+            RequestDelegate next,
             IValidationValueStore store,
             ILoggerFactory loggerFactory,
             IOptions<ExpirationModelOptions> expirationModelOptions,
@@ -83,6 +81,9 @@ namespace Marvin.Cache.Headers
                 // Handle validation: ETag and Last-Modified headers
                 GenerateValidationHeadersOnResponse(currentHttpContext);
 
+                // Generate Vary headers on the response
+                GenerateVaryHeadersOnResponse(currentHttpContext);
+
                 return Task.FromResult(0);
             }, httpContext);
 
@@ -114,7 +115,6 @@ namespace Marvin.Cache.Headers
 
             // We treat dates as weak tags.  There is no backup to IfUnmodifiedSince 
             // for 412 responses. 
-
 
             // work with an in-between memory buffer for the response body,
             // otherwise we are unable to read it out (and thus cannot generate strong etags
@@ -205,6 +205,11 @@ namespace Marvin.Cache.Headers
 
         private async Task<bool> ConditionalGETIsValid(HttpContext httpContext)
         {
+            if (httpContext.Request.Method != HttpMethods.Get)
+            {
+                return false;
+            }
+
             // if the header value to check is missing, we should
             // always return false - we don't need to check anything, and 
             // can never return a 304 response
@@ -228,16 +233,12 @@ namespace Marvin.Cache.Headers
             }
 
             // for GET, this must be on If-None-Match + weak comparison
-            if (httpContext.Request.Method == HttpMethods.Get)
-            {
-                return
-                    ETagsMatch(validationValue.ETag,
-                    httpContext.Request.Headers[HeaderNames.IfNoneMatch].ToString(),
-                    false);
-            }
 
-            // for all the other methods, return false (no 304 response)
-            return false;
+            return
+                ETagsMatch(validationValue.ETag,
+                httpContext.Request.Headers[HeaderNames.IfNoneMatch].ToString(),
+                false);
+
         }
 
         private async Task<bool> PreconditionIsValid(HttpContext httpContext)
@@ -383,6 +384,25 @@ namespace Marvin.Cache.Headers
             headers[HeaderNames.LastModified] = lastModified.ToString("r", CultureInfo.InvariantCulture);
         }
 
+        public void GenerateVaryHeadersOnResponse(HttpContext httpContext)
+        {
+            // cfr: https://tools.ietf.org/html/rfc7231#section-7.1.4
+            // Generate Vary header for response
+            // The "Vary" header field in a response describes what parts of a
+            // request message, aside from the method, Host header field, and
+            // request target, might influence the origin server's process for
+            // selecting and representing this response.The value consists of
+            // either a single asterisk ("*") or a list of header field names
+            // (case-insensitive).
+
+            var headers = httpContext.Response.Headers;
+
+            headers.Remove(HeaderNames.Vary);
+
+            string varyHeaderValue = string.Join(", ", _validationModelOptions.Vary);
+            headers[HeaderNames.Vary] = varyHeaderValue;
+        }
+
         private void GenerateExpirationHeadersOnResponse(HttpContext httpContext)
         {
             var headers = httpContext.Response.Headers;
@@ -419,7 +439,7 @@ namespace Marvin.Cache.Headers
             // get the request headers to take into account (VaryBy) & take 
             // their values
             var requestHeaderValues = request.Headers.Where(x =>
-               VaryBy.Any(h => h.Equals(x.Key, StringComparison.CurrentCultureIgnoreCase)))
+               _validationModelOptions.Vary.Any(h => h.Equals(x.Key, StringComparison.CurrentCultureIgnoreCase)))
                .SelectMany(h => h.Value);
 
             // get the resoure path
@@ -449,6 +469,6 @@ namespace Marvin.Cache.Headers
             System.Buffer.BlockCopy(a, 0, c, 0, a.Length);
             System.Buffer.BlockCopy(b, 0, c, a.Length, b.Length);
             return c;
-        }        
+        }
     }
 }

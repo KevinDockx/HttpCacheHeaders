@@ -12,9 +12,9 @@ namespace Marvin.Cache.Headers
         /// Maximum age, in seconds, after which a response expires. Has an effect on Expires & on the max-age directive
         /// of the Cache-Control header.
         /// 
-        /// Defaults to 600.
+        /// Defaults to 60.
         /// </summary>
-        public int MaxAge { get; set; } = 600;
+        public int MaxAge { get; set; } = 60;
 
         /// <summary>
         /// Maximum age, in seconds, after which a response expires for shared caches.  If included, 

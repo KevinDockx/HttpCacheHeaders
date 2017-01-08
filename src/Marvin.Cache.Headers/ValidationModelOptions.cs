@@ -15,9 +15,10 @@ namespace Marvin.Cache.Headers
         /// A case-insensitive list of headers from the request to take into account as differentiator
         /// between requests (eg: for generating ETags)
         /// 
-        /// Defaults to Accept, Accept-Language.  * indicates all headers will be taken into account.
+        /// Defaults to Accept, Accept-Language, Accept-Encoding.  * indicates all request headers can be taken into account.
         /// </summary>
-        public IEnumerable<string> Vary { get; set; } = new List<string>() { "Accept", "Accept-Language" };
+        public IEnumerable<string> Vary { get; set; } 
+            = new List<string>() { "Accept", "Accept-Language", "Accept-Encoding" };
 
         /// <summary>
         /// When true, the no-cache directive is added to the Cache-Control header.
