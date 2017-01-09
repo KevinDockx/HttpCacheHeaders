@@ -22,7 +22,6 @@ namespace Marvin.Cache.Headers.Test.Extensions
             IApplicationBuilder appBuilder = null;
 
             Assert.Throws<ArgumentNullException>(() => appBuilder.UseHttpCacheHeaders());
-
         }
     }
 }
