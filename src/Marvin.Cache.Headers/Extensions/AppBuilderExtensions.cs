@@ -2,9 +2,6 @@
 // Any issues, requests: https://github.com/KevinDockx/HttpCacheHeaders
 
 using Marvin.Cache.Headers;
-using Marvin.Cache.Headers.Interfaces;
-using Marvin.Cache.Headers.Stores;
-using Microsoft.Extensions.DependencyInjection;
 using System;
 
 namespace Microsoft.AspNetCore.Builder
