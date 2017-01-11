@@ -16,6 +16,7 @@ namespace Marvin.Cache.Headers.Test.Extensions
             var hostBuilder = new WebHostBuilder().Configure(app => app.UseHttpCacheHeaders()).ConfigureServices(service => service.AddHttpCacheHeaders());
             var testServer = new TestServer(hostBuilder);
 
+            // not sure this is the correct way to test if the middleware is registered
             var middleware = testServer.Host.Services.GetService(typeof(IValidationValueStore));
             Assert.NotNull(middleware);
         }
