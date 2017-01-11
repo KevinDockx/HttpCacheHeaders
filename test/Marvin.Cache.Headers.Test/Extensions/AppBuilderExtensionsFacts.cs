@@ -1,19 +1,23 @@
 ﻿using System;
+using Marvin.Cache.Headers.Interfaces;
 using Microsoft.AspNetCore.Builder;
-using Moq;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
 namespace Marvin.Cache.Headers.Test.Extensions
 {
     public class AppBuilderExtensionsFacts
     {
-        [Fact(Skip = "The Verify throws an exception because UseMiddleware is an extension function as well and can't be mocked, need to find ")]
+        [Fact]
         public void Correctly_register_HttpCacheHeadersMiddleware()
         {
-            var appBuilderMock = new Mock<IApplicationBuilder>();
-            appBuilderMock.Object.UseHttpCacheHeaders();
+            var hostBuilder = new WebHostBuilder().Configure(app => app.UseHttpCacheHeaders()).ConfigureServices(service => service.AddHttpCacheHeaders());
+            var testServer = new TestServer(hostBuilder);
 
-            appBuilderMock.Verify(x => x.UseMiddleware<HttpCacheHeadersMiddleware>(), "Application builder isn't registering the middleware.");
+            var middleware = testServer.Host.Services.GetService(typeof(IValidationValueStore));
+            Assert.NotNull(middleware);
         }
 
         [Fact]
