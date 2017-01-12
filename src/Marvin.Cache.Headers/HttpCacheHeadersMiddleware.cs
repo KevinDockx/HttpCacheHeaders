@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
@@ -205,7 +206,7 @@ namespace Marvin.Cache.Headers
 
         private async Task<bool> ConditionalGETIsValid(HttpContext httpContext)
         {
-            if (httpContext.Request.Method != HttpMethods.Get)
+            if (httpContext.Request.Method != HttpMethod.Get.ToString())
             {
                 return false;
             }
@@ -266,8 +267,8 @@ namespace Marvin.Cache.Headers
 
             // Preconditional checks are used for concurrency checks only.
             // for PUT or PATCH, this must be on If-Match + strong comparison
-            if (httpContext.Request.Method == HttpMethods.Put
-                || httpContext.Request.Method == HttpMethods.Patch)
+            if (httpContext.Request.Method == HttpMethod.Put.ToString()
+                || httpContext.Request.Method == "PATCH")
             {
                 return
                    ETagsMatch(validationValue.ETag,
