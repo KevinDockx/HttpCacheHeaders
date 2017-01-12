@@ -243,6 +243,15 @@ namespace Marvin.Cache.Headers
 
         private async Task<bool> PreconditionIsValid(HttpContext httpContext)
         {
+            // Preconditional checks are used for concurrency checks only,
+            // on updates: PUT or PATCH
+            if ((httpContext.Request.Method != HttpMethod.Put.ToString()
+                && httpContext.Request.Method == "PATCH"))
+            {
+                // for all the other methods, return true (no 412 response)
+                return true;
+            }
+
             // if the header value to check is missing, we return true
             // (no 412 response)
             if (!httpContext.Request.Headers.Keys.Contains(HeaderNames.IfMatch))
@@ -265,18 +274,11 @@ namespace Marvin.Cache.Headers
             }
 
             // Preconditional checks are used for concurrency checks only.
-            // for PUT or PATCH, this must be on If-Match + strong comparison
-            if (httpContext.Request.Method == HttpMethod.Put.ToString()
-                || httpContext.Request.Method == "PATCH")
-            {
-                return
-                   ETagsMatch(validationValue.ETag,
-                   httpContext.Request.Headers[HeaderNames.IfMatch].ToString(),
-                   true);
-            }
-
-            // for all the other methods, return true (no 412 response)
-            return true;
+            // Must be on If-Match + strong comparison
+ 
+            return ETagsMatch(validationValue.ETag,
+                httpContext.Request.Headers[HeaderNames.IfMatch].ToString(),
+                true);
         }
 
         private bool ETagsMatch(ETag eTag, string eTagToCompare, bool useStrongComparisonFunction)
