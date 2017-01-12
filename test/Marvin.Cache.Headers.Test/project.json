@@ -1,10 +1,13 @@
-﻿{
+{
   "buildOptions": {
     "warningsAsErrors": true
   },
   "dependencies": {
     "dotnet-test-xunit": "2.2.0-*",
     "Marvin.Cache.Headers": "*",
+    "Microsoft.AspNetCore.Hosting": "1.0.0-*",
+    "Microsoft.AspNetCore.Hosting.Abstractions": "1.0.0-*",
+    "Microsoft.AspNetCore.TestHost": "1.0.0-*",
     "Moq": "4.6.36-*",
     "xunit": "2.2.0-*"
   },
