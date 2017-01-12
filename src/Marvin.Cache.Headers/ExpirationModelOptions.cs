@@ -50,6 +50,5 @@ namespace Marvin.Cache.Headers
         /// Defaults to false.
         /// </summary>
         public bool AddNoTransformDirective { get; set; } = false;
-
     }
 }
