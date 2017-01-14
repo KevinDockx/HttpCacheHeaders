@@ -25,7 +25,7 @@ namespace Microsoft.Extensions.DependencyInjection
         }
 
         public static IServiceCollection AddHttpCacheHeaders(this IServiceCollection services,
-      Action<ExpirationModelOptions> configureExpirationModelOptions)
+            Action<ExpirationModelOptions> configureExpirationModelOptions)
         {
             if (services == null)
             {
@@ -44,7 +44,7 @@ namespace Microsoft.Extensions.DependencyInjection
         }
 
         public static IServiceCollection AddHttpCacheHeaders(this IServiceCollection services,
-         Action<ValidationModelOptions> configureValidationModelOptions)
+            Action<ValidationModelOptions> configureValidationModelOptions)
         {
             if (services == null)
             {
@@ -63,8 +63,8 @@ namespace Microsoft.Extensions.DependencyInjection
         }
 
         public static IServiceCollection AddHttpCacheHeaders(this IServiceCollection services,
-         Action<ExpirationModelOptions> configureExpirationModelOptions,
-         Action<ValidationModelOptions> configureValidationModelOptions)
+            Action<ExpirationModelOptions> configureExpirationModelOptions,
+            Action<ValidationModelOptions> configureValidationModelOptions)
         {
             if (services == null)
             {
