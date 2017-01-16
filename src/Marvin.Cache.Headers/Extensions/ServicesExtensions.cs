@@ -4,7 +4,6 @@
 using Marvin.Cache.Headers;
 using Marvin.Cache.Headers.Interfaces;
 using Marvin.Cache.Headers.Stores;
-using Microsoft.Extensions.DependencyInjection;
 using System;
 
 namespace Microsoft.Extensions.DependencyInjection

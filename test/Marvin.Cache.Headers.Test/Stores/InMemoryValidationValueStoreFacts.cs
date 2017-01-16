@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using Marvin.Cache.Headers.Stores;
 using Xunit;
 
-namespace Marvin.Cache.Headers.Test
+namespace Marvin.Cache.Headers.Test.Stores
 {
     public class InMemoryValidationValueStoreFacts
     {
