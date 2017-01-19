@@ -200,6 +200,7 @@ namespace Marvin.Cache.Headers
 
             // set headers
             headers[HeaderNames.ETag] = eTag.Value;
+            // r = RFC1123 pattern (https://msdn.microsoft.com/en-us/library/az4se3k1(v=vs.110).aspx)
             headers[HeaderNames.LastModified] = lastModified.ToString("r", CultureInfo.InvariantCulture);
         }
 
@@ -210,13 +211,20 @@ namespace Marvin.Cache.Headers
                 return false;
             }
 
-            // if the header value to check is missing, we should
+            // we should check ALL If-None-Match values (can be multiple eTags) (if available),
+            // and the If-Modified-Since date (if available).  See issue #2 @Github.
+            // So, this is a valid conditional GET (304) if one of the ETags match, or if the If-Modified-Since
+            // date 
+
+            // if both headers are missing, we should
             // always return false - we don't need to check anything, and 
             // can never return a 304 response
-            if (!httpContext.Request.Headers.Keys.Contains(HeaderNames.IfNoneMatch))
+
+            if (!(httpContext.Request.Headers.Keys.Contains(HeaderNames.IfNoneMatch)
+                || httpContext.Request.Headers.Keys.Contains(HeaderNames.IfModifiedSince)))
             {
                 return false;
-            }
+            }             
 
             // generate the request key
             var requestKey = GenerateRequestKey(httpContext.Request);
@@ -232,13 +240,55 @@ namespace Marvin.Cache.Headers
                 return false;
             }
 
-            // for GET, this must be on If-None-Match + weak comparison
+            // check the ETags
+            if (httpContext.Request.Headers.Keys.Contains(HeaderNames.IfNoneMatch))
+            {
+                var ETagsFromIfNoneMatchHeader = httpContext.Request.Headers[HeaderNames.IfNoneMatch]
+                    .ToString().Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+           
+                foreach (var ETag in ETagsFromIfNoneMatchHeader)
+                {                  
+                    // check the ETag.  If one of the ETags matches, we're good to 
+                    // go and can return a 304 Not Modified.         
+                    //
+                    // For conditional GET, we use weak comparison          
+                    if (ETagsMatch(validationValue.ETag,
+                                    ETag.Trim(),
+                                    false))
+                    {
+                        return true;
+                    }
+                }
+            }
+            
+            if (httpContext.Request.Headers.Keys.Contains(HeaderNames.IfModifiedSince))
+            {
+                // if the LastModified date is smaller than the IfModifiedSince date, 
+                // we can return a 304 Not Modified.  By adding an If-Modified-Since date
+                // to a GET request, the consumer is stating that he only wants the resource
+                // to be returned if if has been modified after that.
 
-            return
-                ETagsMatch(validationValue.ETag,
-                httpContext.Request.Headers[HeaderNames.IfNoneMatch].ToString(),
-                false);
+                var ifModifiedSinceValue = httpContext.Request.Headers[HeaderNames.IfModifiedSince].ToString();
 
+                DateTimeOffset parsedIfModifiedSince;
+
+                if (DateTimeOffset.TryParseExact(ifModifiedSinceValue, "r",
+                    CultureInfo.InvariantCulture.DateTimeFormat, DateTimeStyles.AdjustToUniversal, 
+                    out parsedIfModifiedSince))
+                {
+                    // can only check if we can parse it.
+                    if (validationValue.LastModified.CompareTo(parsedIfModifiedSince) < 0)
+                    {
+                        // The LastModified date is smaller than the IfModifiedSince date. 
+                        // We should return 304 Not Modified.
+                        return true;
+                    }
+                }
+            }
+
+            // none of the headers resulted in a conditional GET.  We should not return
+            // a 304 Not Modified
+            return false;
         }
 
         private async Task<bool> PreconditionIsValid(HttpContext httpContext)
