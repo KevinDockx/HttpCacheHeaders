@@ -151,37 +151,21 @@ namespace Marvin.Cache.Headers
             }
         }
 
-        private void Generate412PreconditionFailedResponse(HttpContext httpContext)
+        private async Task Generate412PreconditionFailedResponse(HttpContext httpContext)
         {
-            var headers = httpContext.Response.Headers;
-
             httpContext.Response.StatusCode = StatusCodes.Status412PreconditionFailed;
-
-            // set the ETag & Last-Modified date.
-            // remove any other ETag and Last-Modified headers (could be set
-            // by other pieces of code)
-            headers.Remove(HeaderNames.ETag);
-            headers.Remove(HeaderNames.LastModified);
-
-            // generate key, ETag and LastModified
-            var requestKey = GenerateRequestKey(httpContext.Request);
-            // strong eTags by default!
-            var eTag = new ETag(ETagType.Strong, httpContext.Request.Headers[HeaderNames.IfNoneMatch].ToString());
-            var lastModified = DateTimeOffset.UtcNow;
-
-            // store (overwrite)
-            _store.SetAsync(requestKey, new ValidationValue(eTag, lastModified));
-
-            // set headers
-            headers[HeaderNames.ETag] = eTag.Value;
-            headers[HeaderNames.LastModified] = lastModified.ToString("r", CultureInfo.InvariantCulture);
+            await GenerateResponseFromStore(httpContext);          
         }
 
-        private void Generate304NotModifiedResponse(HttpContext httpContext)
+        private async Task Generate304NotModifiedResponse(HttpContext httpContext)
+        {
+            httpContext.Response.StatusCode = StatusCodes.Status304NotModified;
+            await GenerateResponseFromStore(httpContext);
+        }
+
+        private async Task GenerateResponseFromStore(HttpContext httpContext)
         {
             var headers = httpContext.Response.Headers;
-
-            httpContext.Response.StatusCode = StatusCodes.Status304NotModified;
 
             // set the ETag & Last-Modified date.
             // remove any other ETag and Last-Modified headers (could be set
@@ -191,17 +175,24 @@ namespace Marvin.Cache.Headers
 
             // generate key, ETag and LastModified
             var requestKey = GenerateRequestKey(httpContext.Request);
-            // strong eTags by default!
-            var eTag = new ETag(ETagType.Strong, httpContext.Request.Headers[HeaderNames.IfNoneMatch].ToString());
+
+            // set LastModified
             var lastModified = DateTimeOffset.UtcNow;
-
-            // store (overwrite)
-            _store.SetAsync(requestKey, new ValidationValue(eTag, lastModified));
-
-            // set headers
-            headers[HeaderNames.ETag] = eTag.Value;
             // r = RFC1123 pattern (https://msdn.microsoft.com/en-us/library/az4se3k1(v=vs.110).aspx)
             headers[HeaderNames.LastModified] = lastModified.ToString("r", CultureInfo.InvariantCulture);
+
+            ETag eTag = null;
+            // take ETag value from the store (if it's found)
+            var savedResponse = await _store.GetAsync(requestKey);
+            if (savedResponse != null && savedResponse.ETag != null)
+            {
+                eTag = new ETag(savedResponse.ETag.ETagType, savedResponse.ETag.Value);
+                // set ETag
+                headers[HeaderNames.ETag] = savedResponse.ETag.Value;
+            }
+
+            // store (overwrite)
+            await _store.SetAsync(requestKey, new ValidationValue(eTag, lastModified));
         }
 
         private async Task<bool> ConditionalGETIsValid(HttpContext httpContext)
@@ -214,7 +205,7 @@ namespace Marvin.Cache.Headers
             // we should check ALL If-None-Match values (can be multiple eTags) (if available),
             // and the If-Modified-Since date (if available).  See issue #2 @Github.
             // So, this is a valid conditional GET (304) if one of the ETags match, or if the If-Modified-Since
-            // date 
+            // date
 
             // if both headers are missing, we should
             // always return false - we don't need to check anything, and 
