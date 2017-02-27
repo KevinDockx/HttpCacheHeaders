@@ -87,14 +87,14 @@ namespace Marvin.Cache.Headers
                 return Task.FromResult(0);
             }, httpContext);
 
-            // check request ETag headers 
+            // check request ETag headers & dates
 
-            // GET & If-None-Match: returns 304 when the resource hasn't
+            // GET & If-None-Match / IfModifiedSince: returns 304 when the resource hasn't
             // been modified
             if (await ConditionalGETIsValid(httpContext))
             {
                 // still valid. Return 304, and update the Last-Modified date.
-                Generate304NotModifiedResponse(httpContext);
+                await Generate304NotModifiedResponse(httpContext);
 
                 // don't continue with the rest of the flow, we don't want
                 // to generate the response.
@@ -102,11 +102,14 @@ namespace Marvin.Cache.Headers
 
             }
 
-            // check for If-Match on PUT/PATCH
+            // Check for If-Match / IfUnModifiedSince on PUT/PATCH.  Even though
+            // dates aren't guaranteed to be strong validators, the standard allows
+            // using these.  It's up to the server to ensure they are strong
+            // if they want to allow using them.
             if (!(await PreconditionIsValid(httpContext)))
             {
                 // not valid anymore.  Return a 412 response
-                Generate412PreconditionFailedResponse(httpContext);
+                await Generate412PreconditionFailedResponse(httpContext);
 
                 // don't continue with the rest of the flow, we don't want
                 // to generate the response.
@@ -205,7 +208,7 @@ namespace Marvin.Cache.Headers
             // we should check ALL If-None-Match values (can be multiple eTags) (if available),
             // and the If-Modified-Since date (if available).  See issue #2 @Github.
             // So, this is a valid conditional GET (304) if one of the ETags match, or if the If-Modified-Since
-            // date
+            // date is larger than what's saved.
 
             // if both headers are missing, we should
             // always return false - we don't need to check anything, and 
@@ -215,7 +218,7 @@ namespace Marvin.Cache.Headers
                 || httpContext.Request.Headers.Keys.Contains(HeaderNames.IfModifiedSince)))
             {
                 return false;
-            }             
+            }
 
             // generate the request key
             var requestKey = GenerateRequestKey(httpContext.Request);
@@ -275,6 +278,10 @@ namespace Marvin.Cache.Headers
                         return true;
                     }
                 }
+                else
+                {
+                    throw new Exception("Cannot parse the IfModifiedSince date.");
+                }
             }
 
             // none of the headers resulted in a conditional GET.  We should not return
@@ -293,13 +300,22 @@ namespace Marvin.Cache.Headers
                 return true;
             }
 
-            // if the header value to check is missing, we return true
-            // (no 412 response)
-            if (!httpContext.Request.Headers.Keys.Contains(HeaderNames.IfMatch))
+            // the precondition is valid if one of the ETags submitted through 
+            // IfMatch matches with the saved ETag, AND if the If-UnModified-Since
+            // value is smaller than the saved date.  Both must be valid if both 
+            // are submitted.
+            //
+
+            // if both headers are missing, we should
+            // always return true (the precondition is missing, so it's valid) 
+            // We don't need to check anything, and can never return a 412 response
+
+            if (!(httpContext.Request.Headers.Keys.Contains(HeaderNames.IfMatch)
+                || httpContext.Request.Headers.Keys.Contains(HeaderNames.IfUnmodifiedSince)))
             {
                 return true;
             }
-
+ 
             // generate the request key
             var requestKey = GenerateRequestKey(httpContext.Request);
 
@@ -314,12 +330,67 @@ namespace Marvin.Cache.Headers
                 return false;
             }
 
-            // Preconditional checks are used for concurrency checks only.
-            // Must be on If-Match + strong comparison
- 
-            return ETagsMatch(validationValue.ETag,
-                httpContext.Request.Headers[HeaderNames.IfMatch].ToString(),
-                true);
+            // check the ETags
+            if (httpContext.Request.Headers.Keys.Contains(HeaderNames.IfMatch))
+            {
+                var ETagIsValid = false;
+
+                var ETagsFromIfMatchHeader = httpContext.Request.Headers[HeaderNames.IfMatch]
+                    .ToString().Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+
+                foreach (var ETag in ETagsFromIfMatchHeader)
+                {
+                    // check the ETag.  If one of the ETags matches, the 
+                    // ETag precondition is valid.
+
+                    // for concurrency checks, we use the strong 
+                    // comparison function.  
+                    if (ETagsMatch(validationValue.ETag,
+                                    ETag.Trim(),
+                                    true))
+                    {
+                        ETagIsValid = true;
+                        break;
+                    }                    
+                }
+
+                // if there is an IfMatch header but none of the ETags match,
+                // the precondition is already invalid.
+                if (!ETagIsValid)
+                {
+                    return false;
+                }
+            }
+
+            // Either the ETag matches (or one of them), or there was no IfMatch header.  
+            // Continue with checking the IfUnModifiedSince header, if it exists.
+            if (httpContext.Request.Headers.Keys.Contains(HeaderNames.IfUnmodifiedSince))
+            {
+                // if the LastModified date is smaller than the IfUnmodifiedSince date, 
+                // the precondition is valid.
+                var ifUnModifiedSinceValue = httpContext.Request.Headers[HeaderNames.IfUnmodifiedSince].ToString();
+
+                DateTimeOffset parsedIfUnModifiedSince;
+
+                if (DateTimeOffset.TryParseExact(ifUnModifiedSinceValue, "r",
+                    CultureInfo.InvariantCulture.DateTimeFormat, DateTimeStyles.AdjustToUniversal,
+                    out parsedIfUnModifiedSince))
+                {
+                    // The LastModified date is smaller than the IfUnmodifiedSince date. 
+                    // The precondition is valid.  This is the last check, so we can 
+                    // return outcome of the compare function.
+                    return (validationValue.LastModified.CompareTo(parsedIfUnModifiedSince) < 0);
+                }
+                else
+                {
+                    // can only check if we can parse it.
+                    throw new Exception("Cannot parse the IfUnModifiedSince date.");
+                }
+            }
+
+            // there is no IfUnModifiedSince date, and the ETag checked out.  
+            // The precondition is valid.
+            return true;
         }
 
         private bool ETagsMatch(ETag eTag, string eTagToCompare, bool useStrongComparisonFunction)
