@@ -91,7 +91,7 @@ namespace Marvin.Cache.Headers
 
             // GET & If-None-Match / IfModifiedSince: returns 304 when the resource hasn't
             // been modified
-            if (await ConditionalGETIsValid(httpContext))
+            if (await ConditionalGETorHEADIsValid(httpContext))
             {
                 // still valid. Return 304, and update the Last-Modified date.
                 await Generate304NotModifiedResponse(httpContext);
@@ -198,7 +198,7 @@ namespace Marvin.Cache.Headers
             await _store.SetAsync(requestKey, new ValidationValue(eTag, lastModified));
         }
 
-        private async Task<bool> ConditionalGETIsValid(HttpContext httpContext)
+        private async Task<bool> ConditionalGETorHEADIsValid(HttpContext httpContext)
         {
             if (httpContext.Request.Method != HttpMethod.Get.ToString())
             {
