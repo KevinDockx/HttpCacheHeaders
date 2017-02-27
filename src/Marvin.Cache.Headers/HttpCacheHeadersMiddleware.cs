@@ -106,7 +106,7 @@ namespace Marvin.Cache.Headers
             // dates aren't guaranteed to be strong validators, the standard allows
             // using these.  It's up to the server to ensure they are strong
             // if they want to allow using them.
-            if (!(await PreconditionIsValid(httpContext)))
+            if (!(await ConditionalPUTorPATCHIsValid(httpContext)))
             {
                 // not valid anymore.  Return a 412 response
                 await Generate412PreconditionFailedResponse(httpContext);
@@ -289,7 +289,7 @@ namespace Marvin.Cache.Headers
             return false;
         }
 
-        private async Task<bool> PreconditionIsValid(HttpContext httpContext)
+        private async Task<bool> ConditionalPUTorPATCHIsValid(HttpContext httpContext)
         {
             // Preconditional checks are used for concurrency checks only,
             // on updates: PUT or PATCH
