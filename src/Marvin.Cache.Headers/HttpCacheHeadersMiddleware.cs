@@ -240,39 +240,48 @@ namespace Marvin.Cache.Headers
             // check the ETags
             if (httpContext.Request.Headers.Keys.Contains(HeaderNames.IfNoneMatch))
             {
-                var ETagsFromIfNoneMatchHeader = httpContext.Request.Headers[HeaderNames.IfNoneMatch]
-                    .ToString().Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
-           
-                foreach (var ETag in ETagsFromIfNoneMatchHeader)
-                {                  
-                    // check the ETag.  If one of the ETags matches, we're good to 
-                    // go and can return a 304 Not Modified.   
-                    // For conditional GET/HEAD, we use weak comparison.          
-                    if (ETagsMatch(validationValue.ETag,
-                                    ETag.Trim(),
-                                    false))
-                    {
-                        eTagIsValid = true;
-                        break;
-                    }
-                }
+                var ifNoneMatchHeaderValue = httpContext.Request.Headers[HeaderNames.IfNoneMatch].ToString().Trim();
 
-                // if there is an IfNoneMatch header, but none of the eTags match, we don't take the 
-                // If-Modified-Since headers into account. 
-                //
-                // cfr: "If none of the entity tags match, then the server MAY perform the requested method as if the 
-                // If-None-Match header field did not exist, but MUST also ignore any If-Modified-Since header field(s) 
-                // in the request. That is, if no entity tags match, then the server MUST NOT return a 304(Not Modified) response."
-                if (!eTagIsValid)
+                // if the value is *, the check is valid.
+                if (ifNoneMatchHeaderValue == "*")
                 {
-                    return false;
+                    eTagIsValid = true;
+                }
+                else
+                {
+                    var ETagsFromIfNoneMatchHeader = ifNoneMatchHeaderValue
+                        .Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+
+                    foreach (var ETag in ETagsFromIfNoneMatchHeader)
+                    {
+                        // check the ETag.  If one of the ETags matches, we're good to 
+                        // go and can return a 304 Not Modified.   
+                        // For conditional GET/HEAD, we use weak comparison.          
+                        if (ETagsMatch(validationValue.ETag,
+                                        ETag.Trim(),
+                                        false))
+                        {
+                            eTagIsValid = true;
+                            break;
+                        }
+                    }
+
+                    // if there is an IfNoneMatch header, but none of the eTags match, we don't take the 
+                    // If-Modified-Since headers into account. 
+                    //
+                    // cfr: "If none of the entity tags match, then the server MAY perform the requested method as if the 
+                    // If-None-Match header field did not exist, but MUST also ignore any If-Modified-Since header field(s) 
+                    // in the request. That is, if no entity tags match, then the server MUST NOT return a 304(Not Modified) response."
+                    if (!eTagIsValid)
+                    {
+                        return false;
+                    }
                 }
             }
             else
             {
                 eTagIsValid = true;
             }
-
             
             if (httpContext.Request.Headers.Keys.Contains(HeaderNames.IfModifiedSince))
             {
