@@ -21,9 +21,22 @@ namespace Marvin.Cache.Headers
             = new List<string>() { "Accept", "Accept-Language", "Accept-Encoding" };
 
         /// <summary>
+        /// Indicates that all request headers are taken into account as differentiator. 
+        /// When set to true, this is the same as Vary *.  The Vary list will thus be ignored.
+        /// 
+        /// Note that a Vary field value of "*" implies that a cache cannot determine 
+        /// from the request headers of a subsequent request whether this response is 
+        /// the appropriate representation.  This should thus only be set to true for 
+        /// exceptional cases.
+        /// 
+        /// Defaults to false.
+        /// </summary>
+        public bool VaryByAll { get; set; } = false;
+
+        /// <summary>
         /// When true, the no-cache directive is added to the Cache-Control header.
         /// This indicates to a cache that the response should not be used for subsequent requests 
-        /// without successful revalidation with the origin server.
+        /// without successful revalidation with the origin server.  
         /// 
         /// Defaults to false.
         /// </summary>

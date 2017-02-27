@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.Net.Http.Headers;
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -545,14 +546,14 @@ namespace Marvin.Cache.Headers
             headers[HeaderNames.LastModified] = lastModified.ToString("r", CultureInfo.InvariantCulture);
         }
 
-        public void GenerateVaryHeadersOnResponse(HttpContext httpContext)
+        private void GenerateVaryHeadersOnResponse(HttpContext httpContext)
         {
             // cfr: https://tools.ietf.org/html/rfc7231#section-7.1.4
             // Generate Vary header for response
             // The "Vary" header field in a response describes what parts of a
             // request message, aside from the method, Host header field, and
             // request target, might influence the origin server's process for
-            // selecting and representing this response.The value consists of
+            // selecting and representing this response. The value consists of
             // either a single asterisk ("*") or a list of header field names
             // (case-insensitive).
 
@@ -560,7 +561,17 @@ namespace Marvin.Cache.Headers
 
             headers.Remove(HeaderNames.Vary);
 
-            string varyHeaderValue = string.Join(", ", _validationModelOptions.Vary);
+            string varyHeaderValue = string.Empty;
+
+            if (_validationModelOptions.VaryByAll)
+            {
+                varyHeaderValue = "*";
+            }
+            else
+            {
+                varyHeaderValue = string.Join(", ", _validationModelOptions.Vary);
+            }
+                     
             headers[HeaderNames.Vary] = varyHeaderValue;
         }
 
@@ -597,11 +608,20 @@ namespace Marvin.Cache.Headers
         {
             // generate a key to store the entity tag with in the entity tag store
 
+            var requestHeaderValues = new List<string>();
+
             // get the request headers to take into account (VaryBy) & take 
             // their values
-            var requestHeaderValues = request.Headers.Where(x =>
-               _validationModelOptions.Vary.Any(h => h.Equals(x.Key, StringComparison.CurrentCultureIgnoreCase)))
-               .SelectMany(h => h.Value);
+            if (_validationModelOptions.VaryByAll)
+            {
+                requestHeaderValues = request.Headers.SelectMany(h => h.Value).ToList();
+            }
+            else
+            {
+                requestHeaderValues = request.Headers.Where(x =>
+                   _validationModelOptions.Vary.Any(h => h.Equals(x.Key, StringComparison.CurrentCultureIgnoreCase)))
+                   .SelectMany(h => h.Value).ToList();
+            }
 
             // get the resoure path
             var resourcePath = request.Path.ToString();
