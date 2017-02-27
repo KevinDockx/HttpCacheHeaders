@@ -281,7 +281,6 @@ namespace Marvin.Cache.Headers
                 // By adding an If-Modified-Since date
                 // to a GET/HEAD request, the consumer is stating that (s)he only wants the resource
                 // to be returned if if has been modified after that.
-
                 var ifModifiedSinceValue = httpContext.Request.Headers[HeaderNames.IfModifiedSince].ToString();
 
                 DateTimeOffset parsedIfModifiedSince;
@@ -346,8 +345,8 @@ namespace Marvin.Cache.Headers
                 return false;
             }
 
-            var ETagIsValid = false;
-            var IfUnModifiedSinceIsValid = false;
+            var eTagIsValid = false;
+            var ifUnModifiedSinceIsValid = false;
 
             // check the ETags
             if (httpContext.Request.Headers.Keys.Contains(HeaderNames.IfMatch))
@@ -357,7 +356,7 @@ namespace Marvin.Cache.Headers
                 // if the value is *, the check is valid.
                 if (ifMatchHeaderValue == "*")
                 {
-                    ETagIsValid = true;
+                    eTagIsValid = true;
                 }
                 else
                 {
@@ -376,7 +375,7 @@ namespace Marvin.Cache.Headers
                                         ETag.Trim(),
                                         true))
                         {
-                            ETagIsValid = true;
+                            eTagIsValid = true;
                             break;
                         }
                     }
@@ -385,13 +384,13 @@ namespace Marvin.Cache.Headers
             else
             {
                 // if there is no IfMatch header, the tag precondition is valid.
-                ETagIsValid = true;
+                eTagIsValid = true;
             }
 
             // if there is an IfMatch header but none of the ETags match,
             // the precondition is already invalid.  We don't have to 
             // continue checking.
-            if (!ETagIsValid)
+            if (!eTagIsValid)
             {
                 return false;
             }
@@ -412,24 +411,24 @@ namespace Marvin.Cache.Headers
                 {
                     // If the LastModified date is smaller than the IfUnmodifiedSince date, 
                     // the precondition is valid.
-                    IfUnModifiedSinceIsValid = validationValue.LastModified.CompareTo(parsedIfUnModifiedSince) < 0;
+                    ifUnModifiedSinceIsValid = validationValue.LastModified.CompareTo(parsedIfUnModifiedSince) < 0;
                 }
                 else
                 {
                     // can only check if we can parse it.  Invalid values must
                     // be ignored.
-                    IfUnModifiedSinceIsValid = true;
+                    ifUnModifiedSinceIsValid = true;
                     _logger.LogInformation("Cannot parse the IfUnModifiedSince date, header is ignored.");
                 }
             }
             else
             {
                 // if there is no IfUnmodifiedSince header, the check is valid.
-                IfUnModifiedSinceIsValid = true;
+                ifUnModifiedSinceIsValid = true;
             }
 
             // return the combined result of all validators.
-            return (IfUnModifiedSinceIsValid && ETagIsValid);
+            return (ifUnModifiedSinceIsValid && eTagIsValid);
         }
 
         private bool ETagsMatch(ETag eTag, string eTagToCompare, bool useStrongComparisonFunction)
