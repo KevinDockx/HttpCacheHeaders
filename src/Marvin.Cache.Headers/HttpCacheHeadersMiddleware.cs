@@ -294,7 +294,7 @@ namespace Marvin.Cache.Headers
             // Preconditional checks are used for concurrency checks only,
             // on updates: PUT or PATCH
             if ((httpContext.Request.Method != HttpMethod.Put.ToString()
-                && httpContext.Request.Method == "PATCH"))
+                && httpContext.Request.Method != "PATCH"))
             {
                 // for all the other methods, return true (no 412 response)
                 return true;
