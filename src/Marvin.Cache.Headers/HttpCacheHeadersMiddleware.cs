@@ -280,7 +280,7 @@ namespace Marvin.Cache.Headers
                 }
                 else
                 {
-                    throw new Exception("Cannot parse the IfModifiedSince date.");
+                    _logger.LogInformation("Cannot parse the IfModifiedSince date, header is ignored.");
                 }
             }
 
@@ -304,12 +304,10 @@ namespace Marvin.Cache.Headers
             // IfMatch matches with the saved ETag, AND if the If-UnModified-Since
             // value is smaller than the saved date.  Both must be valid if both 
             // are submitted.
-            //
-
-            // if both headers are missing, we should
+            
+            // If both headers are missing, we should
             // always return true (the precondition is missing, so it's valid) 
             // We don't need to check anything, and can never return a 412 response
-
             if (!(httpContext.Request.Headers.Keys.Contains(HeaderNames.IfMatch)
                 || httpContext.Request.Headers.Keys.Contains(HeaderNames.IfUnmodifiedSince)))
             {
@@ -330,36 +328,54 @@ namespace Marvin.Cache.Headers
                 return false;
             }
 
+            var ETagIsValid = false;
+            var IfUnModifiedSinceIsValid = false;
+
             // check the ETags
             if (httpContext.Request.Headers.Keys.Contains(HeaderNames.IfMatch))
             {
-                var ETagIsValid = false;
+                var ifMatchHeaderValue = httpContext.Request.Headers[HeaderNames.IfMatch].ToString().Trim();
 
-                var ETagsFromIfMatchHeader = httpContext.Request.Headers[HeaderNames.IfMatch]
-                    .ToString().Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
-
-                foreach (var ETag in ETagsFromIfMatchHeader)
+                // if the value is *, the check is valid.
+                if (ifMatchHeaderValue == "*")
                 {
-                    // check the ETag.  If one of the ETags matches, the 
-                    // ETag precondition is valid.
+                    ETagIsValid = true;
+                }
+                else
+                {
+                    // otherwise, check the actual ETag(s)
+                    var ETagsFromIfMatchHeader = ifMatchHeaderValue
+                            .Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
 
-                    // for concurrency checks, we use the strong 
-                    // comparison function.  
-                    if (ETagsMatch(validationValue.ETag,
-                                    ETag.Trim(),
-                                    true))
+                    foreach (var ETag in ETagsFromIfMatchHeader)
                     {
-                        ETagIsValid = true;
-                        break;
-                    }                    
-                }
+                        // check the ETag.  If one of the ETags matches, the 
+                        // ETag precondition is valid.
 
-                // if there is an IfMatch header but none of the ETags match,
-                // the precondition is already invalid.
-                if (!ETagIsValid)
-                {
-                    return false;
-                }
+                        // for concurrency checks, we use the strong 
+                        // comparison function.  
+                        if (ETagsMatch(validationValue.ETag,
+                                        ETag.Trim(),
+                                        true))
+                        {
+                            ETagIsValid = true;
+                            break;
+                        }
+                    }
+                }     
+            }
+            else
+            {
+                // if there is no IfMatch header, the tag precondition is valid.
+                ETagIsValid = true;
+            }
+
+            // if there is an IfMatch header but none of the ETags match,
+            // the precondition is already invalid.  We don't have to 
+            // continue checking.
+            if (!ETagIsValid)
+            {
+                return false;
             }
 
             // Either the ETag matches (or one of them), or there was no IfMatch header.  
@@ -376,21 +392,26 @@ namespace Marvin.Cache.Headers
                     CultureInfo.InvariantCulture.DateTimeFormat, DateTimeStyles.AdjustToUniversal,
                     out parsedIfUnModifiedSince))
                 {
-                    // The LastModified date is smaller than the IfUnmodifiedSince date. 
-                    // The precondition is valid.  This is the last check, so we can 
-                    // return outcome of the compare function.
-                    return (validationValue.LastModified.CompareTo(parsedIfUnModifiedSince) < 0);
+                    // If the LastModified date is smaller than the IfUnmodifiedSince date, 
+                    // the precondition is valid.
+                    IfUnModifiedSinceIsValid = validationValue.LastModified.CompareTo(parsedIfUnModifiedSince) < 0;
                 }
                 else
                 {
-                    // can only check if we can parse it.
-                    throw new Exception("Cannot parse the IfUnModifiedSince date.");
+                    // can only check if we can parse it.  Invalid values must
+                    // be ignored.
+                    IfUnModifiedSinceIsValid = true;
+                    _logger.LogInformation("Cannot parse the IfUnModifiedSince date, header is ignored.");
                 }
             }
+            else
+            {
+                // if there is no IfUnmodifiedSince header, the check is valid.
+                IfUnModifiedSinceIsValid = true;
+            }
 
-            // there is no IfUnModifiedSince date, and the ETag checked out.  
-            // The precondition is valid.
-            return true;
+            // return the combined result of all validators.
+            return (IfUnModifiedSinceIsValid && ETagIsValid);
         }
 
         private bool ETagsMatch(ETag eTag, string eTagToCompare, bool useStrongComparisonFunction)
