@@ -200,20 +200,20 @@ namespace Marvin.Cache.Headers
 
         private async Task<bool> ConditionalGETorHEADIsValid(HttpContext httpContext)
         {
-            if (httpContext.Request.Method != HttpMethod.Get.ToString())
+            if (!(httpContext.Request.Method == HttpMethod.Get.ToString()) ||
+                httpContext.Request.Method == "HEAD")
             {
                 return false;
             }
 
             // we should check ALL If-None-Match values (can be multiple eTags) (if available),
-            // and the If-Modified-Since date (if available).  See issue #2 @Github.
-            // So, this is a valid conditional GET (304) if one of the ETags match, or if the If-Modified-Since
-            // date is larger than what's saved.
+            // and the If-Modified-Since date (if available AND an eTag matches).  See issue #2 @Github.
+            // So, this is a valid conditional GET/HEAD (304) if one of the ETags match and, if it's 
+            // available, the If-Modified-Since date is larger than what's saved.
 
             // if both headers are missing, we should
             // always return false - we don't need to check anything, and 
             // can never return a 304 response
-
             if (!(httpContext.Request.Headers.Keys.Contains(HeaderNames.IfNoneMatch)
                 || httpContext.Request.Headers.Keys.Contains(HeaderNames.IfModifiedSince)))
             {
@@ -234,6 +234,9 @@ namespace Marvin.Cache.Headers
                 return false;
             }
 
+            bool eTagIsValid = false;
+            bool ifModifiedSinceIsValid = false;
+
             // check the ETags
             if (httpContext.Request.Headers.Keys.Contains(HeaderNames.IfNoneMatch))
             {
@@ -243,23 +246,40 @@ namespace Marvin.Cache.Headers
                 foreach (var ETag in ETagsFromIfNoneMatchHeader)
                 {                  
                     // check the ETag.  If one of the ETags matches, we're good to 
-                    // go and can return a 304 Not Modified.         
-                    //
-                    // For conditional GET, we use weak comparison          
+                    // go and can return a 304 Not Modified.   
+                    // For conditional GET/HEAD, we use weak comparison.          
                     if (ETagsMatch(validationValue.ETag,
                                     ETag.Trim(),
                                     false))
                     {
-                        return true;
+                        eTagIsValid = true;
+                        break;
                     }
                 }
+
+                // if there is an IfNoneMatch header, but none of the eTags match, we don't take the 
+                // If-Modified-Since headers into account. 
+                //
+                // cfr: "If none of the entity tags match, then the server MAY perform the requested method as if the 
+                // If-None-Match header field did not exist, but MUST also ignore any If-Modified-Since header field(s) 
+                // in the request. That is, if no entity tags match, then the server MUST NOT return a 304(Not Modified) response."
+                if (!eTagIsValid)
+                {
+                    return false;
+                }
             }
+            else
+            {
+                eTagIsValid = true;
+            }
+
             
             if (httpContext.Request.Headers.Keys.Contains(HeaderNames.IfModifiedSince))
             {
                 // if the LastModified date is smaller than the IfModifiedSince date, 
-                // we can return a 304 Not Modified.  By adding an If-Modified-Since date
-                // to a GET request, the consumer is stating that he only wants the resource
+                // we can return a 304 Not Modified (IF there's also a matching ETag).  
+                // By adding an If-Modified-Since date
+                // to a GET/HEAD request, the consumer is stating that (s)he only wants the resource
                 // to be returned if if has been modified after that.
 
                 var ifModifiedSinceValue = httpContext.Request.Headers[HeaderNames.IfModifiedSince].ToString();
@@ -271,30 +291,28 @@ namespace Marvin.Cache.Headers
                     out parsedIfModifiedSince))
                 {
                     // can only check if we can parse it.
-                    if (validationValue.LastModified.CompareTo(parsedIfModifiedSince) < 0)
-                    {
-                        // The LastModified date is smaller than the IfModifiedSince date. 
-                        // We should return 304 Not Modified.
-                        return true;
-                    }
+                    ifModifiedSinceIsValid = validationValue.LastModified.CompareTo(parsedIfModifiedSince) < 0;               
                 }
                 else
                 {
+                    ifModifiedSinceIsValid = true;
                     _logger.LogInformation("Cannot parse the IfModifiedSince date, header is ignored.");
                 }
             }
+            else
+            {
+                ifModifiedSinceIsValid = true;
+            }
 
-            // none of the headers resulted in a conditional GET.  We should not return
-            // a 304 Not Modified
-            return false;
+            return (eTagIsValid && ifModifiedSinceIsValid);
         }
 
         private async Task<bool> ConditionalPUTorPATCHIsValid(HttpContext httpContext)
         {
             // Preconditional checks are used for concurrency checks only,
             // on updates: PUT or PATCH
-            if ((httpContext.Request.Method != HttpMethod.Put.ToString()
-                && httpContext.Request.Method != "PATCH"))
+            if (!(httpContext.Request.Method == HttpMethod.Put.ToString()
+                || httpContext.Request.Method == "PATCH"))
             {
                 // for all the other methods, return true (no 412 response)
                 return true;
