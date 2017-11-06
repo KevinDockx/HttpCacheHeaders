@@ -69,25 +69,6 @@ namespace Marvin.Cache.Headers
 
         public async Task Invoke(HttpContext httpContext)
         {
-            // delegate invoked just before the response headers 
-            // are sent to the client
-            httpContext.Response.OnStarting(state =>
-            {
-                var currentHttpContext = (HttpContext)state;
-
-                // Handle expiration: Expires & Cache-Control headers
-                // (these are also added for 304 / 412 responses)
-                GenerateExpirationHeadersOnResponse(currentHttpContext);
-
-                // Handle validation: ETag and Last-Modified headers
-                GenerateValidationHeadersOnResponse(currentHttpContext);
-
-                // Generate Vary headers on the response
-                GenerateVaryHeadersOnResponse(currentHttpContext);
-
-                return Task.FromResult(0);
-            }, httpContext);
-
             // check request ETag headers & dates
 
             // GET & If-None-Match / IfModifiedSince: returns 304 when the resource hasn't
@@ -131,7 +112,7 @@ namespace Marvin.Cache.Headers
             // otherwise we are unable to read it out (and thus cannot generate strong etags
             // correctly)
             // cfr: http://stackoverflow.com/questions/35458737/implement-http-cache-etag-in-asp-net-core-web-api
-
+            
             using (var buffer = new MemoryStream())
             {
                 // replace the context response with a temporary buffer
@@ -141,7 +122,20 @@ namespace Marvin.Cache.Headers
                 // Call the next middleware delegate in the pipeline 
                 await _next.Invoke(httpContext);
 
-                // reset the buffer and read out the contents
+                // Handle the response (expiration, validation, vary headers)
+
+                // Handle expiration: Expires & Cache-Control headers
+                // (these are also added for 304 / 412 responses)
+                GenerateExpirationHeadersOnResponse(httpContext);
+
+                // Handle validation: ETag and Last-Modified headers
+                GenerateValidationHeadersOnResponse(httpContext);
+
+                // Generate Vary headers on the response
+                GenerateVaryHeadersOnResponse(httpContext);
+
+                // reset the buffer, read out the contents & copy it to the original stream.  This
+                // will ensure our changes to the buffer are applied to the original stream.   
                 buffer.Seek(0, SeekOrigin.Begin);
                 var reader = new StreamReader(buffer);
                 using (var bufferReader = new StreamReader(buffer))
@@ -152,8 +146,7 @@ namespace Marvin.Cache.Headers
                     buffer.Seek(0, SeekOrigin.Begin);
 
                     // Copy the buffer content to the original stream.
-                    // This will invoke Response.OnStarting (which can now
-                    // read our the body & generate the ETag if necessary)  
+                    // This invokes Response.OnStarting (not used)  
                     await buffer.CopyToAsync(stream);
 
                     // set the response body back to the original stream

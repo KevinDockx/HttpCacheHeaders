@@ -1,24 +1,21 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio 15
+VisualStudioVersion = 15.0.26730.3
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{006274C4-3D3A-4206-BF23-78582B4DADAD}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{26BCE0B1-AEE3-4814-8A00-841DDD25F7F4}"
-	ProjectSection(SolutionItems) = preProject
-		global.json = global.json
-	EndProjectSection
-EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Marvin.Cache.Headers", "src\Marvin.Cache.Headers\Marvin.Cache.Headers.xproj", "{B06BDC10-2211-49C4-9D83-8C6B0C6BF70E}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{76ECA680-0E22-4862-958E-9EED8B88BAEC}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Marvin.Cache.Headers.Test", "test\Marvin.Cache.Headers.Test\Marvin.Cache.Headers.Test.xproj", "{E3126A65-2BED-4584-81A0-3DC8C579FE5E}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "sample", "sample", "{15DDD61F-1285-46F1-8364-667BFC8EB55E}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Marvin.Cache.Headers.Sample", "sample\Marvin.Cache.Headers.Sample\Marvin.Cache.Headers.Sample.xproj", "{08D750BA-752F-4E0C-8FE6-CEF81EA7FA7A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Marvin.Cache.Headers", "src\Marvin.Cache.Headers\Marvin.Cache.Headers.csproj", "{B06BDC10-2211-49C4-9D83-8C6B0C6BF70E}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Marvin.Cache.Headers.Test", "test\Marvin.Cache.Headers.Test\Marvin.Cache.Headers.Test.csproj", "{E3126A65-2BED-4584-81A0-3DC8C579FE5E}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Marvin.Cache.Headers.Sample", "sample\Marvin.Cache.Headers.Sample\Marvin.Cache.Headers.Sample.csproj", "{08D750BA-752F-4E0C-8FE6-CEF81EA7FA7A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -46,5 +43,8 @@ Global
 		{B06BDC10-2211-49C4-9D83-8C6B0C6BF70E} = {006274C4-3D3A-4206-BF23-78582B4DADAD}
 		{E3126A65-2BED-4584-81A0-3DC8C579FE5E} = {76ECA680-0E22-4862-958E-9EED8B88BAEC}
 		{08D750BA-752F-4E0C-8FE6-CEF81EA7FA7A} = {15DDD61F-1285-46F1-8364-667BFC8EB55E}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {1DB7EC6B-6966-4A99-9FCA-F93364450822}
 	EndGlobalSection
 EndGlobal
