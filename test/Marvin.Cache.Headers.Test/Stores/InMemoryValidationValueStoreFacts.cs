@@ -22,8 +22,8 @@ namespace Marvin.Cache.Headers.Test.Stores
 
             // assert
             Assert.NotNull(result);
-            Assert.Equal(result.ETag.ETagType, ETagType.Strong);
-            Assert.Equal(result.ETag.Value, "test");
+            Assert.Equal(ETagType.Strong, result.ETag.ETagType);
+            Assert.Equal("test", result.ETag.Value);
             Assert.Equal(result.LastModified, referenceTime);
         }
 
