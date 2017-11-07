@@ -22,8 +22,8 @@ REM call dotnet build --configuration %config%
 if not "%errorlevel%"=="0" goto failure
 
 REM Unit tests
-call dotnet test test\Marvin.Cache.Headers.Test --configuration %config%
-if not "%errorlevel%"=="0" goto failure
+rem call dotnet test test\Marvin.Cache.Headers.Test --configuration %config%
+rem if not "%errorlevel%"=="0" goto failure
 
 REM Package
 mkdir %cd%\artifacts
