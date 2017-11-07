@@ -9,6 +9,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Marvin.Cache.Headers", "src\Marvin.Cache.Headers\Marvin.Cache.Headers.csproj", "{B06BDC10-2211-49C4-9D83-8C6B0C6BF70E}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Marvin.Cache.Headers.Sample", "sample\Marvin.Cache.Headers.Sample\Marvin.Cache.Headers.Sample.csproj", "{632D464C-B5F7-428A-8105-6B7F2808E67E}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Marvin.Cache.Headers.Test", "test\Marvin.Cache.Headers.Test\Marvin.Cache.Headers.Test.csproj", "{269A960C-1E7A-4ABF-B4E3-0FEE0F3AFDC3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -19,6 +23,14 @@ Global
 		{B06BDC10-2211-49C4-9D83-8C6B0C6BF70E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B06BDC10-2211-49C4-9D83-8C6B0C6BF70E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B06BDC10-2211-49C4-9D83-8C6B0C6BF70E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{632D464C-B5F7-428A-8105-6B7F2808E67E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{632D464C-B5F7-428A-8105-6B7F2808E67E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{632D464C-B5F7-428A-8105-6B7F2808E67E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{632D464C-B5F7-428A-8105-6B7F2808E67E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{269A960C-1E7A-4ABF-B4E3-0FEE0F3AFDC3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{269A960C-1E7A-4ABF-B4E3-0FEE0F3AFDC3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{269A960C-1E7A-4ABF-B4E3-0FEE0F3AFDC3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{269A960C-1E7A-4ABF-B4E3-0FEE0F3AFDC3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

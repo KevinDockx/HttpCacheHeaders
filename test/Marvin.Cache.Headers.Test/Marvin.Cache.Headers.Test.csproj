@@ -21,9 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Reference Include="Marvin.Cache.Headers">
-      <HintPath>..\..\src\Marvin.Cache.Headers\bin\Debug\netstandard1.6\Marvin.Cache.Headers.dll</HintPath>
-    </Reference>
+    <ProjectReference Include="..\..\src\Marvin.Cache.Headers\Marvin.Cache.Headers.csproj" />
   </ItemGroup>
 
 </Project>
