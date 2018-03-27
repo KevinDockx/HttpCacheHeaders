@@ -674,8 +674,11 @@ namespace Marvin.Cache.Headers
             // get the resoure path
             var resourcePath = request.Path.ToString();
 
+            // get the query string
+            var queryString = request.QueryString.ToString();
+
             // combine these two
-            return string.Format("{0}-{1}", resourcePath, string.Join("-", requestHeaderValues));
+            return string.Format("{0}-{1}-{2}", resourcePath, queryString, string.Join("-", requestHeaderValues));
         }
 
         // from http://jakzaprogramowac.pl/pytanie/20645,implement-http-cache-etag-in-aspnet-core-web-api
