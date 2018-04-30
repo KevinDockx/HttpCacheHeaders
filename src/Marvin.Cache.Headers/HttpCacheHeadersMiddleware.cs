@@ -216,8 +216,8 @@ namespace Marvin.Cache.Headers
             // if both headers are missing, we should
             // always return false - we don't need to check anything, and
             // can never return a 304 response
-            if (!(httpContext.Request.Headers.Keys.Contains(HeaderNames.IfNoneMatch)
-                || httpContext.Request.Headers.Keys.Contains(HeaderNames.IfModifiedSince)))
+            if (!httpContext.Request.Headers.Keys.Contains(HeaderNames.IfNoneMatch) &&
+                !httpContext.Request.Headers.Keys.Contains(HeaderNames.IfModifiedSince))
             {
                 _logger.LogInformation("Not valid - no If-None-Match or If-Modified-Since headers.");
                 return false;
@@ -325,8 +325,8 @@ namespace Marvin.Cache.Headers
 
             // Preconditional checks are used for concurrency checks only,
             // on updates: PUT or PATCH
-            if (!(httpContext.Request.Method == HttpMethod.Put.ToString()
-                || httpContext.Request.Method == "PATCH"))
+            if (httpContext.Request.Method != HttpMethod.Put.ToString() &&
+                httpContext.Request.Method != "PATCH")
             {
                 _logger.LogInformation("Not valid - method isn't PUT or PATCH.");
                 // for all the other methods, return true (no 412 response)
@@ -341,8 +341,8 @@ namespace Marvin.Cache.Headers
             // If both headers are missing, we should
             // always return true (the precondition is missing, so it's valid)
             // We don't need to check anything, and can never return a 412 response
-            if (!(httpContext.Request.Headers.Keys.Contains(HeaderNames.IfMatch)
-                || httpContext.Request.Headers.Keys.Contains(HeaderNames.IfUnmodifiedSince)))
+            if (!httpContext.Request.Headers.Keys.Contains(HeaderNames.IfMatch) &&
+                !httpContext.Request.Headers.Keys.Contains(HeaderNames.IfUnmodifiedSince))
             {
                 _logger.LogInformation("Not valid - no If Match or If Unmodified-Since headers.");
                 return true;
@@ -369,7 +369,6 @@ namespace Marvin.Cache.Headers
             // check the ETags
             if (httpContext.Request.Headers.Keys.Contains(HeaderNames.IfMatch))
             {
-
                 var ifMatchHeaderValue = httpContext.Request.Headers[HeaderNames.IfMatch].ToString().Trim();
                 _logger.LogInformation($"Checking If-Match: {ifMatchHeaderValue}.");
 

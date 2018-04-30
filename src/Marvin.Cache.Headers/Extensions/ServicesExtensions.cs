@@ -15,16 +15,55 @@ namespace Microsoft.Extensions.DependencyInjection
     {
         public static IServiceCollection AddHttpCacheHeaders(this IServiceCollection services)
         {
+            AddInMemoryValidationValueStore(services);
+
+            return services;
+        }
+
+        public static IServiceCollection AddHttpCacheHeaders(
+            this IServiceCollection services,
+            Action<ExpirationModelOptions> configureExpirationModelOptions)
+        {
+            AddConfigureExpirationModelOptions(services, configureExpirationModelOptions);
+            AddInMemoryValidationValueStore(services);
+
+            return services;
+        }
+
+        public static IServiceCollection AddHttpCacheHeaders(
+            this IServiceCollection services,
+            Action<ValidationModelOptions> configureValidationModelOptions)
+        {
+            AddConfigureValidationModelOptions(services, configureValidationModelOptions);
+            AddInMemoryValidationValueStore(services);
+
+            return services;
+        }
+
+        public static IServiceCollection AddHttpCacheHeaders(
+            this IServiceCollection services,
+            Action<ExpirationModelOptions> configureExpirationModelOptions,
+            Action<ValidationModelOptions> configureValidationModelOptions)
+        {
+            AddConfigureExpirationModelOptions(services, configureExpirationModelOptions);
+            AddConfigureValidationModelOptions(services, configureValidationModelOptions);
+            AddInMemoryValidationValueStore(services);
+
+            return services;
+        }
+
+        private static void AddInMemoryValidationValueStore(IServiceCollection services)
+        {
             if (services == null)
             {
                 throw new ArgumentNullException(nameof(services));
             }
 
             services.Add(ServiceDescriptor.Singleton<IValidationValueStore, InMemoryValidationValueStore>());
-            return services;
         }
 
-        public static IServiceCollection AddHttpCacheHeaders(this IServiceCollection services,
+        private static void AddConfigureExpirationModelOptions(
+            IServiceCollection services,
             Action<ExpirationModelOptions> configureExpirationModelOptions)
         {
             if (services == null)
@@ -38,12 +77,10 @@ namespace Microsoft.Extensions.DependencyInjection
             }
 
             services.Configure(configureExpirationModelOptions);
-            services.AddHttpCacheHeaders();
-
-            return services;
         }
 
-        public static IServiceCollection AddHttpCacheHeaders(this IServiceCollection services,
+        private static void AddConfigureValidationModelOptions(
+            IServiceCollection services,
             Action<ValidationModelOptions> configureValidationModelOptions)
         {
             if (services == null)
@@ -57,35 +94,6 @@ namespace Microsoft.Extensions.DependencyInjection
             }
 
             services.Configure(configureValidationModelOptions);
-            services.AddHttpCacheHeaders();
-
-            return services;
-        }
-
-        public static IServiceCollection AddHttpCacheHeaders(this IServiceCollection services,
-            Action<ExpirationModelOptions> configureExpirationModelOptions,
-            Action<ValidationModelOptions> configureValidationModelOptions)
-        {
-            if (services == null)
-            {
-                throw new ArgumentNullException(nameof(services));
-            }
-
-            if (configureExpirationModelOptions == null)
-            {
-                throw new ArgumentNullException(nameof(configureExpirationModelOptions));
-            }
-
-            if (configureValidationModelOptions == null)
-            {
-                throw new ArgumentNullException(nameof(configureValidationModelOptions));
-            }
-
-            services.Configure(configureExpirationModelOptions);
-            services.Configure(configureValidationModelOptions);
-            services.AddHttpCacheHeaders();
-
-            return services;
         }
     }
 }

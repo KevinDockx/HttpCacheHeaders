@@ -14,11 +14,9 @@ namespace Marvin.Cache.Headers.Stores
 
         public Task<ValidationValue> GetAsync(string key)
         {
-            if (_store.ContainsKey(key) && _store[key] is ValidationValue eTag)
-                return Task.FromResult(eTag);
-
-            // not found
-            return Task.FromResult<ValidationValue>(null);
+            return _store.ContainsKey(key) && _store[key] is ValidationValue eTag
+                ? Task.FromResult(eTag)
+                : Task.FromResult<ValidationValue>(null);
         }
 
         public Task SetAsync(string key, ValidationValue eTag)
