@@ -60,41 +60,59 @@ namespace Marvin.Cache.Headers
         public async Task Invoke(HttpContext httpContext)
         {
             // check request ETag headers & dates
+            if (await GetOrHeadIndicatesResourceStillValid(httpContext))
+            {
+                return;
+            }
 
-            // GET & If-None-Match / IfModifiedSince: returns 304 when the resource hasn't
-            // been modified
-            if (await ConditionalGETorHEADIsValid(httpContext))
+            if (await PutOrPostIndicatesResourceHasChanged(httpContext))
+            {
+                return;
+            }
+
+            await HandleResponse(httpContext);
+        }
+
+        private async Task<bool> GetOrHeadIndicatesResourceStillValid(HttpContext httpContext)
+        {
+            // GET & If-None-Match / IfModifiedSince:
+            // returns 304 when the resource hasn't been modified
+            if (await ConditionalGetOrHeadIsValid(httpContext))
             {
                 // still valid. Return 304, and update the Last-Modified date.
                 await Generate304NotModifiedResponse(httpContext);
 
                 // don't continue with the rest of the flow, we don't want
                 // to generate the response.
-                return;
-            }
-            else
-            {
-                _logger.LogInformation("Don't generate 304 - Not Modified.  Continue.");
+                return true;
             }
 
+            _logger.LogInformation("Don't generate 304 - Not Modified.  Continue.");
+            return false;
+        }
+
+        private async Task<bool> PutOrPostIndicatesResourceHasChanged(HttpContext httpContext)
+        {
             // Check for If-Match / IfUnModifiedSince on PUT/PATCH.  Even though
             // dates aren't guaranteed to be strong validators, the standard allows
             // using these.  It's up to the server to ensure they are strong
             // if they want to allow using them.
-            if (!(await ConditionalPUTorPATCHIsValid(httpContext)))
+            if (!(await ConditionalPutOrPatchIsValid(httpContext)))
             {
                 // not valid anymore.  Return a 412 response
                 await Generate412PreconditionFailedResponse(httpContext);
 
                 // don't continue with the rest of the flow, we don't want
                 // to generate the response.
-                return;
-            }
-            else
-            {
-                _logger.LogInformation("Don't generate 412 - Precondition Failed.  Continue.");
+                return true;
             }
 
+            _logger.LogInformation("Don't generate 412 - Precondition Failed.  Continue.");
+            return false;
+        }
+
+        private async Task HandleResponse(HttpContext httpContext)
+        {
             // We treat dates as weak tags.  There is no backup to IfUnmodifiedSince
             // for 412 responses.
 
@@ -102,7 +120,6 @@ namespace Marvin.Cache.Headers
             // otherwise we are unable to read it out (and thus cannot generate strong etags
             // correctly)
             // cfr: http://stackoverflow.com/questions/35458737/implement-http-cache-etag-in-asp-net-core-web-api
-
             using (var buffer = new MemoryStream())
             {
                 // replace the context response with a temporary buffer
@@ -144,60 +161,7 @@ namespace Marvin.Cache.Headers
             }
         }
 
-        private async Task Generate412PreconditionFailedResponse(HttpContext httpContext)
-        {
-            _logger.LogInformation("Generating 412 - Precondition Failed.");
-            httpContext.Response.StatusCode = StatusCodes.Status412PreconditionFailed;
-            await GenerateResponseFromStore(httpContext);
-        }
-
-        private async Task Generate304NotModifiedResponse(HttpContext httpContext)
-        {
-            _logger.LogInformation("Generating 304 - Not Modified.");
-            httpContext.Response.StatusCode = StatusCodes.Status304NotModified;
-            await GenerateResponseFromStore(httpContext);
-        }
-
-        private async Task GenerateResponseFromStore(HttpContext httpContext)
-        {
-            var headers = httpContext.Response.Headers;
-
-            // set the ETag & Last-Modified date.
-            // remove any other ETag and Last-Modified headers (could be set
-            // by other pieces of code)
-            headers.Remove(HeaderNames.ETag);
-            headers.Remove(HeaderNames.LastModified);
-
-            // generate key
-            var requestKey = GenerateRequestKey(httpContext.Request);
-
-            // set LastModified
-            var lastModified = DateTimeOffset.UtcNow;
-            // r = RFC1123 pattern (https://msdn.microsoft.com/en-us/library/az4se3k1(v=vs.110).aspx)
-            headers[HeaderNames.LastModified] = lastModified.ToString("r", CultureInfo.InvariantCulture);
-
-            ETag eTag = null;
-            // take ETag value from the store (if it's found)
-            var savedResponse = await _store.GetAsync(requestKey);
-            if (savedResponse?.ETag != null)
-            {
-                eTag = new ETag(savedResponse.ETag.ETagType, savedResponse.ETag.Value);
-                // set ETag
-                headers[HeaderNames.ETag] = savedResponse.ETag.Value;
-            }
-
-            // store (overwrite)
-            await _store.SetAsync(requestKey, new ValidationValue(eTag, lastModified));
-            var logInformation = string.Empty;
-            if (eTag != null)
-            {
-                logInformation = $"ETag: {eTag.ETagType.ToString()}, {eTag.Value}, ";
-            }
-            logInformation += $"Last-Modified: {lastModified.ToString("r", CultureInfo.InvariantCulture)}.";
-            _logger.LogInformation($"Generation done. {logInformation}");
-        }
-
-        private async Task<bool> ConditionalGETorHEADIsValid(HttpContext httpContext)
+        private async Task<bool> ConditionalGetOrHeadIsValid(HttpContext httpContext)
         {
             _logger.LogInformation("Checking for conditional GET/HEAD.");
 
@@ -238,88 +202,86 @@ namespace Marvin.Cache.Headers
                 return false;
             }
 
-            var eTagIsValid = false;
-            bool ifModifiedSinceIsValid;
-
             // check the ETags
-            if (httpContext.Request.Headers.Keys.Contains(HeaderNames.IfNoneMatch))
+            // return the combined result of all validators.
+            return CheckIfNoneMatchIsValid(httpContext, validationValue) &&
+                   CheckIfModifiedSinceIsValid(httpContext, validationValue);
+        }
+
+        private bool CheckIfNoneMatchIsValid(HttpContext httpContext, ValidationValue validationValue)
+        {
+            if (!httpContext.Request.Headers.Keys.Contains(HeaderNames.IfNoneMatch))
             {
-                _logger.LogInformation("Checking If-None-Match.");
-
-                var ifNoneMatchHeaderValue = httpContext.Request.Headers[HeaderNames.IfNoneMatch].ToString().Trim();
-                _logger.LogInformation($"Checking If-None-Match: {ifNoneMatchHeaderValue}.");
-
-                // if the value is *, the check is valid.
-                if (ifNoneMatchHeaderValue == "*")
-                {
-                    eTagIsValid = true;
-                }
-                else
-                {
-                    var eTagsFromIfNoneMatchHeader = ifNoneMatchHeaderValue
-                        .Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
-
-                    // check the ETag.  If one of the ETags matches, we're good to
-                    // go and can return a 304 Not Modified.
-                    // For conditional GET/HEAD, we use weak comparison.
-                    if (eTagsFromIfNoneMatchHeader.Any(eTag => ETagsMatch(validationValue.ETag, eTag.Trim(), false)))
-                    {
-                        eTagIsValid = true;
-                        _logger.LogInformation($"ETag valid: {validationValue.ETag}.");
-                    }
-
-                    // if there is an IfNoneMatch header, but none of the eTags match, we don't take the
-                    // If-Modified-Since headers into account.
-                    //
-                    // cfr: "If none of the entity tags match, then the server MAY perform the requested method as if the
-                    // If-None-Match header field did not exist, but MUST also ignore any If-Modified-Since header field(s)
-                    // in the request. That is, if no entity tags match, then the server MUST NOT return a 304(Not Modified) response."
-                    if (!eTagIsValid)
-                    {
-                        _logger.LogInformation("Not valid. No match found for ETag.");
-                        return false;
-                    }
-                }
-            }
-            else
-            {
+                // if there is no IfNoneMatch header, the tag precondition is valid.
                 _logger.LogInformation("No If-None-Match header, don't check ETag.");
-                eTagIsValid = true;
+                return true;
             }
 
+            _logger.LogInformation("Checking If-None-Match.");
+            var ifNoneMatchHeaderValue = httpContext.Request.Headers[HeaderNames.IfNoneMatch].ToString().Trim();
+            _logger.LogInformation($"Checking If-None-Match: {ifNoneMatchHeaderValue}.");
+
+            // if the value is *, the check is valid.
+            if (ifNoneMatchHeaderValue == "*")
+            {
+                return true;
+            }
+
+            var eTagsFromIfNoneMatchHeader = ifNoneMatchHeaderValue.Split(new[] {','}, StringSplitOptions.RemoveEmptyEntries);
+
+            // check the ETag.  If one of the ETags matches, we're good to
+            // go and can return a 304 Not Modified.
+            // For conditional GET/HEAD, we use weak comparison.
+            if (eTagsFromIfNoneMatchHeader.Any(eTag => ETagsMatch(validationValue.ETag, eTag.Trim(), false)))
+            {
+                _logger.LogInformation($"ETag valid: {validationValue.ETag}.");
+                return true;
+            }
+
+            // if there is an IfNoneMatch header, but none of the eTags match, we don't take the
+            // If-Modified-Since headers into account.
+            //
+            // cfr: "If none of the entity tags match, then the server MAY perform the requested method as if the
+            // If-None-Match header field did not exist, but MUST also ignore any If-Modified-Since header field(s)
+            // in the request. That is, if no entity tags match, then the server MUST NOT return a 304(Not Modified) response."
+
+            _logger.LogInformation("Not valid. No match found for ETag.");
+            return false;
+        }
+
+        private bool CheckIfModifiedSinceIsValid(HttpContext httpContext, ValidationValue validationValue)
+        {
             if (httpContext.Request.Headers.Keys.Contains(HeaderNames.IfModifiedSince))
             {
                 // if the LastModified date is smaller than the IfModifiedSince date,
-                // we can return a 304 Not Modified (IF there's also a matching ETag).
+                // we can return a 304 Not Modified (If there's also a matching ETag).
                 // By adding an If-Modified-Since date
                 // to a GET/HEAD request, the consumer is stating that (s)he only wants the resource
                 // to be returned if if has been modified after that.
                 var ifModifiedSinceValue = httpContext.Request.Headers[HeaderNames.IfModifiedSince].ToString();
                 _logger.LogInformation($"Checking If-Modified-Since: {ifModifiedSinceValue}");
 
-                if (DateTimeOffset.TryParseExact(ifModifiedSinceValue, "r",
-                    CultureInfo.InvariantCulture.DateTimeFormat, DateTimeStyles.AdjustToUniversal,
+                if (DateTimeOffset.TryParseExact(
+                    ifModifiedSinceValue,
+                    "r",
+                    CultureInfo.InvariantCulture.DateTimeFormat,
+                    DateTimeStyles.AdjustToUniversal,
                     out var parsedIfModifiedSince))
                 {
-                    // can only check if we can parse it.
-                    ifModifiedSinceIsValid = validationValue.LastModified.CompareTo(parsedIfModifiedSince) < 0;
+                    return validationValue.LastModified.CompareTo(parsedIfModifiedSince) < 0;
                 }
-                else
-                {
-                    ifModifiedSinceIsValid = true;
-                    _logger.LogInformation("Cannot parse If-Modified-Since value as date, header is ignored.");
-                }
-            }
-            else
-            {
-                _logger.LogInformation("No If-Modified-Since header.");
-                ifModifiedSinceIsValid = true;
+
+                // can only check if we can parse it. Invalid values must be ignored.
+                _logger.LogInformation("Cannot parse If-Modified-Since value as date, header is ignored.");
+                return true;
             }
 
-            return eTagIsValid && ifModifiedSinceIsValid;
+            // if there is no IfModifiedSince header, the check is valid.
+            _logger.LogInformation("No If-Modified-Since header.");
+            return true;
         }
 
-        private async Task<bool> ConditionalPUTorPATCHIsValid(HttpContext httpContext)
+        private async Task<bool> ConditionalPutOrPatchIsValid(HttpContext httpContext)
         {
             _logger.LogInformation("Checking for conditional PUT/PATCH.");
 
@@ -363,54 +325,55 @@ namespace Marvin.Cache.Headers
                 return false;
             }
 
-            var eTagIsValid = false;
-            bool ifUnModifiedSinceIsValid;
-
             // check the ETags
-            if (httpContext.Request.Headers.Keys.Contains(HeaderNames.IfMatch))
+            // return the combined result of all validators.
+            return CheckIfMatchIsValid(httpContext, validationValue) &&
+                   CheckIfUnmodifiedSinceIsValid(httpContext, validationValue);
+        }
+
+        private bool CheckIfMatchIsValid(HttpContext httpContext, ValidationValue validationValue)
+        {
+            if (!httpContext.Request.Headers.Keys.Contains(HeaderNames.IfMatch))
             {
-                var ifMatchHeaderValue = httpContext.Request.Headers[HeaderNames.IfMatch].ToString().Trim();
-                _logger.LogInformation($"Checking If-Match: {ifMatchHeaderValue}.");
-
-                // if the value is *, the check is valid.
-                if (ifMatchHeaderValue == "*")
-                {
-                    eTagIsValid = true;
-                }
-                else
-                {
-                    // otherwise, check the actual ETag(s)
-                    var eTagsFromIfMatchHeader = ifMatchHeaderValue
-                            .Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
-
-                    // check the ETag.  If one of the ETags matches, the
-                    // ETag precondition is valid.
-
-                    // for concurrency checks, we use the strong
-                    // comparison function.
-                    if (eTagsFromIfMatchHeader.Any(eTag => ETagsMatch(validationValue.ETag, eTag.Trim(), true)))
-                    {
-                        _logger.LogInformation($"ETag valid: {validationValue.ETag}.");
-                        eTagIsValid = true;
-                    }
-                }
-            }
-            else
-            {
-                _logger.LogInformation("No If-Match header, don't check ETag.");
                 // if there is no IfMatch header, the tag precondition is valid.
-                eTagIsValid = true;
+                _logger.LogInformation("No If-Match header, don't check ETag.");
+                return true;
+            }
+
+            _logger.LogInformation("Checking If-Match.");
+            var ifMatchHeaderValue = httpContext.Request.Headers[HeaderNames.IfMatch].ToString().Trim();
+            _logger.LogInformation($"Checking If-Match: {ifMatchHeaderValue}.");
+
+            // if the value is *, the check is valid.
+            if (ifMatchHeaderValue == "*")
+            {
+                return true;
+            }
+
+            // otherwise, check the actual ETag(s)
+            var eTagsFromIfMatchHeader = ifMatchHeaderValue.Split(new[] {','}, StringSplitOptions.RemoveEmptyEntries);
+
+            // check the ETag.  If one of the ETags matches, the
+            // ETag precondition is valid.
+
+            // for concurrency checks, we use the strong
+            // comparison function.
+            if (eTagsFromIfMatchHeader.Any(eTag => ETagsMatch(validationValue.ETag, eTag.Trim(), true)))
+            {
+                _logger.LogInformation($"ETag valid: {validationValue.ETag}.");
+                return true;
             }
 
             // if there is an IfMatch header but none of the ETags match,
             // the precondition is already invalid.  We don't have to
             // continue checking.
-            if (!eTagIsValid)
-            {
-                _logger.LogInformation("Not valid. No match found for ETag.");
-                return false;
-            }
 
+            _logger.LogInformation("Not valid. No match found for ETag.");
+            return false;
+        }
+
+        private bool CheckIfUnmodifiedSinceIsValid(HttpContext httpContext, ValidationValue validationValue)
+        {
             // Either the ETag matches (or one of them), or there was no IfMatch header.
             // Continue with checking the IfUnModifiedSince header, if it exists.
             if (httpContext.Request.Headers.Keys.Contains(HeaderNames.IfUnmodifiedSince))
@@ -420,66 +383,79 @@ namespace Marvin.Cache.Headers
                 var ifUnModifiedSinceValue = httpContext.Request.Headers[HeaderNames.IfUnmodifiedSince].ToString();
                 _logger.LogInformation($"Checking If-Unmodified-Since: {ifUnModifiedSinceValue}");
 
-                if (DateTimeOffset.TryParseExact(ifUnModifiedSinceValue, "r",
-                    CultureInfo.InvariantCulture.DateTimeFormat, DateTimeStyles.AdjustToUniversal,
+                if (DateTimeOffset.TryParseExact(
+                    ifUnModifiedSinceValue,
+                    "r",
+                    CultureInfo.InvariantCulture.DateTimeFormat,
+                    DateTimeStyles.AdjustToUniversal,
                     out var parsedIfUnModifiedSince))
                 {
                     // If the LastModified date is smaller than the IfUnmodifiedSince date,
                     // the precondition is valid.
-                    ifUnModifiedSinceIsValid = validationValue.LastModified.CompareTo(parsedIfUnModifiedSince) < 0;
+                    return  validationValue.LastModified.CompareTo(parsedIfUnModifiedSince) < 0;
                 }
-                else
-                {
-                    // can only check if we can parse it.  Invalid values must
-                    // be ignored.
-                    ifUnModifiedSinceIsValid = true;
-                    _logger.LogInformation("Cannot parse If-Unmodified-Since value as date, header is ignored.");
-                }
-            }
-            else
-            {
-                _logger.LogInformation("No If-Unmodified-Since header.");
-                // if there is no IfUnmodifiedSince header, the check is valid.
-                ifUnModifiedSinceIsValid = true;
+
+                // can only check if we can parse it. Invalid values must be ignored.
+                _logger.LogInformation("Cannot parse If-Unmodified-Since value as date, header is ignored.");
+                return true;
             }
 
-            // return the combined result of all validators.
-            return ifUnModifiedSinceIsValid && eTagIsValid;
+            // if there is no IfUnmodifiedSince header, the check is valid.
+            _logger.LogInformation("No If-Unmodified-Since header.");
+            return true;
         }
 
-        private static bool ETagsMatch(ETag eTag, string eTagToCompare, bool useStrongComparisonFunction)
+        private async Task Generate304NotModifiedResponse(HttpContext httpContext)
         {
-            // for If-None-Match (cache) checks, weak comparison should be used.
-            // for If-Match (concurrency) check, strong comparison should be used.
+            _logger.LogInformation("Generating 304 - Not Modified.");
+            httpContext.Response.StatusCode = StatusCodes.Status304NotModified;
+            await GenerateResponseFromStore(httpContext);
+        }
 
-            //The example below shows the results for a set of entity-tag pairs and
-            //both the weak and strong comparison function results:
+        private async Task Generate412PreconditionFailedResponse(HttpContext httpContext)
+        {
+            _logger.LogInformation("Generating 412 - Precondition Failed.");
+            httpContext.Response.StatusCode = StatusCodes.Status412PreconditionFailed;
+            await GenerateResponseFromStore(httpContext);
+        }
 
-            //+--------+--------+-------------------+-----------------+
-            //| ETag 1 | ETag 2 | Strong Comparison | Weak Comparison |
-            //+--------+--------+-------------------+-----------------+
-            //| W/"1"  | W/"1"  | no match          | match           |
-            //| W/"1"  | W/"2"  | no match          | no match        |
-            //| W/"1"  | "1"    | no match          | match           |
-            //| "1"    | "1"    | match             | match           |
-            //+--------+--------+-------------------+-----------------+
+        private async Task GenerateResponseFromStore(HttpContext httpContext)
+        {
+            var headers = httpContext.Response.Headers;
 
-            if (useStrongComparisonFunction)
+            // set the ETag & Last-Modified date.
+            // remove any other ETag and Last-Modified headers (could be set
+            // by other pieces of code)
+            headers.Remove(HeaderNames.ETag);
+            headers.Remove(HeaderNames.LastModified);
+
+            // generate key
+            var requestKey = GenerateRequestKey(httpContext.Request);
+
+            // set LastModified
+            // r = RFC1123 pattern (https://msdn.microsoft.com/en-us/library/az4se3k1(v=vs.110).aspx)
+            var lastModified = DateTimeOffset.UtcNow;
+            headers[HeaderNames.LastModified] = lastModified.ToString("r", CultureInfo.InvariantCulture);
+
+            ETag eTag = null;
+            // take ETag value from the store (if it's found)
+            var savedResponse = await _store.GetAsync(requestKey);
+            if (savedResponse?.ETag != null)
             {
-                // to match, both eTags must be strong & be an exact match.
-
-                var eTagToCompareIsStrong = !eTagToCompare.StartsWith("W/");
-
-                return eTagToCompareIsStrong &&
-                       eTag.ETagType == ETagType.Strong &&
-                       string.Equals(eTag.Value, eTagToCompare, StringComparison.OrdinalIgnoreCase);
+                eTag = new ETag(savedResponse.ETag.ETagType, savedResponse.ETag.Value);
+                headers[HeaderNames.ETag] = savedResponse.ETag.Value;
             }
 
-            // for weak comparison, we only compare the parts of the eTags after the "W/"
-            var firstValueToCompare = eTag.ETagType == ETagType.Weak ? eTag.Value.Substring(2) : eTag.Value;
-            var secondValueToCompare = eTagToCompare.StartsWith("W/") ? eTagToCompare.Substring(2) : eTagToCompare;
+            // store (overwrite)
+            await _store.SetAsync(requestKey, new ValidationValue(eTag, lastModified));
+            var logInformation = string.Empty;
+            if (eTag != null)
+            {
+                logInformation = $"ETag: {eTag.ETagType.ToString()}, {eTag.Value}, ";
+            }
 
-            return string.Equals(firstValueToCompare, secondValueToCompare, StringComparison.OrdinalIgnoreCase);
+            logInformation += $"Last-Modified: {lastModified.ToString("r", CultureInfo.InvariantCulture)}.";
+            _logger.LogInformation($"Generation done. {logInformation}");
         }
 
         private void GenerateValidationHeadersOnResponse(HttpContext httpContext)
@@ -505,7 +481,6 @@ namespace Marvin.Cache.Headers
 
             // if the response body cannot be read, we can never
             // generate correct ETags (and it should never be cached)
-
             if (!httpContext.Response.Body.CanRead)
             {
                 return;
@@ -548,13 +523,11 @@ namespace Marvin.Cache.Headers
             // store the ETag & LastModified date with the request key as key in the ETag store
             _store.SetAsync(requestKey, new ValidationValue(eTag, lastModified));
 
-            // set the ETag header
+            // set the ETag and LastModified header
             headers[HeaderNames.ETag] = eTag.Value;
-            // set the LastModified header
             headers[HeaderNames.LastModified] = lastModified.ToString("r", CultureInfo.InvariantCulture);
 
             _logger.LogInformation($"Validation headers generated. ETag: {eTag.Value}. Last-Modified: {lastModified.ToString("r", CultureInfo.InvariantCulture)}");
-
         }
 
         private void GenerateVaryHeadersOnResponse(HttpContext httpContext)
@@ -594,24 +567,25 @@ namespace Marvin.Cache.Headers
             headers.Remove(HeaderNames.CacheControl);
 
             // set expiration header (remove milliseconds)
-            var expiresValue = DateTimeOffset.UtcNow
+            var expiresValue = DateTimeOffset
+                .UtcNow
                 .AddSeconds(_expirationModelOptions.MaxAge)
                 .ToString("r", CultureInfo.InvariantCulture);
 
             headers[HeaderNames.Expires] = expiresValue;
 
             var cacheControlHeaderValue = string.Format(
-                   CultureInfo.InvariantCulture,
-                   "{0},max-age={1}{2}{3}{4}{5}{6}{7}{8}",
-                   _expirationModelOptions.CacheLocation.ToString().ToLowerInvariant(),
-                   _expirationModelOptions.MaxAge,
-                   _expirationModelOptions.SharedMaxAge == null ? null : ",s-maxage=",
-                   _expirationModelOptions.SharedMaxAge,
-                   _expirationModelOptions.AddNoStoreDirective ? ",no-store" : null,
-                   _expirationModelOptions.AddNoTransformDirective ? ",no-transform" : null,
-                   _validationModelOptions.AddNoCache ? ",no-cache" : null,
-                   _validationModelOptions.AddMustRevalidate ? ",must-revalidate" : null,
-                   _validationModelOptions.AddProxyRevalidate ? ",proxy-revalidate" : null);
+                CultureInfo.InvariantCulture,
+                "{0},max-age={1}{2}{3}{4}{5}{6}{7}{8}",
+                _expirationModelOptions.CacheLocation.ToString().ToLowerInvariant(),
+                _expirationModelOptions.MaxAge,
+                _expirationModelOptions.SharedMaxAge == null ? null : ",s-maxage=",
+                _expirationModelOptions.SharedMaxAge,
+                _expirationModelOptions.AddNoStoreDirective ? ",no-store" : null,
+                _expirationModelOptions.AddNoTransformDirective ? ",no-transform" : null,
+                _validationModelOptions.AddNoCache ? ",no-cache" : null,
+                _validationModelOptions.AddMustRevalidate ? ",must-revalidate" : null,
+                _validationModelOptions.AddProxyRevalidate ? ",proxy-revalidate" : null);
 
             headers[HeaderNames.CacheControl] = cacheControlHeaderValue;
 
@@ -628,13 +602,18 @@ namespace Marvin.Cache.Headers
             // their values
             if (_validationModelOptions.VaryByAll)
             {
-                requestHeaderValues = request.Headers.SelectMany(h => h.Value).ToList();
+                requestHeaderValues = request
+                    .Headers
+                    .SelectMany(h => h.Value)
+                    .ToList();
             }
             else
             {
-                requestHeaderValues = request.Headers
+                requestHeaderValues = request
+                    .Headers
                     .Where(x => _validationModelOptions.Vary.Any(h => h.Equals(x.Key, StringComparison.CurrentCultureIgnoreCase)))
-                    .SelectMany(h => h.Value).ToList();
+                    .SelectMany(h => h.Value)
+                    .ToList();
             }
 
             // get the resoure path
@@ -645,6 +624,41 @@ namespace Marvin.Cache.Headers
 
             // combine these two
             return string.Format("{0}-{1}-{2}", resourcePath, queryString, string.Join("-", requestHeaderValues));
+        }
+
+        private static bool ETagsMatch(ETag eTag, string eTagToCompare, bool useStrongComparisonFunction)
+        {
+            // for If-None-Match (cache) checks, weak comparison should be used.
+            // for If-Match (concurrency) check, strong comparison should be used.
+
+            //The example below shows the results for a set of entity-tag pairs and
+            //both the weak and strong comparison function results:
+
+            //+--------+--------+-------------------+-----------------+
+            //| ETag 1 | ETag 2 | Strong Comparison | Weak Comparison |
+            //+--------+--------+-------------------+-----------------+
+            //| W/"1"  | W/"1"  | no match          | match           |
+            //| W/"1"  | W/"2"  | no match          | no match        |
+            //| W/"1"  | "1"    | no match          | match           |
+            //| "1"    | "1"    | match             | match           |
+            //+--------+--------+-------------------+-----------------+
+
+            if (useStrongComparisonFunction)
+            {
+                // to match, both eTags must be strong & be an exact match.
+
+                var eTagToCompareIsStrong = !eTagToCompare.StartsWith("W/");
+
+                return eTagToCompareIsStrong &&
+                       eTag.ETagType == ETagType.Strong &&
+                       string.Equals(eTag.Value, eTagToCompare, StringComparison.OrdinalIgnoreCase);
+            }
+
+            // for weak comparison, we only compare the parts of the eTags after the "W/"
+            var firstValueToCompare = eTag.ETagType == ETagType.Weak ? eTag.Value.Substring(2) : eTag.Value;
+            var secondValueToCompare = eTagToCompare.StartsWith("W/") ? eTagToCompare.Substring(2) : eTagToCompare;
+
+            return string.Equals(firstValueToCompare, secondValueToCompare, StringComparison.OrdinalIgnoreCase);
         }
 
         // from http://jakzaprogramowac.pl/pytanie/20645,implement-http-cache-etag-in-aspnet-core-web-api
