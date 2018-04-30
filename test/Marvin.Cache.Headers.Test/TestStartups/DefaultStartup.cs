@@ -1,3 +1,6 @@
+// Any comments, input: @KevinDockx
+// Any issues, requests: https://github.com/KevinDockx/HttpCacheHeaders
+
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;

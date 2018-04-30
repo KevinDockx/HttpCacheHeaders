@@ -1,4 +1,7 @@
-﻿using Microsoft.AspNetCore.Builder;
+﻿// Any comments, input: @KevinDockx
+// Any issues, requests: https://github.com/KevinDockx/HttpCacheHeaders
+
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -16,12 +19,12 @@ namespace Marvin.Cache.Headers.Sample
 
             // Add HttpCacheHeaders services with custom options
             services.AddHttpCacheHeaders(
-                (expirationModelOptions) =>
+                expirationModelOptions =>
                 {
                     expirationModelOptions.MaxAge = 600;
                     expirationModelOptions.SharedMaxAge = 300;
                 },
-                (validationModelOptions) =>
+                validationModelOptions =>
                 {
                     validationModelOptions.AddMustRevalidate = true;
                     validationModelOptions.AddProxyRevalidate = true;
@@ -33,7 +36,7 @@ namespace Marvin.Cache.Headers.Sample
         {
             // add Microsoft's ResponseCaching middleware to the request pipeline (with InMemory cache store)
             app.UseResponseCaching();
-            
+
             // add HttpCacheHeaders middleware to the request pipeline
             app.UseHttpCacheHeaders();
 

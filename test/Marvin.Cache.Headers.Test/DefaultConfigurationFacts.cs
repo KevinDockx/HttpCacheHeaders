@@ -1,4 +1,7 @@
-﻿using System.Linq;
+﻿// Any comments, input: @KevinDockx
+// Any issues, requests: https://github.com/KevinDockx/HttpCacheHeaders
+
+using System.Linq;
 using System.Threading.Tasks;
 using Marvin.Cache.Headers.Test.TestStartups;
 using Microsoft.AspNetCore.Hosting;
