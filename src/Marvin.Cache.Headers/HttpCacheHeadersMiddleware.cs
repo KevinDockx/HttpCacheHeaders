@@ -127,10 +127,9 @@ namespace Marvin.Cache.Headers
                 // reset the buffer, read out the contents & copy it to the original stream.  This
                 // will ensure our changes to the buffer are applied to the original stream.
                 buffer.Seek(0, SeekOrigin.Begin);
-                var reader = new StreamReader(buffer);
                 using (var bufferReader = new StreamReader(buffer))
                 {
-                    var body = await bufferReader.ReadToEndAsync();
+                    await bufferReader.ReadToEndAsync();
 
                     // reset to the start of the stream
                     buffer.Seek(0, SeekOrigin.Begin);
@@ -202,8 +201,8 @@ namespace Marvin.Cache.Headers
         {
             _logger.LogInformation("Checking for conditional GET/HEAD.");
 
-            if (httpContext.Request.Method != HttpMethod.Get.ToString()
-                && httpContext.Request.Method != HttpMethod.Head.ToString())
+            if (httpContext.Request.Method != HttpMethod.Get.ToString() &&
+                httpContext.Request.Method != HttpMethod.Head.ToString())
             {
                 _logger.LogInformation("Not valid - method isn't GET or HEAD.");
                 return false;
@@ -233,13 +232,13 @@ namespace Marvin.Cache.Headers
             // if there is no validation value in the store, always
             // return false - we have nothing to compare to, and can
             // never return a 304 response
-            if (validationValue == null || validationValue.ETag == null)
+            if (validationValue?.ETag == null)
             {
                 _logger.LogInformation("No saved response found in store.");
                 return false;
             }
 
-            bool eTagIsValid = false;
+            var eTagIsValid = false;
             bool ifModifiedSinceIsValid;
 
             // check the ETags
@@ -257,22 +256,16 @@ namespace Marvin.Cache.Headers
                 }
                 else
                 {
-                    var ETagsFromIfNoneMatchHeader = ifNoneMatchHeaderValue
+                    var eTagsFromIfNoneMatchHeader = ifNoneMatchHeaderValue
                         .Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
 
-                    foreach (var ETag in ETagsFromIfNoneMatchHeader)
+                    // check the ETag.  If one of the ETags matches, we're good to
+                    // go and can return a 304 Not Modified.
+                    // For conditional GET/HEAD, we use weak comparison.
+                    if (eTagsFromIfNoneMatchHeader.Any(eTag => ETagsMatch(validationValue.ETag, eTag.Trim(), false)))
                     {
-                        // check the ETag.  If one of the ETags matches, we're good to
-                        // go and can return a 304 Not Modified.
-                        // For conditional GET/HEAD, we use weak comparison.
-                        if (ETagsMatch(validationValue.ETag,
-                                        ETag.Trim(),
-                                        false))
-                        {
-                            eTagIsValid = true;
-                            _logger.LogInformation($"ETag valid: {validationValue.ETag}.");
-                            break;
-                        }
+                        eTagIsValid = true;
+                        _logger.LogInformation($"ETag valid: {validationValue.ETag}.");
                     }
 
                     // if there is an IfNoneMatch header, but none of the eTags match, we don't take the
@@ -364,7 +357,7 @@ namespace Marvin.Cache.Headers
             // if there is no validation value in the store, we return false:
             // there is nothing to compare to, so the precondition can
             // never be ok - return a 412 response
-            if (validationValue == null || validationValue.ETag == null)
+            if (validationValue?.ETag == null)
             {
                 _logger.LogInformation("No saved response found in store.");
                 return false;
@@ -388,22 +381,18 @@ namespace Marvin.Cache.Headers
                 else
                 {
                     // otherwise, check the actual ETag(s)
-                    var ETagsFromIfMatchHeader = ifMatchHeaderValue
+                    var eTagsFromIfMatchHeader = ifMatchHeaderValue
                             .Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
 
-                    foreach (var ETag in ETagsFromIfMatchHeader)
+                    // check the ETag.  If one of the ETags matches, the
+                    // ETag precondition is valid.
+
+                    // for concurrency checks, we use the strong
+                    // comparison function.
+                    if (eTagsFromIfMatchHeader.Any(eTag => ETagsMatch(validationValue.ETag, eTag.Trim(), true)))
                     {
-                        // check the ETag.  If one of the ETags matches, the
-                        // ETag precondition is valid.
-
-                        // for concurrency checks, we use the strong
-                        // comparison function.
-                        if (!ETagsMatch(validationValue.ETag, ETag.Trim(), true))
-                            continue;
-
                         _logger.LogInformation($"ETag valid: {validationValue.ETag}.");
                         eTagIsValid = true;
-                        break;
                     }
                 }
             }
