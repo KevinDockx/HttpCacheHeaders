@@ -18,7 +18,7 @@ namespace Marvin.Cache.Headers
         /// Defaults to Accept, Accept-Language, Accept-Encoding.  * indicates all request headers can be taken into account.
         /// </summary>
         public IEnumerable<string> Vary { get; set; }
-            = new List<string>() { "Accept", "Accept-Language", "Accept-Encoding" };
+            = new List<string> { "Accept", "Accept-Language", "Accept-Encoding" };
 
         /// <summary>
         /// Indicates that all request headers are taken into account as differentiator.

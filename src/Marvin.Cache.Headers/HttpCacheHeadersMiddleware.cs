@@ -35,16 +35,6 @@ namespace Marvin.Cache.Headers
             IOptions<ExpirationModelOptions> expirationModelOptions,
             IOptions<ValidationModelOptions> validationModelOptions)
         {
-            if (next == null)
-            {
-                throw new ArgumentNullException(nameof(next));
-            }
-
-            if (store == null)
-            {
-                throw new ArgumentNullException(nameof(store));
-            }
-
             if (loggerFactory == null)
             {
                 throw new ArgumentNullException(nameof(loggerFactory));
@@ -60,8 +50,8 @@ namespace Marvin.Cache.Headers
                 throw new ArgumentNullException(nameof(expirationModelOptions));
             }
 
-            _next = next;
-            _store = store;
+            _next = next ?? throw new ArgumentNullException(nameof(next));
+            _store = store ?? throw new ArgumentNullException(nameof(store));
             _expirationModelOptions = expirationModelOptions.Value;
             _validationModelOptions = validationModelOptions.Value;
             _logger = loggerFactory.CreateLogger<HttpCacheHeadersMiddleware>();
@@ -190,7 +180,7 @@ namespace Marvin.Cache.Headers
             ETag eTag = null;
             // take ETag value from the store (if it's found)
             var savedResponse = await _store.GetAsync(requestKey);
-            if (savedResponse != null && savedResponse.ETag != null)
+            if (savedResponse?.ETag != null)
             {
                 eTag = new ETag(savedResponse.ETag.ETagType, savedResponse.ETag.Value);
                 // set ETag
@@ -250,7 +240,7 @@ namespace Marvin.Cache.Headers
             }
 
             bool eTagIsValid = false;
-            bool ifModifiedSinceIsValid = false;
+            bool ifModifiedSinceIsValid;
 
             // check the ETags
             if (httpContext.Request.Headers.Keys.Contains(HeaderNames.IfNoneMatch))
@@ -268,7 +258,7 @@ namespace Marvin.Cache.Headers
                 else
                 {
                     var ETagsFromIfNoneMatchHeader = ifNoneMatchHeaderValue
-                        .Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+                        .Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
 
                     foreach (var ETag in ETagsFromIfNoneMatchHeader)
                     {
@@ -314,11 +304,9 @@ namespace Marvin.Cache.Headers
                 var ifModifiedSinceValue = httpContext.Request.Headers[HeaderNames.IfModifiedSince].ToString();
                 _logger.LogInformation($"Checking If-Modified-Since: {ifModifiedSinceValue}");
 
-                DateTimeOffset parsedIfModifiedSince;
-
                 if (DateTimeOffset.TryParseExact(ifModifiedSinceValue, "r",
                     CultureInfo.InvariantCulture.DateTimeFormat, DateTimeStyles.AdjustToUniversal,
-                    out parsedIfModifiedSince))
+                    out var parsedIfModifiedSince))
                 {
                     // can only check if we can parse it.
                     ifModifiedSinceIsValid = validationValue.LastModified.CompareTo(parsedIfModifiedSince) < 0;
@@ -335,7 +323,7 @@ namespace Marvin.Cache.Headers
                 ifModifiedSinceIsValid = true;
             }
 
-            return (eTagIsValid && ifModifiedSinceIsValid);
+            return eTagIsValid && ifModifiedSinceIsValid;
         }
 
         private async Task<bool> ConditionalPUTorPATCHIsValid(HttpContext httpContext)
@@ -383,7 +371,7 @@ namespace Marvin.Cache.Headers
             }
 
             var eTagIsValid = false;
-            var ifUnModifiedSinceIsValid = false;
+            bool ifUnModifiedSinceIsValid;
 
             // check the ETags
             if (httpContext.Request.Headers.Keys.Contains(HeaderNames.IfMatch))
@@ -401,7 +389,7 @@ namespace Marvin.Cache.Headers
                 {
                     // otherwise, check the actual ETag(s)
                     var ETagsFromIfMatchHeader = ifMatchHeaderValue
-                            .Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+                            .Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
 
                     foreach (var ETag in ETagsFromIfMatchHeader)
                     {
@@ -410,14 +398,12 @@ namespace Marvin.Cache.Headers
 
                         // for concurrency checks, we use the strong
                         // comparison function.
-                        if (ETagsMatch(validationValue.ETag,
-                                        ETag.Trim(),
-                                        true))
-                        {
-                            _logger.LogInformation($"ETag valid: {validationValue.ETag}.");
-                            eTagIsValid = true;
-                            break;
-                        }
+                        if (!ETagsMatch(validationValue.ETag, ETag.Trim(), true))
+                            continue;
+
+                        _logger.LogInformation($"ETag valid: {validationValue.ETag}.");
+                        eTagIsValid = true;
+                        break;
                     }
                 }
             }
@@ -446,11 +432,9 @@ namespace Marvin.Cache.Headers
                 var ifUnModifiedSinceValue = httpContext.Request.Headers[HeaderNames.IfUnmodifiedSince].ToString();
                 _logger.LogInformation($"Checking If-Unmodified-Since: {ifUnModifiedSinceValue}");
 
-                DateTimeOffset parsedIfUnModifiedSince;
-
                 if (DateTimeOffset.TryParseExact(ifUnModifiedSinceValue, "r",
                     CultureInfo.InvariantCulture.DateTimeFormat, DateTimeStyles.AdjustToUniversal,
-                    out parsedIfUnModifiedSince))
+                    out var parsedIfUnModifiedSince))
                 {
                     // If the LastModified date is smaller than the IfUnmodifiedSince date,
                     // the precondition is valid.
@@ -472,10 +456,10 @@ namespace Marvin.Cache.Headers
             }
 
             // return the combined result of all validators.
-            return (ifUnModifiedSinceIsValid && eTagIsValid);
+            return ifUnModifiedSinceIsValid && eTagIsValid;
         }
 
-        private bool ETagsMatch(ETag eTag, string eTagToCompare, bool useStrongComparisonFunction)
+        private static bool ETagsMatch(ETag eTag, string eTagToCompare, bool useStrongComparisonFunction)
         {
             // for If-None-Match (cache) checks, weak comparison should be used.
             // for If-Match (concurrency) check, strong comparison should be used.
@@ -498,13 +482,13 @@ namespace Marvin.Cache.Headers
 
                 var eTagToCompareIsStrong = !eTagToCompare.StartsWith("W/");
 
-                return (eTagToCompareIsStrong &&
-                    eTag.ETagType == ETagType.Strong &&
-                    string.Equals(eTag.Value, eTagToCompare, StringComparison.OrdinalIgnoreCase));
+                return eTagToCompareIsStrong &&
+                       eTag.ETagType == ETagType.Strong &&
+                       string.Equals(eTag.Value, eTagToCompare, StringComparison.OrdinalIgnoreCase);
             }
 
             // for weak comparison, we only compare the parts of the eTags after the "W/"
-            var firstValueToCompare = (eTag.ETagType == ETagType.Weak) ? eTag.Value.Substring(2) : eTag.Value;
+            var firstValueToCompare = eTag.ETagType == ETagType.Weak ? eTag.Value.Substring(2) : eTag.Value;
             var secondValueToCompare = eTagToCompare.StartsWith("W/") ? eTagToCompare.Substring(2) : eTagToCompare;
 
             return string.Equals(firstValueToCompare, secondValueToCompare, StringComparison.OrdinalIgnoreCase);
@@ -602,21 +586,13 @@ namespace Marvin.Cache.Headers
 
             headers.Remove(HeaderNames.Vary);
 
-            string varyHeaderValue = string.Empty;
-
-            if (_validationModelOptions.VaryByAll)
-            {
-                varyHeaderValue = "*";
-            }
-            else
-            {
-                varyHeaderValue = string.Join(", ", _validationModelOptions.Vary);
-            }
+            var varyHeaderValue = _validationModelOptions.VaryByAll
+                ? "*"
+                : string.Join(", ", _validationModelOptions.Vary);
 
             headers[HeaderNames.Vary] = varyHeaderValue;
 
             _logger.LogInformation($"Vary header generated: {varyHeaderValue}.");
-
         }
 
         private void GenerateExpirationHeadersOnResponse(HttpContext httpContext)
@@ -630,8 +606,10 @@ namespace Marvin.Cache.Headers
             headers.Remove(HeaderNames.CacheControl);
 
             // set expiration header (remove milliseconds)
-            var expiresValue = DateTimeOffset.UtcNow.AddSeconds(_expirationModelOptions.MaxAge)
-                 .ToString("r", CultureInfo.InvariantCulture);
+            var expiresValue = DateTimeOffset.UtcNow
+                .AddSeconds(_expirationModelOptions.MaxAge)
+                .ToString("r", CultureInfo.InvariantCulture);
+
             headers[HeaderNames.Expires] = expiresValue;
 
             var cacheControlHeaderValue = string.Format(
@@ -656,7 +634,7 @@ namespace Marvin.Cache.Headers
         {
             // generate a key to store the entity tag with in the entity tag store
 
-            var requestHeaderValues = new List<string>();
+            List<string> requestHeaderValues;
 
             // get the request headers to take into account (VaryBy) & take
             // their values
@@ -666,9 +644,9 @@ namespace Marvin.Cache.Headers
             }
             else
             {
-                requestHeaderValues = request.Headers.Where(x =>
-                   _validationModelOptions.Vary.Any(h => h.Equals(x.Key, StringComparison.CurrentCultureIgnoreCase)))
-                   .SelectMany(h => h.Value).ToList();
+                requestHeaderValues = request.Headers
+                    .Where(x => _validationModelOptions.Vary.Any(h => h.Equals(x.Key, StringComparison.CurrentCultureIgnoreCase)))
+                    .SelectMany(h => h.Value).ToList();
             }
 
             // get the resoure path
@@ -682,24 +660,24 @@ namespace Marvin.Cache.Headers
         }
 
         // from http://jakzaprogramowac.pl/pytanie/20645,implement-http-cache-etag-in-aspnet-core-web-api
-        private string GenerateETag(byte[] data)
+        private static string GenerateETag(byte[] data)
         {
-            string ret = string.Empty;
+            string ret;
 
             using (var md5 = MD5.Create())
             {
                 var hash = md5.ComputeHash(data);
-                string hex = BitConverter.ToString(hash);
+                var hex = BitConverter.ToString(hash);
                 ret = hex.Replace("-", "");
             }
             return ret;
         }
 
-        byte[] Combine(byte[] a, byte[] b)
+        private static byte[] Combine(byte[] a, byte[] b)
         {
-            byte[] c = new byte[a.Length + b.Length];
-            System.Buffer.BlockCopy(a, 0, c, 0, a.Length);
-            System.Buffer.BlockCopy(b, 0, c, a.Length, b.Length);
+            var c = new byte[a.Length + b.Length];
+            Buffer.BlockCopy(a, 0, c, 0, a.Length);
+            Buffer.BlockCopy(b, 0, c, a.Length, b.Length);
             return c;
         }
     }
