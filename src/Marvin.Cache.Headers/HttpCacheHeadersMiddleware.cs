@@ -212,8 +212,8 @@ namespace Marvin.Cache.Headers
         {
             _logger.LogInformation("Checking for conditional GET/HEAD.");
 
-            if (!(httpContext.Request.Method == HttpMethod.Get.ToString()) ||
-                httpContext.Request.Method == "HEAD")
+            if (httpContext.Request.Method != HttpMethod.Get.ToString() 
+                && httpContext.Request.Method != HttpMethod.Head.ToString())
             {
                 _logger.LogInformation("Not valid - method isn't GET or HEAD.");
                 return false;
@@ -624,7 +624,7 @@ namespace Marvin.Cache.Headers
             _logger.LogInformation("Generating expiration headers.");
 
             var headers = httpContext.Response.Headers;
-
+             
             // remove current Expires & Cache-Control headers
             headers.Remove(HeaderNames.Expires);
             headers.Remove(HeaderNames.CacheControl);
