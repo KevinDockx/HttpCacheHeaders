@@ -1,4 +1,6 @@
-﻿using Marvin.Cache.Headers.Sample;
+﻿// Any comments, input: @KevinDockx
+// Any issues, requests: https://github.com/KevinDockx/HttpCacheHeaders
+
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 

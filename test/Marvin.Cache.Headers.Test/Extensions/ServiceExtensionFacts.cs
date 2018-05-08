@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Any comments, input: @KevinDockx
+// Any issues, requests: https://github.com/KevinDockx/HttpCacheHeaders
+
+using System;
 using Marvin.Cache.Headers.Interfaces;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -14,7 +17,11 @@ namespace Marvin.Cache.Headers.Test.Extensions
         [Fact]
         public void Correctly_register_HttpCacheHeadersMiddleware_as_service()
         {
-            var hostBuilder = new WebHostBuilder().Configure(app => app.UseHttpCacheHeaders()).ConfigureServices(service => service.AddHttpCacheHeaders());
+            var hostBuilder =
+                new WebHostBuilder()
+                    .Configure(app => app.UseHttpCacheHeaders())
+                    .ConfigureServices(service => service.AddHttpCacheHeaders());
+
             var testServer = new TestServer(hostBuilder);
             var middleware = testServer.Host.Services.GetService(typeof(IValidationValueStore));
             Assert.NotNull(middleware);
@@ -25,9 +32,10 @@ namespace Marvin.Cache.Headers.Test.Extensions
         {
 
             var hostBuilder =
-                new WebHostBuilder().Configure(app => app.UseHttpCacheHeaders())
-                    .ConfigureServices(
-                        service => service.AddHttpCacheHeaders((ExpirationModelOptions options) => options.MaxAge = 1));
+                new WebHostBuilder()
+                    .Configure(app => app.UseHttpCacheHeaders())
+                    .ConfigureServices(service => service.AddHttpCacheHeaders(options => options.MaxAge = 1));
+
             var testServer = new TestServer(hostBuilder);
 
             ValidateServiceOptions<ExpirationModelOptions>(testServer, options => options.Value.MaxAge == 1);
@@ -37,9 +45,11 @@ namespace Marvin.Cache.Headers.Test.Extensions
         public void Correctly_register_HttpCacheHeadersMiddleware_as_service_with_ValidationModelOptions()
         {
             var hostBuilder =
-                new WebHostBuilder().Configure(app => app.UseHttpCacheHeaders())
-                    .ConfigureServices(
-                        service => service.AddHttpCacheHeaders((ValidationModelOptions options) => options.AddNoCache = true));
+                new WebHostBuilder()
+                    .Configure(app => app.UseHttpCacheHeaders())
+                    .ConfigureServices(service => service
+                        .AddHttpCacheHeaders(options => options.AddNoCache = true));
+
             var testServer = new TestServer(hostBuilder);
 
             ValidateServiceOptions<ValidationModelOptions>(testServer, options => options.Value.AddNoCache);
@@ -49,23 +59,24 @@ namespace Marvin.Cache.Headers.Test.Extensions
         public void Correctly_register_HttpCacheHeadersMiddleware_as_service_with_ExpirationModelOptions_and_ValidationModelOptions()
         {
             var hostBuilder =
-                new WebHostBuilder().Configure(app => app.UseHttpCacheHeaders())
-                    .ConfigureServices(
-                        service =>
-                            service.AddHttpCacheHeaders(
-                                (ExpirationModelOptions options) => options.MaxAge = 1,
-                                (ValidationModelOptions options) => options.AddNoCache = true));
+                new WebHostBuilder()
+                    .Configure(app => app.UseHttpCacheHeaders())
+                    .ConfigureServices(service => service
+                        .AddHttpCacheHeaders(
+                            options => options.MaxAge = 1,
+                            options => options.AddNoCache = true));
+
             var testServer = new TestServer(hostBuilder);
 
             ValidateServiceOptions<ExpirationModelOptions>(testServer, options => options.Value.MaxAge == 1);
             ValidateServiceOptions<ValidationModelOptions>(testServer, options => options.Value.AddNoCache);
         }
 
-        private void ValidateServiceOptions<T>(TestServer testServer, Func<OptionsManager<T>, bool> validOptions) where T : class, new()
+        private static void ValidateServiceOptions<T>(TestServer testServer, Func<OptionsManager<T>, bool> validOptions) where T : class, new()
         {
             var options = testServer.Host.Services.GetService(typeof(IOptions<T>));
             Assert.NotNull(options);
-            var manager = (OptionsManager<T>) options;
+            var manager = (OptionsManager<T>)options;
             Assert.True(validOptions(manager));
         }
 
@@ -74,7 +85,8 @@ namespace Marvin.Cache.Headers.Test.Extensions
         {
             IServiceCollection serviceCollection = null;
 
-            Assert.Throws<ArgumentNullException>(() => serviceCollection.AddHttpCacheHeaders());
+            Assert.Throws<ArgumentNullException>(
+                () => serviceCollection.AddHttpCacheHeaders());
         }
 
         [Fact]
@@ -83,7 +95,7 @@ namespace Marvin.Cache.Headers.Test.Extensions
             IServiceCollection serviceCollection = null;
 
             Assert.Throws<ArgumentNullException>(
-                () => serviceCollection.AddHttpCacheHeaders((ExpirationModelOptions options) => options.MaxAge = 1));
+                () => serviceCollection.AddHttpCacheHeaders(options => options.MaxAge = 1));
         }
 
         [Fact]
@@ -92,8 +104,7 @@ namespace Marvin.Cache.Headers.Test.Extensions
             IServiceCollection serviceCollection = null;
 
             Assert.Throws<ArgumentNullException>(
-                () =>
-                    serviceCollection.AddHttpCacheHeaders((ValidationModelOptions options) => options.AddNoCache = true));
+                () => serviceCollection.AddHttpCacheHeaders(options => options.AddNoCache = true));
         }
 
         [Fact]
@@ -102,10 +113,9 @@ namespace Marvin.Cache.Headers.Test.Extensions
             IServiceCollection serviceCollection = null;
 
             Assert.Throws<ArgumentNullException>(
-                () =>
-                    serviceCollection.AddHttpCacheHeaders(
-                        (ExpirationModelOptions options) => options.MaxAge = 1,
-                        (ValidationModelOptions options) => options.AddNoCache = true));
+                () => serviceCollection.AddHttpCacheHeaders(
+                    options => options.MaxAge = 1,
+                    options => options.AddNoCache = true));
         }
     }
 }

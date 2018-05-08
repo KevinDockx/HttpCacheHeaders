@@ -7,8 +7,8 @@ namespace Marvin.Cache.Headers
 {
     public class ValidationValue
     {
-        public ETag ETag { get; private set; }
-        public DateTimeOffset LastModified { get; private set; }
+        public ETag ETag { get; }
+        public DateTimeOffset LastModified { get; }
 
         public ValidationValue(ETag eTag, DateTimeOffset lastModified)
         {

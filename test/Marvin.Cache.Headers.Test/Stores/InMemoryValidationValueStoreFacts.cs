@@ -1,5 +1,7 @@
-﻿using System;
-using System.Text;
+﻿// Any comments, input: @KevinDockx
+// Any issues, requests: https://github.com/KevinDockx/HttpCacheHeaders
+
+using System;
 using System.Threading.Tasks;
 using Marvin.Cache.Headers.Stores;
 using Xunit;

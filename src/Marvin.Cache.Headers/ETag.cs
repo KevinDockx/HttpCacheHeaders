@@ -5,8 +5,8 @@ namespace Marvin.Cache.Headers
 {
     public class ETag
     {
-        public ETagType ETagType { get; private set; }
-        public string Value { get; private set; }
+        public ETagType ETagType { get; }
+        public string Value { get; }
 
         public ETag(ETagType eTagType, string value)
         {
@@ -14,9 +14,6 @@ namespace Marvin.Cache.Headers
             Value = value;
         }
 
-        public override string ToString()
-        {
-            return Value;
-        }
+        public override string ToString() => Value;
     }
 }
