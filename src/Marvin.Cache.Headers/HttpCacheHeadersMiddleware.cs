@@ -268,7 +268,7 @@ namespace Marvin.Cache.Headers
                     DateTimeStyles.AdjustToUniversal,
                     out var parsedIfModifiedSince))
                 {
-                    return validationValue.LastModified.CompareTo(parsedIfModifiedSince) < 0;
+                    return validationValue.LastModified.CompareTo(parsedIfModifiedSince) <= 0;
                 }
 
                 // can only check if we can parse it. Invalid values must be ignored.
@@ -434,7 +434,7 @@ namespace Marvin.Cache.Headers
 
             // set LastModified
             // r = RFC1123 pattern (https://msdn.microsoft.com/en-us/library/az4se3k1(v=vs.110).aspx)
-            var lastModified = DateTimeOffset.UtcNow;
+            var lastModified = GetUtcNowWithoutMilliseconds();
             headers[HeaderNames.LastModified] = lastModified.ToString("r", CultureInfo.InvariantCulture);
 
             ETag eTag = null;
@@ -518,7 +518,7 @@ namespace Marvin.Cache.Headers
             var combinedBytes = Combine(requestKeyAsBytes, responseBodyContentAsBytes);
 
             var eTag = new ETag(ETagType.Strong, GenerateETag(combinedBytes));
-            var lastModified = DateTimeOffset.UtcNow;
+            var lastModified = GetUtcNowWithoutMilliseconds();
 
             // store the ETag & LastModified date with the request key as key in the ETag store
             _store.SetAsync(requestKey, new ValidationValue(eTag, lastModified));
@@ -681,6 +681,20 @@ namespace Marvin.Cache.Headers
             Buffer.BlockCopy(a, 0, c, 0, a.Length);
             Buffer.BlockCopy(b, 0, c, a.Length, b.Length);
             return c;
+        }
+
+        private static DateTimeOffset GetUtcNowWithoutMilliseconds()
+        {
+            var now = DateTimeOffset.UtcNow;
+
+            return new DateTimeOffset(
+                now.Year,
+                now.Month,
+                now.Day,
+                now.Hour,
+                now.Minute,
+                now.Second,
+                now.Offset);
         }
     }
 }
