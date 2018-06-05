@@ -2,12 +2,15 @@
 // Any issues, requests: https://github.com/KevinDockx/HttpCacheHeaders
 
 using System.Linq;
+using System.Net;
+using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using Marvin.Cache.Headers.Test.TestStartups;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Net.Http.Headers;
 using Xunit;
+using EntityTagHeaderValue = System.Net.Http.Headers.EntityTagHeaderValue;
 
 namespace Marvin.Cache.Headers.Test
 {
@@ -75,6 +78,32 @@ namespace Marvin.Cache.Headers.Test
                 Assert.True(response2.IsSuccessStatusCode);
 
                 Assert.NotEqual(
+                    response1.Headers.GetValues(HeaderNames.ETag).First(),
+                    response2.Headers.GetValues(HeaderNames.ETag).First());
+            }
+        }
+
+        [Theory]
+        [InlineData(500)]
+        [InlineData(1000)]
+        [InlineData(1500)]
+        public async Task Return_302_When_Request_Is_Cached(int delayInMs)
+        {
+            using (var client = _server.CreateClient())
+            {
+                var response1 = await client.GetAsync("/");
+                var lastmodified = response1.Content.Headers.LastModified;
+                var etag = response1.Headers.GetValues(HeaderNames.ETag).First();
+
+                await Task.Delay(delayInMs);
+                client.DefaultRequestHeaders.IfNoneMatch.Add(new EntityTagHeaderValue(etag, false));
+                client.DefaultRequestHeaders.IfModifiedSince = lastmodified.Value.AddMilliseconds(delayInMs);
+                var response2 = await client.GetAsync("/");
+
+                Assert.True(response1.IsSuccessStatusCode);
+                Assert.True(response2.StatusCode == HttpStatusCode.NotModified);
+
+                Assert.Equal(
                     response1.Headers.GetValues(HeaderNames.ETag).First(),
                     response2.Headers.GetValues(HeaderNames.ETag).First());
             }
