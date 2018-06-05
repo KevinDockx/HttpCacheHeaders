@@ -672,7 +672,7 @@ namespace Marvin.Cache.Headers
                 var hex = BitConverter.ToString(hash);
                 ret = hex.Replace("-", "");
             }
-            return ret;
+            return $"\"{ret}\"";
         }
 
         private static byte[] Combine(byte[] a, byte[] b)
