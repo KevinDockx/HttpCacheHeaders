@@ -11,6 +11,8 @@ namespace Marvin.Cache.Headers.Sample.Controllers
     {
         // GET api/values
         [HttpGet]
+        [HttpCacheExpiration(cacheLocation: CacheLocation.Public, maxAge: 99999)]
+        [HttpCacheValidation(addMustRevalidate: true)]
         public IEnumerable<string> Get()
         {
             return new[] { "value1", "value2" };
@@ -18,6 +20,8 @@ namespace Marvin.Cache.Headers.Sample.Controllers
 
         // GET api/values/5
         [HttpGet("{id}")]
+        [HttpCacheExpiration(cacheLocation: CacheLocation.Private, maxAge: 1337)]
+        [HttpCacheValidation]
         public string Get(int id)
         {
             return "value";
