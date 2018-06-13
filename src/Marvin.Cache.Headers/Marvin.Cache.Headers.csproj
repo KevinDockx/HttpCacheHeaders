@@ -15,6 +15,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="1.0.2" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Abstractions" Version="1.0.2" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="1.0.2" />
     <PackageReference Include="Microsoft.Net.Http.Headers" Version="1.0.2" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="1.0.2" />

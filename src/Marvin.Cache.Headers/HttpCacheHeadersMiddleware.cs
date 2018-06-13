@@ -20,6 +20,9 @@ namespace Marvin.Cache.Headers
 {
     public class HttpCacheHeadersMiddleware
     {
+        internal static readonly string ContextItemsExpirationModelOptions = "HttpCacheHeadersMiddleware-ExpirationModelOptions";
+        internal static readonly string ContextItemsValidationModelOptions = "HttpCacheHeadersMiddleware-ValidationModelOptions";
+
         // RequestDelegate is the middleware delegate that should be called
         // after this middleware delegate is finished
         private readonly RequestDelegate _next;
@@ -97,7 +100,7 @@ namespace Marvin.Cache.Headers
             // dates aren't guaranteed to be strong validators, the standard allows
             // using these.  It's up to the server to ensure they are strong
             // if they want to allow using them.
-            if (!(await ConditionalPutOrPatchIsValid(httpContext)))
+            if (!await ConditionalPutOrPatchIsValid(httpContext))
             {
                 // not valid anymore.  Return a 412 response
                 await Generate412PreconditionFailedResponse(httpContext);
@@ -129,17 +132,26 @@ namespace Marvin.Cache.Headers
                 // Call the next middleware delegate in the pipeline
                 await _next.Invoke(httpContext);
 
+                // Grab possible cache overrides from the method
+                var expirationModelOptions = httpContext.Items.ContainsKey(ContextItemsExpirationModelOptions)
+                    ? (ExpirationModelOptions)httpContext.Items[ContextItemsExpirationModelOptions]
+                    : _expirationModelOptions;
+
+                var validationModelOptions = httpContext.Items.ContainsKey(ContextItemsValidationModelOptions)
+                    ? (ValidationModelOptions)httpContext.Items[ContextItemsValidationModelOptions]
+                    : _validationModelOptions;
+
                 // Handle the response (expiration, validation, vary headers)
 
                 // Handle expiration: Expires & Cache-Control headers
                 // (these are also added for 304 / 412 responses)
-                GenerateExpirationHeadersOnResponse(httpContext);
+                GenerateExpirationHeadersOnResponse(httpContext, expirationModelOptions, validationModelOptions);
 
                 // Handle validation: ETag and Last-Modified headers
                 GenerateValidationHeadersOnResponse(httpContext);
 
                 // Generate Vary headers on the response
-                GenerateVaryHeadersOnResponse(httpContext);
+                GenerateVaryHeadersOnResponse(httpContext, validationModelOptions);
 
                 // reset the buffer, read out the contents & copy it to the original stream.  This
                 // will ensure our changes to the buffer are applied to the original stream.
@@ -227,7 +239,7 @@ namespace Marvin.Cache.Headers
                 return true;
             }
 
-            var eTagsFromIfNoneMatchHeader = ifNoneMatchHeaderValue.Split(new[] {','}, StringSplitOptions.RemoveEmptyEntries);
+            var eTagsFromIfNoneMatchHeader = ifNoneMatchHeaderValue.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
 
             // check the ETag.  If one of the ETags matches, we're good to
             // go and can return a 304 Not Modified.
@@ -351,7 +363,7 @@ namespace Marvin.Cache.Headers
             }
 
             // otherwise, check the actual ETag(s)
-            var eTagsFromIfMatchHeader = ifMatchHeaderValue.Split(new[] {','}, StringSplitOptions.RemoveEmptyEntries);
+            var eTagsFromIfMatchHeader = ifMatchHeaderValue.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
 
             // check the ETag.  If one of the ETags matches, the
             // ETag precondition is valid.
@@ -392,7 +404,7 @@ namespace Marvin.Cache.Headers
                 {
                     // If the LastModified date is smaller than the IfUnmodifiedSince date,
                     // the precondition is valid.
-                    return  validationValue.LastModified.CompareTo(parsedIfUnModifiedSince) < 0;
+                    return validationValue.LastModified.CompareTo(parsedIfUnModifiedSince) < 0;
                 }
 
                 // can only check if we can parse it. Invalid values must be ignored.
@@ -530,7 +542,7 @@ namespace Marvin.Cache.Headers
             _logger.LogInformation($"Validation headers generated. ETag: {eTag.Value}. Last-Modified: {lastModified.ToString("r", CultureInfo.InvariantCulture)}");
         }
 
-        private void GenerateVaryHeadersOnResponse(HttpContext httpContext)
+        private void GenerateVaryHeadersOnResponse(HttpContext httpContext, ValidationModelOptions validationModelOptions)
         {
             // cfr: https://tools.ietf.org/html/rfc7231#section-7.1.4
             // Generate Vary header for response
@@ -547,16 +559,19 @@ namespace Marvin.Cache.Headers
 
             headers.Remove(HeaderNames.Vary);
 
-            var varyHeaderValue = _validationModelOptions.VaryByAll
+            var varyHeaderValue = validationModelOptions.VaryByAll
                 ? "*"
-                : string.Join(", ", _validationModelOptions.Vary);
+                : string.Join(", ", validationModelOptions.Vary);
 
             headers[HeaderNames.Vary] = varyHeaderValue;
 
             _logger.LogInformation($"Vary header generated: {varyHeaderValue}.");
         }
 
-        private void GenerateExpirationHeadersOnResponse(HttpContext httpContext)
+        private void GenerateExpirationHeadersOnResponse(
+            HttpContext httpContext,
+            ExpirationModelOptions expirationModelOptions,
+            ValidationModelOptions validationModelOptions)
         {
             _logger.LogInformation("Generating expiration headers.");
 
@@ -569,7 +584,7 @@ namespace Marvin.Cache.Headers
             // set expiration header (remove milliseconds)
             var expiresValue = DateTimeOffset
                 .UtcNow
-                .AddSeconds(_expirationModelOptions.MaxAge)
+                .AddSeconds(expirationModelOptions.MaxAge)
                 .ToString("r", CultureInfo.InvariantCulture);
 
             headers[HeaderNames.Expires] = expiresValue;
@@ -577,15 +592,15 @@ namespace Marvin.Cache.Headers
             var cacheControlHeaderValue = string.Format(
                 CultureInfo.InvariantCulture,
                 "{0},max-age={1}{2}{3}{4}{5}{6}{7}{8}",
-                _expirationModelOptions.CacheLocation.ToString().ToLowerInvariant(),
-                _expirationModelOptions.MaxAge,
-                _expirationModelOptions.SharedMaxAge == null ? null : ",s-maxage=",
-                _expirationModelOptions.SharedMaxAge,
-                _expirationModelOptions.AddNoStoreDirective ? ",no-store" : null,
-                _expirationModelOptions.AddNoTransformDirective ? ",no-transform" : null,
-                _validationModelOptions.AddNoCache ? ",no-cache" : null,
-                _validationModelOptions.AddMustRevalidate ? ",must-revalidate" : null,
-                _validationModelOptions.AddProxyRevalidate ? ",proxy-revalidate" : null);
+                expirationModelOptions.CacheLocation.ToString().ToLowerInvariant(),
+                expirationModelOptions.MaxAge,
+                expirationModelOptions.SharedMaxAge == null ? null : ",s-maxage=",
+                expirationModelOptions.SharedMaxAge,
+                expirationModelOptions.AddNoStoreDirective ? ",no-store" : null,
+                expirationModelOptions.AddNoTransformDirective ? ",no-transform" : null,
+                validationModelOptions.AddNoCache ? ",no-cache" : null,
+                validationModelOptions.AddMustRevalidate ? ",must-revalidate" : null,
+                validationModelOptions.AddProxyRevalidate ? ",proxy-revalidate" : null);
 
             headers[HeaderNames.CacheControl] = cacheControlHeaderValue;
 
@@ -598,6 +613,7 @@ namespace Marvin.Cache.Headers
 
             List<string> requestHeaderValues;
 
+            // TODO: These validationModelOptions should be configurable at method level as well
             // get the request headers to take into account (VaryBy) & take
             // their values
             if (_validationModelOptions.VaryByAll)

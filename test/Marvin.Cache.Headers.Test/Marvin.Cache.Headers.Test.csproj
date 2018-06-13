@@ -21,6 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\sample\Marvin.Cache.Headers.Sample\Marvin.Cache.Headers.Sample.csproj" />
     <ProjectReference Include="..\..\src\Marvin.Cache.Headers\Marvin.Cache.Headers.csproj" />
   </ItemGroup>
 

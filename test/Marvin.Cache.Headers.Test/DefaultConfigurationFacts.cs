@@ -3,7 +3,6 @@
 
 using System.Linq;
 using System.Net;
-using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using Marvin.Cache.Headers.Test.TestStartups;
 using Microsoft.AspNetCore.Hosting;
