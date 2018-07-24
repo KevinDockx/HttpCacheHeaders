@@ -39,7 +39,7 @@ namespace Marvin.Cache.Headers
         ///
         /// Defaults to false.
         /// </summary>
-        public bool AddNoCache { get; set; } = false;
+        public bool NoCache { get; set; } = false;
 
         /// <summary>
         /// When true, the must-revalidate directive is added to the Cache-Control header.
@@ -50,7 +50,7 @@ namespace Marvin.Cache.Headers
         ///
         /// Defaults to false.
         /// </summary>
-        public bool AddMustRevalidate { get; set; } = false;
+        public bool MustRevalidate { get; set; } = false;
 
         /// <summary>
         /// When true, the proxy-revalidate directive is added to the Cache-Control header.
@@ -62,7 +62,7 @@ namespace Marvin.Cache.Headers
         ///
         /// Defaults to false.
         /// </summary>
-        public bool AddProxyRevalidate { get; set; } = false;
+        public bool ProxyRevalidate { get; set; } = false;
 
         public HttpCacheValidationAttribute()
         {
@@ -70,9 +70,9 @@ namespace Marvin.Cache.Headers
             {
                 Vary = Vary,
                 VaryByAll = VaryByAll,
-                AddNoCache = AddNoCache,
-                AddMustRevalidate = AddMustRevalidate,
-                AddProxyRevalidate = AddProxyRevalidate
+                NoCache = NoCache,
+                MustRevalidate = MustRevalidate,
+                ProxyRevalidate = ProxyRevalidate
             });
         }
 

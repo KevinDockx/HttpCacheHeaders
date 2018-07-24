@@ -41,5 +41,18 @@ namespace Marvin.Cache.Headers.Test
                 Assert.Contains(response2.Headers, pair => pair.Key == HeaderNames.CacheControl && pair.Value.First() == "max-age=1337, private");
             }
         }
+
+        [Fact]
+        public async Task Controller_Level_Validation_And_ExpirationHeaders_Override_Method_Level()
+        {
+            using (var client = _server.CreateClient())
+            {
+                var response = await client.GetAsync("/api/morevalues");
+
+                Assert.True(response.IsSuccessStatusCode);
+
+                Assert.Contains(response.Headers, pair => pair.Key == HeaderNames.CacheControl && pair.Value.First() == "public, max-age=11111");
+            }
+        }
     }
 }

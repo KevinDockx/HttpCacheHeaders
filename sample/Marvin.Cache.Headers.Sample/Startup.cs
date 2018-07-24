@@ -26,8 +26,8 @@ namespace Marvin.Cache.Headers.Sample
                 },
                 validationModelOptions =>
                 {
-                    validationModelOptions.AddMustRevalidate = true;
-                    validationModelOptions.AddProxyRevalidate = true;
+                    validationModelOptions.MustRevalidate = true;
+                    validationModelOptions.ProxyRevalidate = true;
                 });
         }
 

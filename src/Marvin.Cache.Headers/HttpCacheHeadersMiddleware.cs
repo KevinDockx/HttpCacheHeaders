@@ -598,9 +598,9 @@ namespace Marvin.Cache.Headers
                 expirationModelOptions.SharedMaxAge,
                 expirationModelOptions.AddNoStoreDirective ? ",no-store" : null,
                 expirationModelOptions.AddNoTransformDirective ? ",no-transform" : null,
-                validationModelOptions.AddNoCache ? ",no-cache" : null,
-                validationModelOptions.AddMustRevalidate ? ",must-revalidate" : null,
-                validationModelOptions.AddProxyRevalidate ? ",proxy-revalidate" : null);
+                validationModelOptions.NoCache ? ",no-cache" : null,
+                validationModelOptions.MustRevalidate ? ",must-revalidate" : null,
+                validationModelOptions.ProxyRevalidate ? ",proxy-revalidate" : null);
 
             headers[HeaderNames.CacheControl] = cacheControlHeaderValue;
 

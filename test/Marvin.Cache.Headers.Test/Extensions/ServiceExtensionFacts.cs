@@ -48,11 +48,11 @@ namespace Marvin.Cache.Headers.Test.Extensions
                 new WebHostBuilder()
                     .Configure(app => app.UseHttpCacheHeaders())
                     .ConfigureServices(service => service
-                        .AddHttpCacheHeaders(options => options.AddNoCache = true));
+                        .AddHttpCacheHeaders(options => options.NoCache = true));
 
             var testServer = new TestServer(hostBuilder);
 
-            ValidateServiceOptions<ValidationModelOptions>(testServer, options => options.Value.AddNoCache);
+            ValidateServiceOptions<ValidationModelOptions>(testServer, options => options.Value.NoCache);
         }
 
         [Fact]
@@ -64,12 +64,12 @@ namespace Marvin.Cache.Headers.Test.Extensions
                     .ConfigureServices(service => service
                         .AddHttpCacheHeaders(
                             options => options.MaxAge = 1,
-                            options => options.AddNoCache = true));
+                            options => options.NoCache = true));
 
             var testServer = new TestServer(hostBuilder);
 
             ValidateServiceOptions<ExpirationModelOptions>(testServer, options => options.Value.MaxAge == 1);
-            ValidateServiceOptions<ValidationModelOptions>(testServer, options => options.Value.AddNoCache);
+            ValidateServiceOptions<ValidationModelOptions>(testServer, options => options.Value.NoCache);
         }
 
         private static void ValidateServiceOptions<T>(TestServer testServer, Func<OptionsManager<T>, bool> validOptions) where T : class, new()
@@ -104,7 +104,7 @@ namespace Marvin.Cache.Headers.Test.Extensions
             IServiceCollection serviceCollection = null;
 
             Assert.Throws<ArgumentNullException>(
-                () => serviceCollection.AddHttpCacheHeaders(options => options.AddNoCache = true));
+                () => serviceCollection.AddHttpCacheHeaders(options => options.NoCache = true));
         }
 
         [Fact]
@@ -115,7 +115,7 @@ namespace Marvin.Cache.Headers.Test.Extensions
             Assert.Throws<ArgumentNullException>(
                 () => serviceCollection.AddHttpCacheHeaders(
                     options => options.MaxAge = 1,
-                    options => options.AddNoCache = true));
+                    options => options.NoCache = true));
         }
     }
 }

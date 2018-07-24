@@ -41,7 +41,7 @@ namespace Marvin.Cache.Headers
         ///
         /// Defaults to false.
         /// </summary>
-        public bool AddNoStoreDirective { get; set; } = false;
+        public bool NoStore { get; set; } = false;
 
         /// <summary>
         /// When true, the no-transform directive is included in the Cache-Control header.
@@ -50,7 +50,7 @@ namespace Marvin.Cache.Headers
         ///
         /// Defaults to false.
         /// </summary>
-        public bool AddNoTransformDirective { get; set; } = false;
+        public bool NoTransform { get; set; } = false;
 
         public HttpCacheExpirationAttribute()
         {
@@ -59,8 +59,8 @@ namespace Marvin.Cache.Headers
                 MaxAge = MaxAge,
                 SharedMaxAge = SharedMaxAge,
                 CacheLocation = CacheLocation,
-                AddNoStoreDirective = AddNoStoreDirective,
-                AddNoTransformDirective = AddNoTransformDirective
+                AddNoStoreDirective = NoStore,
+                AddNoTransformDirective = NoTransform
             });
         }
 
