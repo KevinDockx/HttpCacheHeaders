@@ -59,8 +59,8 @@ namespace Marvin.Cache.Headers
                 MaxAge = MaxAge,
                 SharedMaxAge = SharedMaxAge,
                 CacheLocation = CacheLocation,
-                AddNoStoreDirective = NoStore,
-                AddNoTransformDirective = NoTransform
+                NoStore = NoStore,
+                NoTransform = NoTransform
             });
         }
 

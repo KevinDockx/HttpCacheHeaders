@@ -596,8 +596,8 @@ namespace Marvin.Cache.Headers
                 expirationModelOptions.MaxAge,
                 expirationModelOptions.SharedMaxAge == null ? null : ",s-maxage=",
                 expirationModelOptions.SharedMaxAge,
-                expirationModelOptions.AddNoStoreDirective ? ",no-store" : null,
-                expirationModelOptions.AddNoTransformDirective ? ",no-transform" : null,
+                expirationModelOptions.NoStore ? ",no-store" : null,
+                expirationModelOptions.NoTransform ? ",no-transform" : null,
                 validationModelOptions.NoCache ? ",no-cache" : null,
                 validationModelOptions.MustRevalidate ? ",must-revalidate" : null,
                 validationModelOptions.ProxyRevalidate ? ",proxy-revalidate" : null);
