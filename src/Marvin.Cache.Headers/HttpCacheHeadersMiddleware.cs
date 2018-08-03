@@ -11,7 +11,6 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
-using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using Marvin.Cache.Headers.Extensions;
@@ -25,9 +24,10 @@ namespace Marvin.Cache.Headers
         private readonly RequestDelegate _next;
         private readonly ILogger _logger;
 
+        private readonly IDateParser _dateParser;
         private readonly IValidationValueStore _store;
         private readonly IStoreKeyGenerator _storeKeyGenerator;
-        private readonly IDateParser _dateParser;
+        private readonly IETagGenerator _eTagGenerator;
 
         private readonly ValidationModelOptions _validationModelOptions;
         private readonly ExpirationModelOptions _expirationModelOptions;
@@ -35,9 +35,10 @@ namespace Marvin.Cache.Headers
         public HttpCacheHeadersMiddleware(
             RequestDelegate next,
             ILoggerFactory loggerFactory,
+            IDateParser dateParser,
             IValidationValueStore store,
             IStoreKeyGenerator storeKeyGenerator,
-            IDateParser dateParser,
+            IETagGenerator eTagGenerator,
             IOptions<ExpirationModelOptions> expirationModelOptions,
             IOptions<ValidationModelOptions> validationModelOptions)
         {
@@ -57,11 +58,15 @@ namespace Marvin.Cache.Headers
             }
 
             _next = next ?? throw new ArgumentNullException(nameof(next));
+
+            _dateParser = dateParser ?? throw new ArgumentNullException(nameof(dateParser));
             _store = store ?? throw new ArgumentNullException(nameof(store));
             _storeKeyGenerator = storeKeyGenerator ?? throw new ArgumentNullException(nameof(storeKeyGenerator));
-            _dateParser = dateParser ?? throw new ArgumentNullException(nameof(dateParser));
+            _eTagGenerator = eTagGenerator ?? throw new ArgumentNullException(nameof(eTagGenerator));
+
             _expirationModelOptions = expirationModelOptions.Value;
             _validationModelOptions = validationModelOptions.Value;
+
             _logger = loggerFactory.CreateLogger<HttpCacheHeadersMiddleware>();
         }
 
@@ -501,15 +506,8 @@ namespace Marvin.Cache.Headers
             headers.Remove(HeaderNames.ETag);
             headers.Remove(HeaderNames.LastModified);
 
-            // Save the ETag in a store.
-            // Key = generated from request URI & headers (if VaryBy is
-            // set, only use those headers)
-            // ETag itself is generated from the key + response body
-            // (strong ETag)
-
             // get the request key
-            var requestKey = await _storeKeyGenerator.GenerateStoreKey(httpContext.Request, _validationModelOptions);
-            var requestKeyAsBytes = Encoding.UTF8.GetBytes(requestKey.ToString());
+            var storeKey = await _storeKeyGenerator.GenerateStoreKey(httpContext.Request, _validationModelOptions);
 
             // get the response bytes
             if (httpContext.Response.Body.CanSeek)
@@ -518,17 +516,15 @@ namespace Marvin.Cache.Headers
             }
 
             var responseBodyContent = new StreamReader(httpContext.Response.Body).ReadToEnd();
-            var responseBodyContentAsBytes = Encoding.UTF8.GetBytes(responseBodyContent);
 
-            // combine both to generate an etag
-            var combinedBytes = Combine(requestKeyAsBytes, responseBodyContentAsBytes);
+            // Calculate the ETag to store in the store.
+            var eTag = await _eTagGenerator.GenerateETag(storeKey, responseBodyContent);
 
-            var eTag = new ETag(ETagType.Strong, GenerateETag(combinedBytes));
             var lastModified = GetUtcNowWithoutMilliseconds();
             var lastModifiedValue = await _dateParser.LastModifiedToString(lastModified);
 
             // store the ETag & LastModified date with the request key as key in the ETag store
-            await _store.SetAsync(requestKey, new ValidationValue(eTag, lastModified));
+            await _store.SetAsync(storeKey, new ValidationValue(eTag, lastModified));
 
             // set the ETag and LastModified header
             headers[HeaderNames.ETag] = eTag.Value;
@@ -636,28 +632,6 @@ namespace Marvin.Cache.Headers
             var secondValueToCompare = eTagToCompare.StartsWith("W/") ? eTagToCompare.Substring(2) : eTagToCompare;
 
             return string.Equals(firstValueToCompare, secondValueToCompare, StringComparison.OrdinalIgnoreCase);
-        }
-
-        // from http://jakzaprogramowac.pl/pytanie/20645,implement-http-cache-etag-in-aspnet-core-web-api
-        private static string GenerateETag(byte[] data)
-        {
-            string ret;
-
-            using (var md5 = MD5.Create())
-            {
-                var hash = md5.ComputeHash(data);
-                var hex = BitConverter.ToString(hash);
-                ret = hex.Replace("-", "");
-            }
-            return $"\"{ret}\"";
-        }
-
-        private static byte[] Combine(byte[] a, byte[] b)
-        {
-            var c = new byte[a.Length + b.Length];
-            Buffer.BlockCopy(a, 0, c, 0, a.Length);
-            Buffer.BlockCopy(b, 0, c, a.Length, b.Length);
-            return c;
         }
 
         private static DateTimeOffset GetUtcNowWithoutMilliseconds()

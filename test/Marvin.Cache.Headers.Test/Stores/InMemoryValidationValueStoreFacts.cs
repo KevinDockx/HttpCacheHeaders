@@ -16,7 +16,7 @@ namespace Marvin.Cache.Headers.Test.Stores
         {
             // arrange
             var referenceTime = DateTimeOffset.UtcNow;
-            var requestKey = new RequestKey
+            var requestKey = new StoreKey
             {
                 { "resourcePath", "/v1/gemeenten/11057" },
                 { "queryString", string.Empty },
@@ -41,13 +41,13 @@ namespace Marvin.Cache.Headers.Test.Stores
         {
             // arrange
             var referenceTime = DateTimeOffset.UtcNow;
-            var requestKey = new RequestKey
+            var requestKey = new StoreKey
             {
                 { "resourcePath", "/v1/gemeenten/11057" },
                 { "queryString", string.Empty },
                 { "requestHeaderValues", string.Join("-", new List<string> {"text/plain", "gzip"})}
             };
-            var requestKey2 = new RequestKey
+            var requestKey2 = new StoreKey
             {
                 { "resourcePath", "/v1/gemeenten/1" },
                 { "queryString", string.Empty },

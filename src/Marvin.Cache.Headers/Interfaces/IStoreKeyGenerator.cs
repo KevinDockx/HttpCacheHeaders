@@ -8,7 +8,7 @@ namespace Marvin.Cache.Headers.Interfaces
 {
     public interface IStoreKeyGenerator
     {
-        Task<RequestKey> GenerateStoreKey(
+        Task<StoreKey> GenerateStoreKey(
             HttpRequest request,
             ValidationModelOptions validationModelOptions);
     }

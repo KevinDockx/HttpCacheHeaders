@@ -11,9 +11,9 @@ using Microsoft.AspNetCore.Http;
 
 namespace Marvin.Cache.Header
 {
-    public class StoreKeyGenerator : IStoreKeyGenerator
+    public class DefaultStoreKeyGenerator : IStoreKeyGenerator
     {
-        public Task<RequestKey> GenerateStoreKey(
+        public Task<StoreKey> GenerateStoreKey(
             HttpRequest request,
             ValidationModelOptions validationModelOptions)
         {
@@ -45,7 +45,7 @@ namespace Marvin.Cache.Header
             var queryString = request.QueryString.ToString();
 
             // combine these
-            return Task.FromResult(new RequestKey
+            return Task.FromResult(new StoreKey
             {
                 { nameof(resourcePath), resourcePath },
                 { nameof(queryString), queryString },

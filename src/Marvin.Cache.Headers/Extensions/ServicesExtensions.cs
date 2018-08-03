@@ -18,13 +18,15 @@ namespace Microsoft.Extensions.DependencyInjection
             this IServiceCollection services,
             IDateParser dateParser = null,
             IValidationValueStore store = null,
-            IStoreKeyGenerator storeKeyGenerator = null)
+            IStoreKeyGenerator storeKeyGenerator = null,
+            IETagGenerator eTagGenerator = null)
         {
             AddModularParts(
                 services,
                 dateParser,
                 store,
-                storeKeyGenerator);
+                storeKeyGenerator,
+                eTagGenerator);
 
             return services;
         }
@@ -34,7 +36,8 @@ namespace Microsoft.Extensions.DependencyInjection
             Action<ExpirationModelOptions> configureExpirationModelOptions,
             IDateParser dateParser = null,
             IValidationValueStore store = null,
-            IStoreKeyGenerator storeKeyGenerator = null)
+            IStoreKeyGenerator storeKeyGenerator = null,
+            IETagGenerator eTagGenerator = null)
         {
             AddConfigureExpirationModelOptions(services, configureExpirationModelOptions);
 
@@ -42,7 +45,8 @@ namespace Microsoft.Extensions.DependencyInjection
                 services,
                 dateParser,
                 store,
-                storeKeyGenerator);
+                storeKeyGenerator,
+                eTagGenerator);
 
             return services;
         }
@@ -52,7 +56,8 @@ namespace Microsoft.Extensions.DependencyInjection
             Action<ValidationModelOptions> configureValidationModelOptions,
             IDateParser dateParser = null,
             IValidationValueStore store = null,
-            IStoreKeyGenerator storeKeyGenerator = null)
+            IStoreKeyGenerator storeKeyGenerator = null,
+            IETagGenerator eTagGenerator = null)
         {
             AddConfigureValidationModelOptions(services, configureValidationModelOptions);
 
@@ -60,7 +65,8 @@ namespace Microsoft.Extensions.DependencyInjection
                 services,
                 dateParser,
                 store,
-                storeKeyGenerator);
+                storeKeyGenerator,
+                eTagGenerator);
 
             return services;
         }
@@ -71,7 +77,8 @@ namespace Microsoft.Extensions.DependencyInjection
             Action<ValidationModelOptions> configureValidationModelOptions,
             IDateParser dateParser = null,
             IValidationValueStore store = null,
-            IStoreKeyGenerator storeKeyGenerator = null)
+            IStoreKeyGenerator storeKeyGenerator = null,
+            IETagGenerator eTagGenerator = null)
         {
             AddConfigureExpirationModelOptions(services, configureExpirationModelOptions);
             AddConfigureValidationModelOptions(services, configureValidationModelOptions);
@@ -80,7 +87,8 @@ namespace Microsoft.Extensions.DependencyInjection
                 services,
                 dateParser,
                 store,
-                storeKeyGenerator);
+                storeKeyGenerator,
+                eTagGenerator);
 
             return services;
         }
@@ -89,11 +97,13 @@ namespace Microsoft.Extensions.DependencyInjection
             IServiceCollection services,
             IDateParser dateParser,
             IValidationValueStore store,
-            IStoreKeyGenerator storeKeyGenerator)
+            IStoreKeyGenerator storeKeyGenerator,
+            IETagGenerator eTagGenerator)
         {
             AddDateParser(services, dateParser);
             AddValidationValueStore(services, store);
             AddStoreKeyGenerator(services, storeKeyGenerator);
+            AddETagGenerator(services, eTagGenerator);
         }
 
         private static void AddDateParser(
@@ -141,10 +151,27 @@ namespace Microsoft.Extensions.DependencyInjection
 
             if (storeKeyGenerator == null)
             {
-                storeKeyGenerator = new StoreKeyGenerator();
+                storeKeyGenerator = new DefaultStoreKeyGenerator();
             }
 
             services.Add(ServiceDescriptor.Singleton(typeof(IStoreKeyGenerator), storeKeyGenerator));
+        }
+
+        private static void AddETagGenerator(
+            IServiceCollection services,
+            IETagGenerator eTagGenerator)
+        {
+            if (services == null)
+            {
+                throw new ArgumentNullException(nameof(services));
+            }
+
+            if (eTagGenerator == null)
+            {
+                eTagGenerator = new DefaultStrongETagGenerator();
+            }
+
+            services.Add(ServiceDescriptor.Singleton(typeof(IETagGenerator), eTagGenerator));
         }
 
         private static void AddConfigureExpirationModelOptions(
