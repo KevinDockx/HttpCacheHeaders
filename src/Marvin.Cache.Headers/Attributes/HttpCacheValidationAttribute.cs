@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Any comments, input: @KevinDockx
+// Any issues, requests: https://github.com/KevinDockx/HttpCacheHeaders
+
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.Filters;

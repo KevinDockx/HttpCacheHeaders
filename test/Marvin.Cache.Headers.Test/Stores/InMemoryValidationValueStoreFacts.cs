@@ -16,25 +16,6 @@ namespace Marvin.Cache.Headers.Test.Stores
         {
             // arrange
             var referenceTime = DateTimeOffset.UtcNow;
-
-            var target = new InMemoryValidationValueStore();
-            await target.SetAsync("test-key", new ValidationValue(new ETag(ETagType.Strong, "test"), referenceTime));
-
-            // act
-            var result = await target.GetAsync("test-key");
-
-            // assert
-            Assert.NotNull(result);
-            Assert.Equal(ETagType.Strong, result.ETag.ETagType);
-            Assert.Equal("test", result.ETag.Value);
-            Assert.Equal(result.LastModified, referenceTime);
-        }
-
-        [Fact]
-        public async Task GetAsync_Returns_Stored_ValidationValue_Using_RequestKey()
-        {
-            // arrange
-            var referenceTime = DateTimeOffset.UtcNow;
             var requestKey = new RequestKey
             {
                 { "resourcePath", "/v1/gemeenten/11057" },
@@ -57,22 +38,6 @@ namespace Marvin.Cache.Headers.Test.Stores
 
         [Fact]
         public async Task GetAsync_DoesNotReturn_Unknown_ValidationValue()
-        {
-            // arrange
-            var referenceTime = DateTimeOffset.UtcNow;
-
-            var target = new InMemoryValidationValueStore();
-            await target.SetAsync("test-key", new ValidationValue(new ETag(ETagType.Strong, "test"), referenceTime));
-
-            // act
-            var result = await target.GetAsync("test-nonexisting-key");
-
-            // assert
-            Assert.Null(result);
-        }
-
-        [Fact]
-        public async Task GetAsync_DoesNotReturn_Unknown_ValidationValue_Using_RequestKey()
         {
             // arrange
             var referenceTime = DateTimeOffset.UtcNow;
