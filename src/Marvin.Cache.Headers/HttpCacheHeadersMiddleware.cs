@@ -11,7 +11,6 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
-using System.Text;
 using System.Threading.Tasks;
 using Marvin.Cache.Headers.Extensions;
 
@@ -205,10 +204,10 @@ namespace Marvin.Cache.Headers
             }
 
             // generate the request key
-            var requestKey = await _storeKeyGenerator.GenerateStoreKey(httpContext.Request, _validationModelOptions);
+            var storeKey = await _storeKeyGenerator.GenerateStoreKey(httpContext.Request, _validationModelOptions);
 
             // find the validationValue with this key in the store
-            var validationValue = await _store.GetAsync(requestKey);
+            var validationValue = await _store.GetAsync(storeKey);
 
             // if there is no validation value in the store, always
             // return false - we have nothing to compare to, and can
@@ -325,10 +324,10 @@ namespace Marvin.Cache.Headers
             }
 
             // generate the request key
-            var requestKey = await _storeKeyGenerator.GenerateStoreKey(httpContext.Request, _validationModelOptions);
+            var storeKey = await _storeKeyGenerator.GenerateStoreKey(httpContext.Request, _validationModelOptions);
 
             // find the validationValue with this key in the store
-            var validationValue = await _store.GetAsync(requestKey);
+            var validationValue = await _store.GetAsync(storeKey);
 
             // if there is no validation value in the store, we return false:
             // there is nothing to compare to, so the precondition can
@@ -441,7 +440,7 @@ namespace Marvin.Cache.Headers
             headers.Remove(HeaderNames.LastModified);
 
             // generate key
-            var requestKey = await _storeKeyGenerator.GenerateStoreKey(httpContext.Request, _validationModelOptions);
+            var storeKey = await _storeKeyGenerator.GenerateStoreKey(httpContext.Request, _validationModelOptions);
 
             // set LastModified
             var lastModified = GetUtcNowWithoutMilliseconds();
@@ -450,7 +449,7 @@ namespace Marvin.Cache.Headers
 
             ETag eTag = null;
             // take ETag value from the store (if it's found)
-            var savedResponse = await _store.GetAsync(requestKey);
+            var savedResponse = await _store.GetAsync(storeKey);
             if (savedResponse?.ETag != null)
             {
                 eTag = new ETag(savedResponse.ETag.ETagType, savedResponse.ETag.Value);
@@ -458,7 +457,8 @@ namespace Marvin.Cache.Headers
             }
 
             // store (overwrite)
-            await _store.SetAsync(requestKey, new ValidationValue(eTag, lastModified));
+            await _store.SetAsync(storeKey, new ValidationValue(eTag, lastModified));
+
             var logInformation = string.Empty;
             if (eTag != null)
             {
@@ -501,8 +501,7 @@ namespace Marvin.Cache.Headers
 
             var headers = httpContext.Response.Headers;
 
-            // remove any other ETag and Last-Modified headers (could be set
-            // by other pieces of code)
+            // remove any other ETag and Last-Modified headers (could be set by other pieces of code)
             headers.Remove(HeaderNames.ETag);
             headers.Remove(HeaderNames.LastModified);
 
@@ -596,7 +595,7 @@ namespace Marvin.Cache.Headers
 
             headers[HeaderNames.CacheControl] = cacheControlHeaderValue;
 
-            _logger.LogInformation($"Expiration headers generated. Expires: {expiresValue}.  Cache-Control: {cacheControlHeaderValue}.");
+            _logger.LogInformation($"Expiration headers generated. Expires: {expiresValue}. Cache-Control: {cacheControlHeaderValue}.");
         }
 
         private static bool ETagsMatch(
