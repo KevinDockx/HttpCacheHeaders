@@ -29,7 +29,7 @@ namespace Marvin.Cache.Headers
             // combine both to generate an etag
             var combinedBytes = Combine(requestKeyAsBytes, responseBodyContentAsBytes);
 
-            return Task.FromResult(new ETag(ETagType.Strong, combinedBytes.GenerateStrongETagValue()));
+            return Task.FromResult(new ETag(ETagType.Strong, combinedBytes.GenerateMD5Hash()));
         }
 
         private static byte[] Combine(byte[] a, byte[] b)

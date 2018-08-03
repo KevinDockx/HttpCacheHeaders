@@ -454,7 +454,7 @@ namespace Marvin.Cache.Headers
             if (savedResponse?.ETag != null)
             {
                 eTag = new ETag(savedResponse.ETag.ETagType, savedResponse.ETag.Value);
-                headers[HeaderNames.ETag] = savedResponse.ETag.Value;
+                headers[HeaderNames.ETag] = savedResponse.ETag.ToString();
             }
 
             // store (overwrite)
@@ -462,7 +462,7 @@ namespace Marvin.Cache.Headers
             var logInformation = string.Empty;
             if (eTag != null)
             {
-                logInformation = $"ETag: {eTag.ETagType.ToString()}, {eTag.Value}, ";
+                logInformation = $"ETag: {eTag.ETagType}, {eTag}, ";
             }
 
             logInformation += $"Last-Modified: {lastModifiedValue}.";
@@ -527,10 +527,10 @@ namespace Marvin.Cache.Headers
             await _store.SetAsync(storeKey, new ValidationValue(eTag, lastModified));
 
             // set the ETag and LastModified header
-            headers[HeaderNames.ETag] = eTag.Value;
+            headers[HeaderNames.ETag] = eTag.ToString();
             headers[HeaderNames.LastModified] = lastModifiedValue;
 
-            _logger.LogInformation($"Validation headers generated. ETag: {eTag.Value}. Last-Modified: {lastModifiedValue}");
+            _logger.LogInformation($"Validation headers generated. ETag: {eTag.ETagType}, {eTag}. Last-Modified: {lastModifiedValue}");
         }
 
         private void GenerateVaryHeadersOnResponse(HttpContext httpContext, ValidationModelOptions validationModelOptions)
@@ -599,7 +599,10 @@ namespace Marvin.Cache.Headers
             _logger.LogInformation($"Expiration headers generated. Expires: {expiresValue}.  Cache-Control: {cacheControlHeaderValue}.");
         }
 
-        private static bool ETagsMatch(ETag eTag, string eTagToCompare, bool useStrongComparisonFunction)
+        private static bool ETagsMatch(
+            ETag eTag,
+            string eTagToCompare,
+            bool useStrongComparisonFunction)
         {
             // for If-None-Match (cache) checks, weak comparison should be used.
             // for If-Match (concurrency) check, strong comparison should be used.
@@ -624,11 +627,11 @@ namespace Marvin.Cache.Headers
 
                 return eTagToCompareIsStrong &&
                        eTag.ETagType == ETagType.Strong &&
-                       string.Equals(eTag.Value, eTagToCompare, StringComparison.OrdinalIgnoreCase);
+                       string.Equals(eTag.ToString(), eTagToCompare, StringComparison.OrdinalIgnoreCase);
             }
 
             // for weak comparison, we only compare the parts of the eTags after the "W/"
-            var firstValueToCompare = eTag.ETagType == ETagType.Weak ? eTag.Value.Substring(2) : eTag.Value;
+            var firstValueToCompare = eTag.ETagType == ETagType.Weak ? eTag.ToString().Substring(2) : eTag.ToString();
             var secondValueToCompare = eTagToCompare.StartsWith("W/") ? eTagToCompare.Substring(2) : eTagToCompare;
 
             return string.Equals(firstValueToCompare, secondValueToCompare, StringComparison.OrdinalIgnoreCase);
