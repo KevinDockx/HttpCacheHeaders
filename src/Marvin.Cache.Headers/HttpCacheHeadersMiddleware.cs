@@ -456,9 +456,6 @@ namespace Marvin.Cache.Headers
                 headers[HeaderNames.ETag] = savedResponse.ETag.ToString();
             }
 
-            // store (overwrite)
-            await _store.SetAsync(storeKey, new ValidationValue(eTag, lastModified));
-
             var logInformation = string.Empty;
             if (eTag != null)
             {
