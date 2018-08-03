@@ -459,7 +459,7 @@ namespace Marvin.Cache.Headers
             }
 
             // store (overwrite)
-            await _store.SetAsync(requestKey.ToString(), new ValidationValue(eTag, lastModified));
+            await _store.SetAsync(requestKey, new ValidationValue(eTag, lastModified));
             var logInformation = string.Empty;
             if (eTag != null)
             {
@@ -533,7 +533,7 @@ namespace Marvin.Cache.Headers
             var lastModified = GetUtcNowWithoutMilliseconds();
 
             // store the ETag & LastModified date with the request key as key in the ETag store
-            _store.SetAsync(requestKey.ToString(), new ValidationValue(eTag, lastModified));
+            _store.SetAsync(requestKey, new ValidationValue(eTag, lastModified));
 
             // set the ETag and LastModified header
             headers[HeaderNames.ETag] = eTag.Value;
