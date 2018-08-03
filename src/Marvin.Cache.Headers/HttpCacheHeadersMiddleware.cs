@@ -431,6 +431,8 @@ namespace Marvin.Cache.Headers
 
         private async Task GenerateResponseFromStore(HttpContext httpContext)
         {
+            var logInformation = string.Empty;
+
             var headers = httpContext.Response.Headers;
 
             // set the ETag & Last-Modified date.
@@ -447,18 +449,12 @@ namespace Marvin.Cache.Headers
             var lastModifiedValue = await _dateParser.LastModifiedToString(lastModified);
             headers[HeaderNames.LastModified] = lastModifiedValue;
 
-            ETag eTag = null;
             // take ETag value from the store (if it's found)
             var savedResponse = await _store.GetAsync(storeKey);
             if (savedResponse?.ETag != null)
             {
-                eTag = new ETag(savedResponse.ETag.ETagType, savedResponse.ETag.Value);
+                var eTag = new ETag(savedResponse.ETag.ETagType, savedResponse.ETag.Value);
                 headers[HeaderNames.ETag] = savedResponse.ETag.ToString();
-            }
-
-            var logInformation = string.Empty;
-            if (eTag != null)
-            {
                 logInformation = $"ETag: {eTag.ETagType}, {eTag}, ";
             }
 
