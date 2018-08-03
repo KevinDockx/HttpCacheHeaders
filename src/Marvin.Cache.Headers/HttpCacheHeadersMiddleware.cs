@@ -515,7 +515,7 @@ namespace Marvin.Cache.Headers
 
             // get the request key
             var requestKey = GenerateRequestKey(httpContext.Request);
-            var requestKeyAsBytes = Encoding.UTF8.GetBytes(requestKey);
+            var requestKeyAsBytes = Encoding.UTF8.GetBytes(requestKey.ToString());
 
             // get the response bytes
             if (httpContext.Response.Body.CanSeek)
@@ -607,10 +607,9 @@ namespace Marvin.Cache.Headers
             _logger.LogInformation($"Expiration headers generated. Expires: {expiresValue}.  Cache-Control: {cacheControlHeaderValue}.");
         }
 
-        private string GenerateRequestKey(HttpRequest request)
+        private RequestKey GenerateRequestKey(HttpRequest request)
         {
             // generate a key to store the entity tag with in the entity tag store
-
             List<string> requestHeaderValues;
 
             // TODO: These validationModelOptions should be configurable at method level as well
@@ -638,8 +637,13 @@ namespace Marvin.Cache.Headers
             // get the query string
             var queryString = request.QueryString.ToString();
 
-            // combine these two
-            return string.Format("{0}-{1}-{2}", resourcePath, queryString, string.Join("-", requestHeaderValues));
+            // combine these
+            return new RequestKey
+            {
+                { nameof(resourcePath), resourcePath },
+                { nameof(queryString), queryString },
+                { nameof(requestHeaderValues), string.Join("-", requestHeaderValues)}
+            };
         }
 
         private static bool ETagsMatch(ETag eTag, string eTagToCompare, bool useStrongComparisonFunction)
