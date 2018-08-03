@@ -7,7 +7,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.Net.Http.Headers;
 using System;
-using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -26,15 +25,19 @@ namespace Marvin.Cache.Headers
         // RequestDelegate is the middleware delegate that should be called
         // after this middleware delegate is finished
         private readonly RequestDelegate _next;
-        private readonly IValidationValueStore _store;
         private readonly ILogger _logger;
+
+        private readonly IValidationValueStore _store;
+        private readonly IStoreKeyGenerator _storeKeyGenerator;
+
         private readonly ValidationModelOptions _validationModelOptions;
         private readonly ExpirationModelOptions _expirationModelOptions;
 
         public HttpCacheHeadersMiddleware(
             RequestDelegate next,
-            IValidationValueStore store,
             ILoggerFactory loggerFactory,
+            IValidationValueStore store,
+            IStoreKeyGenerator storeKeyGenerator,
             IOptions<ExpirationModelOptions> expirationModelOptions,
             IOptions<ValidationModelOptions> validationModelOptions)
         {
@@ -55,6 +58,7 @@ namespace Marvin.Cache.Headers
 
             _next = next ?? throw new ArgumentNullException(nameof(next));
             _store = store ?? throw new ArgumentNullException(nameof(store));
+            _storeKeyGenerator = storeKeyGenerator ?? throw new ArgumentNullException(nameof(storeKeyGenerator));
             _expirationModelOptions = expirationModelOptions.Value;
             _validationModelOptions = validationModelOptions.Value;
             _logger = loggerFactory.CreateLogger<HttpCacheHeadersMiddleware>();
@@ -148,7 +152,7 @@ namespace Marvin.Cache.Headers
                 GenerateExpirationHeadersOnResponse(httpContext, expirationModelOptions, validationModelOptions);
 
                 // Handle validation: ETag and Last-Modified headers
-                GenerateValidationHeadersOnResponse(httpContext);
+                await GenerateValidationHeadersOnResponse(httpContext);
 
                 // Generate Vary headers on the response
                 GenerateVaryHeadersOnResponse(httpContext, validationModelOptions);
@@ -200,7 +204,7 @@ namespace Marvin.Cache.Headers
             }
 
             // generate the request key
-            var requestKey = GenerateRequestKey(httpContext.Request);
+            var requestKey = await _storeKeyGenerator.GenerateStoreKey(httpContext.Request, _validationModelOptions);
 
             // find the validationValue with this key in the store
             var validationValue = await _store.GetAsync(requestKey);
@@ -323,7 +327,7 @@ namespace Marvin.Cache.Headers
             }
 
             // generate the request key
-            var requestKey = GenerateRequestKey(httpContext.Request);
+            var requestKey = await _storeKeyGenerator.GenerateStoreKey(httpContext.Request, _validationModelOptions);
 
             // find the validationValue with this key in the store
             var validationValue = await _store.GetAsync(requestKey);
@@ -442,7 +446,7 @@ namespace Marvin.Cache.Headers
             headers.Remove(HeaderNames.LastModified);
 
             // generate key
-            var requestKey = GenerateRequestKey(httpContext.Request);
+            var requestKey = await _storeKeyGenerator.GenerateStoreKey(httpContext.Request, _validationModelOptions);
 
             // set LastModified
             // r = RFC1123 pattern (https://msdn.microsoft.com/en-us/library/az4se3k1(v=vs.110).aspx)
@@ -470,7 +474,7 @@ namespace Marvin.Cache.Headers
             _logger.LogInformation($"Generation done. {logInformation}");
         }
 
-        private void GenerateValidationHeadersOnResponse(HttpContext httpContext)
+        private async Task GenerateValidationHeadersOnResponse(HttpContext httpContext)
         {
             // don't generate these for 304 - that's taken care of at the
             // start of the request
@@ -514,7 +518,7 @@ namespace Marvin.Cache.Headers
             // (strong ETag)
 
             // get the request key
-            var requestKey = GenerateRequestKey(httpContext.Request);
+            var requestKey = await _storeKeyGenerator.GenerateStoreKey(httpContext.Request, _validationModelOptions);
             var requestKeyAsBytes = Encoding.UTF8.GetBytes(requestKey.ToString());
 
             // get the response bytes
@@ -533,7 +537,7 @@ namespace Marvin.Cache.Headers
             var lastModified = GetUtcNowWithoutMilliseconds();
 
             // store the ETag & LastModified date with the request key as key in the ETag store
-            _store.SetAsync(requestKey, new ValidationValue(eTag, lastModified));
+            await _store.SetAsync(requestKey, new ValidationValue(eTag, lastModified));
 
             // set the ETag and LastModified header
             headers[HeaderNames.ETag] = eTag.Value;
@@ -605,45 +609,6 @@ namespace Marvin.Cache.Headers
             headers[HeaderNames.CacheControl] = cacheControlHeaderValue;
 
             _logger.LogInformation($"Expiration headers generated. Expires: {expiresValue}.  Cache-Control: {cacheControlHeaderValue}.");
-        }
-
-        private RequestKey GenerateRequestKey(HttpRequest request)
-        {
-            // generate a key to store the entity tag with in the entity tag store
-            List<string> requestHeaderValues;
-
-            // TODO: These validationModelOptions should be configurable at method level as well
-            // get the request headers to take into account (VaryBy) & take
-            // their values
-            if (_validationModelOptions.VaryByAll)
-            {
-                requestHeaderValues = request
-                    .Headers
-                    .SelectMany(h => h.Value)
-                    .ToList();
-            }
-            else
-            {
-                requestHeaderValues = request
-                    .Headers
-                    .Where(x => _validationModelOptions.Vary.Any(h => h.Equals(x.Key, StringComparison.CurrentCultureIgnoreCase)))
-                    .SelectMany(h => h.Value)
-                    .ToList();
-            }
-
-            // get the resoure path
-            var resourcePath = request.Path.ToString();
-
-            // get the query string
-            var queryString = request.QueryString.ToString();
-
-            // combine these
-            return new RequestKey
-            {
-                { nameof(resourcePath), resourcePath },
-                { nameof(queryString), queryString },
-                { nameof(requestHeaderValues), string.Join("-", requestHeaderValues)}
-            };
         }
 
         private static bool ETagsMatch(ETag eTag, string eTagToCompare, bool useStrongComparisonFunction)

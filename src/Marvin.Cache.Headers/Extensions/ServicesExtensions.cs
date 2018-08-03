@@ -5,6 +5,7 @@ using Marvin.Cache.Headers;
 using Marvin.Cache.Headers.Interfaces;
 using Marvin.Cache.Headers.Stores;
 using System;
+using Marvin.Cache.Header;
 
 namespace Microsoft.Extensions.DependencyInjection
 {
@@ -13,29 +14,13 @@ namespace Microsoft.Extensions.DependencyInjection
     /// </summary>
     public static class ServicesExtensions
     {
-        public static IServiceCollection AddHttpCacheHeaders(this IServiceCollection services)
-        {
-            AddInMemoryValidationValueStore(services);
-
-            return services;
-        }
-
         public static IServiceCollection AddHttpCacheHeaders(
             this IServiceCollection services,
-            Action<ExpirationModelOptions> configureExpirationModelOptions)
+            IValidationValueStore store = null,
+            IStoreKeyGenerator storeKeyGenerator = null)
         {
-            AddConfigureExpirationModelOptions(services, configureExpirationModelOptions);
-            AddInMemoryValidationValueStore(services);
-
-            return services;
-        }
-
-        public static IServiceCollection AddHttpCacheHeaders(
-            this IServiceCollection services,
-            Action<ValidationModelOptions> configureValidationModelOptions)
-        {
-            AddConfigureValidationModelOptions(services, configureValidationModelOptions);
-            AddInMemoryValidationValueStore(services);
+            AddValidationValueStore(services, store);
+            AddStoreKeyGenerator(services, storeKeyGenerator);
 
             return services;
         }
@@ -43,23 +28,79 @@ namespace Microsoft.Extensions.DependencyInjection
         public static IServiceCollection AddHttpCacheHeaders(
             this IServiceCollection services,
             Action<ExpirationModelOptions> configureExpirationModelOptions,
-            Action<ValidationModelOptions> configureValidationModelOptions)
+            IValidationValueStore store = null,
+            IStoreKeyGenerator storeKeyGenerator = null)
         {
             AddConfigureExpirationModelOptions(services, configureExpirationModelOptions);
-            AddConfigureValidationModelOptions(services, configureValidationModelOptions);
-            AddInMemoryValidationValueStore(services);
+
+            AddValidationValueStore(services, store);
+            AddStoreKeyGenerator(services, storeKeyGenerator);
 
             return services;
         }
 
-        private static void AddInMemoryValidationValueStore(IServiceCollection services)
+        public static IServiceCollection AddHttpCacheHeaders(
+            this IServiceCollection services,
+            Action<ValidationModelOptions> configureValidationModelOptions,
+            IValidationValueStore store = null,
+            IStoreKeyGenerator storeKeyGenerator = null)
+        {
+            AddConfigureValidationModelOptions(services, configureValidationModelOptions);
+
+            AddValidationValueStore(services, store);
+            AddStoreKeyGenerator(services, storeKeyGenerator);
+
+            return services;
+        }
+
+        public static IServiceCollection AddHttpCacheHeaders(
+            this IServiceCollection services,
+            Action<ExpirationModelOptions> configureExpirationModelOptions,
+            Action<ValidationModelOptions> configureValidationModelOptions,
+            IValidationValueStore store = null,
+            IStoreKeyGenerator storeKeyGenerator = null)
+        {
+            AddConfigureExpirationModelOptions(services, configureExpirationModelOptions);
+            AddConfigureValidationModelOptions(services, configureValidationModelOptions);
+
+            AddValidationValueStore(services, store);
+            AddStoreKeyGenerator(services, storeKeyGenerator);
+
+            return services;
+        }
+
+        private static void AddValidationValueStore(
+            IServiceCollection services,
+            IValidationValueStore store)
         {
             if (services == null)
             {
                 throw new ArgumentNullException(nameof(services));
             }
 
-            services.Add(ServiceDescriptor.Singleton<IValidationValueStore, InMemoryValidationValueStore>());
+            if (store == null)
+            {
+                store = new InMemoryValidationValueStore();
+            }
+
+            services.Add(ServiceDescriptor.Singleton(typeof(IValidationValueStore), store));
+        }
+
+        private static void AddStoreKeyGenerator(
+            IServiceCollection services,
+            IStoreKeyGenerator storeKeyGenerator)
+        {
+            if (services == null)
+            {
+                throw new ArgumentNullException(nameof(services));
+            }
+
+            if (storeKeyGenerator == null)
+            {
+                storeKeyGenerator = new StoreKeyGenerator();
+            }
+
+            services.Add(ServiceDescriptor.Singleton(typeof(IStoreKeyGenerator), storeKeyGenerator));
         }
 
         private static void AddConfigureExpirationModelOptions(
