@@ -24,5 +24,9 @@ namespace Marvin.Cache.Headers.Stores
             _store[key] = eTag;
             return Task.FromResult(0);
         }
+
+        public Task<ValidationValue> GetAsync(RequestKey key) => GetAsync(key.ToString());
+
+        public Task SetAsync(RequestKey key, ValidationValue eTag) => SetAsync(key.ToString(), eTag);
     }
 }
