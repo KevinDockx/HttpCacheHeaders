@@ -14,14 +14,12 @@ using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
+using Marvin.Cache.Headers.Extensions;
 
 namespace Marvin.Cache.Headers
 {
     public class HttpCacheHeadersMiddleware
     {
-        internal static readonly string ContextItemsExpirationModelOptions = "HttpCacheHeadersMiddleware-ExpirationModelOptions";
-        internal static readonly string ContextItemsValidationModelOptions = "HttpCacheHeadersMiddleware-ValidationModelOptions";
-
         // RequestDelegate is the middleware delegate that should be called
         // after this middleware delegate is finished
         private readonly RequestDelegate _next;
@@ -29,6 +27,7 @@ namespace Marvin.Cache.Headers
 
         private readonly IValidationValueStore _store;
         private readonly IStoreKeyGenerator _storeKeyGenerator;
+        private readonly IDateParser _dateParser;
 
         private readonly ValidationModelOptions _validationModelOptions;
         private readonly ExpirationModelOptions _expirationModelOptions;
@@ -38,6 +37,7 @@ namespace Marvin.Cache.Headers
             ILoggerFactory loggerFactory,
             IValidationValueStore store,
             IStoreKeyGenerator storeKeyGenerator,
+            IDateParser dateParser,
             IOptions<ExpirationModelOptions> expirationModelOptions,
             IOptions<ValidationModelOptions> validationModelOptions)
         {
@@ -59,6 +59,7 @@ namespace Marvin.Cache.Headers
             _next = next ?? throw new ArgumentNullException(nameof(next));
             _store = store ?? throw new ArgumentNullException(nameof(store));
             _storeKeyGenerator = storeKeyGenerator ?? throw new ArgumentNullException(nameof(storeKeyGenerator));
+            _dateParser = dateParser ?? throw new ArgumentNullException(nameof(dateParser));
             _expirationModelOptions = expirationModelOptions.Value;
             _validationModelOptions = validationModelOptions.Value;
             _logger = loggerFactory.CreateLogger<HttpCacheHeadersMiddleware>();
@@ -137,19 +138,14 @@ namespace Marvin.Cache.Headers
                 await _next.Invoke(httpContext);
 
                 // Grab possible cache overrides from the method
-                var expirationModelOptions = httpContext.Items.ContainsKey(ContextItemsExpirationModelOptions)
-                    ? (ExpirationModelOptions)httpContext.Items[ContextItemsExpirationModelOptions]
-                    : _expirationModelOptions;
-
-                var validationModelOptions = httpContext.Items.ContainsKey(ContextItemsValidationModelOptions)
-                    ? (ValidationModelOptions)httpContext.Items[ContextItemsValidationModelOptions]
-                    : _validationModelOptions;
+                var expirationModelOptions = httpContext.ExpirationModelOptionsOrDefault(_expirationModelOptions);
+                var validationModelOptions = httpContext.ValidationModelOptionsOrDefault(_validationModelOptions);
 
                 // Handle the response (expiration, validation, vary headers)
 
                 // Handle expiration: Expires & Cache-Control headers
                 // (these are also added for 304 / 412 responses)
-                GenerateExpirationHeadersOnResponse(httpContext, expirationModelOptions, validationModelOptions);
+                await GenerateExpirationHeadersOnResponse(httpContext, expirationModelOptions, validationModelOptions);
 
                 // Handle validation: ETag and Last-Modified headers
                 await GenerateValidationHeadersOnResponse(httpContext);
@@ -221,7 +217,7 @@ namespace Marvin.Cache.Headers
             // check the ETags
             // return the combined result of all validators.
             return CheckIfNoneMatchIsValid(httpContext, validationValue) &&
-                   CheckIfModifiedSinceIsValid(httpContext, validationValue);
+                   await CheckIfModifiedSinceIsValid(httpContext, validationValue);
         }
 
         private bool CheckIfNoneMatchIsValid(HttpContext httpContext, ValidationValue validationValue)
@@ -265,7 +261,7 @@ namespace Marvin.Cache.Headers
             return false;
         }
 
-        private bool CheckIfModifiedSinceIsValid(HttpContext httpContext, ValidationValue validationValue)
+        private async Task<bool> CheckIfModifiedSinceIsValid(HttpContext httpContext, ValidationValue validationValue)
         {
             if (httpContext.Request.Headers.Keys.Contains(HeaderNames.IfModifiedSince))
             {
@@ -277,14 +273,11 @@ namespace Marvin.Cache.Headers
                 var ifModifiedSinceValue = httpContext.Request.Headers[HeaderNames.IfModifiedSince].ToString();
                 _logger.LogInformation($"Checking If-Modified-Since: {ifModifiedSinceValue}");
 
-                if (DateTimeOffset.TryParseExact(
-                    ifModifiedSinceValue,
-                    "r",
-                    CultureInfo.InvariantCulture.DateTimeFormat,
-                    DateTimeStyles.AdjustToUniversal,
-                    out var parsedIfModifiedSince))
+                var parsedIfModifiedSince = await _dateParser.IfModifiedSinceToDateTimeOffset(ifModifiedSinceValue);
+
+                if (parsedIfModifiedSince.HasValue)
                 {
-                    return validationValue.LastModified.CompareTo(parsedIfModifiedSince) <= 0;
+                    return validationValue.LastModified.CompareTo(parsedIfModifiedSince.Value) <= 0;
                 }
 
                 // can only check if we can parse it. Invalid values must be ignored.
@@ -344,7 +337,7 @@ namespace Marvin.Cache.Headers
             // check the ETags
             // return the combined result of all validators.
             return CheckIfMatchIsValid(httpContext, validationValue) &&
-                   CheckIfUnmodifiedSinceIsValid(httpContext, validationValue);
+                   await CheckIfUnmodifiedSinceIsValid(httpContext, validationValue);
         }
 
         private bool CheckIfMatchIsValid(HttpContext httpContext, ValidationValue validationValue)
@@ -388,7 +381,7 @@ namespace Marvin.Cache.Headers
             return false;
         }
 
-        private bool CheckIfUnmodifiedSinceIsValid(HttpContext httpContext, ValidationValue validationValue)
+        private async Task<bool> CheckIfUnmodifiedSinceIsValid(HttpContext httpContext, ValidationValue validationValue)
         {
             // Either the ETag matches (or one of them), or there was no IfMatch header.
             // Continue with checking the IfUnModifiedSince header, if it exists.
@@ -396,19 +389,16 @@ namespace Marvin.Cache.Headers
             {
                 // if the LastModified date is smaller than the IfUnmodifiedSince date,
                 // the precondition is valid.
-                var ifUnModifiedSinceValue = httpContext.Request.Headers[HeaderNames.IfUnmodifiedSince].ToString();
-                _logger.LogInformation($"Checking If-Unmodified-Since: {ifUnModifiedSinceValue}");
+                var ifUnmodifiedSinceValue = httpContext.Request.Headers[HeaderNames.IfUnmodifiedSince].ToString();
+                _logger.LogInformation($"Checking If-Unmodified-Since: {ifUnmodifiedSinceValue}");
 
-                if (DateTimeOffset.TryParseExact(
-                    ifUnModifiedSinceValue,
-                    "r",
-                    CultureInfo.InvariantCulture.DateTimeFormat,
-                    DateTimeStyles.AdjustToUniversal,
-                    out var parsedIfUnModifiedSince))
+                var parsedIfUnmodifiedSince = await _dateParser.IfUnmodifiedSinceToDateTimeOffset(ifUnmodifiedSinceValue);
+
+                if (parsedIfUnmodifiedSince.HasValue)
                 {
                     // If the LastModified date is smaller than the IfUnmodifiedSince date,
                     // the precondition is valid.
-                    return validationValue.LastModified.CompareTo(parsedIfUnModifiedSince) < 0;
+                    return validationValue.LastModified.CompareTo(parsedIfUnmodifiedSince.Value) < 0;
                 }
 
                 // can only check if we can parse it. Invalid values must be ignored.
@@ -449,9 +439,9 @@ namespace Marvin.Cache.Headers
             var requestKey = await _storeKeyGenerator.GenerateStoreKey(httpContext.Request, _validationModelOptions);
 
             // set LastModified
-            // r = RFC1123 pattern (https://msdn.microsoft.com/en-us/library/az4se3k1(v=vs.110).aspx)
             var lastModified = GetUtcNowWithoutMilliseconds();
-            headers[HeaderNames.LastModified] = lastModified.ToString("r", CultureInfo.InvariantCulture);
+            var lastModifiedValue = await _dateParser.LastModifiedToString(lastModified);
+            headers[HeaderNames.LastModified] = lastModifiedValue;
 
             ETag eTag = null;
             // take ETag value from the store (if it's found)
@@ -470,7 +460,7 @@ namespace Marvin.Cache.Headers
                 logInformation = $"ETag: {eTag.ETagType.ToString()}, {eTag.Value}, ";
             }
 
-            logInformation += $"Last-Modified: {lastModified.ToString("r", CultureInfo.InvariantCulture)}.";
+            logInformation += $"Last-Modified: {lastModifiedValue}.";
             _logger.LogInformation($"Generation done. {logInformation}");
         }
 
@@ -535,15 +525,16 @@ namespace Marvin.Cache.Headers
 
             var eTag = new ETag(ETagType.Strong, GenerateETag(combinedBytes));
             var lastModified = GetUtcNowWithoutMilliseconds();
+            var lastModifiedValue = await _dateParser.LastModifiedToString(lastModified);
 
             // store the ETag & LastModified date with the request key as key in the ETag store
             await _store.SetAsync(requestKey, new ValidationValue(eTag, lastModified));
 
             // set the ETag and LastModified header
             headers[HeaderNames.ETag] = eTag.Value;
-            headers[HeaderNames.LastModified] = lastModified.ToString("r", CultureInfo.InvariantCulture);
+            headers[HeaderNames.LastModified] = lastModifiedValue;
 
-            _logger.LogInformation($"Validation headers generated. ETag: {eTag.Value}. Last-Modified: {lastModified.ToString("r", CultureInfo.InvariantCulture)}");
+            _logger.LogInformation($"Validation headers generated. ETag: {eTag.Value}. Last-Modified: {lastModifiedValue}");
         }
 
         private void GenerateVaryHeadersOnResponse(HttpContext httpContext, ValidationModelOptions validationModelOptions)
@@ -572,7 +563,7 @@ namespace Marvin.Cache.Headers
             _logger.LogInformation($"Vary header generated: {varyHeaderValue}.");
         }
 
-        private void GenerateExpirationHeadersOnResponse(
+        private async Task GenerateExpirationHeadersOnResponse(
             HttpContext httpContext,
             ExpirationModelOptions expirationModelOptions,
             ValidationModelOptions validationModelOptions)
@@ -586,10 +577,11 @@ namespace Marvin.Cache.Headers
             headers.Remove(HeaderNames.CacheControl);
 
             // set expiration header (remove milliseconds)
-            var expiresValue = DateTimeOffset
+            var expires = DateTimeOffset
                 .UtcNow
-                .AddSeconds(expirationModelOptions.MaxAge)
-                .ToString("r", CultureInfo.InvariantCulture);
+                .AddSeconds(expirationModelOptions.MaxAge);
+
+            var expiresValue = await _dateParser.ExpiresToString(expires);
 
             headers[HeaderNames.Expires] = expiresValue;
 

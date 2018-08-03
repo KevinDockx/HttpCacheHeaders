@@ -16,11 +16,15 @@ namespace Microsoft.Extensions.DependencyInjection
     {
         public static IServiceCollection AddHttpCacheHeaders(
             this IServiceCollection services,
+            IDateParser dateParser = null,
             IValidationValueStore store = null,
             IStoreKeyGenerator storeKeyGenerator = null)
         {
-            AddValidationValueStore(services, store);
-            AddStoreKeyGenerator(services, storeKeyGenerator);
+            AddModularParts(
+                services,
+                dateParser,
+                store,
+                storeKeyGenerator);
 
             return services;
         }
@@ -28,13 +32,17 @@ namespace Microsoft.Extensions.DependencyInjection
         public static IServiceCollection AddHttpCacheHeaders(
             this IServiceCollection services,
             Action<ExpirationModelOptions> configureExpirationModelOptions,
+            IDateParser dateParser = null,
             IValidationValueStore store = null,
             IStoreKeyGenerator storeKeyGenerator = null)
         {
             AddConfigureExpirationModelOptions(services, configureExpirationModelOptions);
 
-            AddValidationValueStore(services, store);
-            AddStoreKeyGenerator(services, storeKeyGenerator);
+            AddModularParts(
+                services,
+                dateParser,
+                store,
+                storeKeyGenerator);
 
             return services;
         }
@@ -42,13 +50,17 @@ namespace Microsoft.Extensions.DependencyInjection
         public static IServiceCollection AddHttpCacheHeaders(
             this IServiceCollection services,
             Action<ValidationModelOptions> configureValidationModelOptions,
+            IDateParser dateParser = null,
             IValidationValueStore store = null,
             IStoreKeyGenerator storeKeyGenerator = null)
         {
             AddConfigureValidationModelOptions(services, configureValidationModelOptions);
 
-            AddValidationValueStore(services, store);
-            AddStoreKeyGenerator(services, storeKeyGenerator);
+            AddModularParts(
+                services,
+                dateParser,
+                store,
+                storeKeyGenerator);
 
             return services;
         }
@@ -57,16 +69,48 @@ namespace Microsoft.Extensions.DependencyInjection
             this IServiceCollection services,
             Action<ExpirationModelOptions> configureExpirationModelOptions,
             Action<ValidationModelOptions> configureValidationModelOptions,
+            IDateParser dateParser = null,
             IValidationValueStore store = null,
             IStoreKeyGenerator storeKeyGenerator = null)
         {
             AddConfigureExpirationModelOptions(services, configureExpirationModelOptions);
             AddConfigureValidationModelOptions(services, configureValidationModelOptions);
 
-            AddValidationValueStore(services, store);
-            AddStoreKeyGenerator(services, storeKeyGenerator);
+            AddModularParts(
+                services,
+                dateParser,
+                store,
+                storeKeyGenerator);
 
             return services;
+        }
+
+        private static void AddModularParts(
+            IServiceCollection services,
+            IDateParser dateParser,
+            IValidationValueStore store,
+            IStoreKeyGenerator storeKeyGenerator)
+        {
+            AddDateParser(services, dateParser);
+            AddValidationValueStore(services, store);
+            AddStoreKeyGenerator(services, storeKeyGenerator);
+        }
+
+        private static void AddDateParser(
+            IServiceCollection services,
+            IDateParser dateParser)
+        {
+            if (services == null)
+            {
+                throw new ArgumentNullException(nameof(services));
+            }
+
+            if (dateParser == null)
+            {
+                dateParser = new DefaultDateParser();
+            }
+
+            services.Add(ServiceDescriptor.Singleton(typeof(IDateParser), dateParser));
         }
 
         private static void AddValidationValueStore(
