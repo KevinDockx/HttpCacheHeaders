@@ -13,6 +13,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Marvin.Cache.Headers.Extensions;
+using System.Collections.Generic;
 
 namespace Marvin.Cache.Headers
 {
@@ -204,7 +205,8 @@ namespace Marvin.Cache.Headers
             }
 
             // generate the request key
-            var storeKey = await _storeKeyGenerator.GenerateStoreKey(httpContext.Request, _validationModelOptions);
+            var storeKey = await _storeKeyGenerator.GenerateStoreKey(httpContext.Request,
+                GetVaryByHeaderKeysForRequest(httpContext.Request, _validationModelOptions));
 
             // find the validatorValue with this key in the store
             var validatorValue = await _store.GetAsync(storeKey);
@@ -324,7 +326,8 @@ namespace Marvin.Cache.Headers
             }
 
             // generate the request key
-            var storeKey = await _storeKeyGenerator.GenerateStoreKey(httpContext.Request, _validationModelOptions);
+            var storeKey = await _storeKeyGenerator.GenerateStoreKey(httpContext.Request,
+                GetVaryByHeaderKeysForRequest(httpContext.Request, _validationModelOptions));
 
             // find the validatorValue with this key in the store
             var validatorValue = await _store.GetAsync(storeKey);
@@ -442,7 +445,8 @@ namespace Marvin.Cache.Headers
             headers.Remove(HeaderNames.LastModified);
 
             // generate key
-            var storeKey = await _storeKeyGenerator.GenerateStoreKey(httpContext.Request, _validationModelOptions);
+            var storeKey = await _storeKeyGenerator.GenerateStoreKey(httpContext.Request,
+                GetVaryByHeaderKeysForRequest(httpContext.Request, _validationModelOptions));
 
             // set LastModified
             var lastModified = GetUtcNowWithoutMilliseconds();
@@ -499,7 +503,8 @@ namespace Marvin.Cache.Headers
             headers.Remove(HeaderNames.LastModified);
 
             // get the request key
-            var storeKey = await _storeKeyGenerator.GenerateStoreKey(httpContext.Request, _validationModelOptions);
+            var storeKey = await _storeKeyGenerator.GenerateStoreKey(httpContext.Request,
+                GetVaryByHeaderKeysForRequest(httpContext.Request,_validationModelOptions));
 
             // get the response bytes
             if (httpContext.Response.Body.CanSeek)
@@ -591,6 +596,17 @@ namespace Marvin.Cache.Headers
             _logger.LogInformation($"Expiration headers generated. Expires: {expiresValue}. Cache-Control: {cacheControlHeaderValue}.");
         }
 
+        private IEnumerable<string> GetVaryByHeaderKeysForRequest(HttpRequest request, 
+            ValidationModelOptions validationModelOptions)
+        {
+            if (validationModelOptions.VaryByAll)
+            {
+                return request.Headers.Keys;
+            }
+
+            return validationModelOptions.Vary;           
+        }
+
         private static bool ETagsMatch(
             ETag eTag,
             string eTagToCompare,
@@ -642,5 +658,6 @@ namespace Marvin.Cache.Headers
                 now.Second,
                 now.Offset);
         }
+         
     }
 }

@@ -14,35 +14,25 @@ namespace Marvin.Cache.Header
     public class DefaultStoreKeyGenerator : IStoreKeyGenerator
     {
         public Task<StoreKey> GenerateStoreKey(
-            HttpRequest request,
-            ValidationModelOptions validationModelOptions)
+            HttpRequest httpRequest, 
+            IEnumerable<string> varyByHeaderKeys)
         {
             // generate a key to store the entity tag with in the entity tag store
             List<string> requestHeaderValues;
 
             // get the request headers to take into account (VaryBy) & take
-            // their values
-            if (validationModelOptions.VaryByAll)
-            {
-                requestHeaderValues = request
+            // their values            
+            requestHeaderValues = httpRequest
                     .Headers
+                    .Where(x => varyByHeaderKeys.Any(h => h.Equals(x.Key, StringComparison.CurrentCultureIgnoreCase)))
                     .SelectMany(h => h.Value)
-                    .ToList();
-            }
-            else
-            {
-                requestHeaderValues = request
-                    .Headers
-                    .Where(x => validationModelOptions.Vary.Any(h => h.Equals(x.Key, StringComparison.CurrentCultureIgnoreCase)))
-                    .SelectMany(h => h.Value)
-                    .ToList();
-            }
+                    .ToList();            
 
             // get the resoure path
-            var resourcePath = request.Path.ToString();
+            var resourcePath = httpRequest.Path.ToString();
 
             // get the query string
-            var queryString = request.QueryString.ToString();
+            var queryString = httpRequest.QueryString.ToString();
 
             // combine these
             return Task.FromResult(new StoreKey
@@ -52,5 +42,6 @@ namespace Marvin.Cache.Header
                 { nameof(requestHeaderValues), string.Join("-", requestHeaderValues)}
             });
         }
+ 
     }
 }
