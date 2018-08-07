@@ -24,7 +24,7 @@ namespace Marvin.Cache.Headers
         private readonly ILogger _logger;
 
         private readonly IDateParser _dateParser;
-        private readonly IValidationValueStore _store;
+        private readonly IValidatorValueStore _store;
         private readonly IStoreKeyGenerator _storeKeyGenerator;
         private readonly IETagGenerator _eTagGenerator;
 
@@ -35,7 +35,7 @@ namespace Marvin.Cache.Headers
             RequestDelegate next,
             ILoggerFactory loggerFactory,
             IDateParser dateParser,
-            IValidationValueStore store,
+            IValidatorValueStore store,
             IStoreKeyGenerator storeKeyGenerator,
             IETagGenerator eTagGenerator,
             IOptions<ExpirationModelOptions> expirationModelOptions,
@@ -206,13 +206,13 @@ namespace Marvin.Cache.Headers
             // generate the request key
             var storeKey = await _storeKeyGenerator.GenerateStoreKey(httpContext.Request, _validationModelOptions);
 
-            // find the validationValue with this key in the store
-            var validationValue = await _store.GetAsync(storeKey);
+            // find the validatorValue with this key in the store
+            var validatorValue = await _store.GetAsync(storeKey);
 
             // if there is no validation value in the store, always
             // return false - we have nothing to compare to, and can
             // never return a 304 response
-            if (validationValue?.ETag == null)
+            if (validatorValue?.ETag == null)
             {
                 _logger.LogInformation("No saved response found in store.");
                 return false;
@@ -220,11 +220,11 @@ namespace Marvin.Cache.Headers
 
             // check the ETags
             // return the combined result of all validators.
-            return CheckIfNoneMatchIsValid(httpContext, validationValue) &&
-                   await CheckIfModifiedSinceIsValid(httpContext, validationValue);
+            return CheckIfNoneMatchIsValid(httpContext, validatorValue) &&
+                   await CheckIfModifiedSinceIsValid(httpContext, validatorValue);
         }
 
-        private bool CheckIfNoneMatchIsValid(HttpContext httpContext, ValidationValue validationValue)
+        private bool CheckIfNoneMatchIsValid(HttpContext httpContext, ValidatorValue validatorValue)
         {
             if (!httpContext.Request.Headers.Keys.Contains(HeaderNames.IfNoneMatch))
             {
@@ -248,9 +248,9 @@ namespace Marvin.Cache.Headers
             // check the ETag.  If one of the ETags matches, we're good to
             // go and can return a 304 Not Modified.
             // For conditional GET/HEAD, we use weak comparison.
-            if (eTagsFromIfNoneMatchHeader.Any(eTag => ETagsMatch(validationValue.ETag, eTag.Trim(), false)))
+            if (eTagsFromIfNoneMatchHeader.Any(eTag => ETagsMatch(validatorValue.ETag, eTag.Trim(), false)))
             {
-                _logger.LogInformation($"ETag valid: {validationValue.ETag}.");
+                _logger.LogInformation($"ETag valid: {validatorValue.ETag}.");
                 return true;
             }
 
@@ -265,7 +265,7 @@ namespace Marvin.Cache.Headers
             return false;
         }
 
-        private async Task<bool> CheckIfModifiedSinceIsValid(HttpContext httpContext, ValidationValue validationValue)
+        private async Task<bool> CheckIfModifiedSinceIsValid(HttpContext httpContext, ValidatorValue validatorValue)
         {
             if (httpContext.Request.Headers.Keys.Contains(HeaderNames.IfModifiedSince))
             {
@@ -281,7 +281,7 @@ namespace Marvin.Cache.Headers
 
                 if (parsedIfModifiedSince.HasValue)
                 {
-                    return validationValue.LastModified.CompareTo(parsedIfModifiedSince.Value) <= 0;
+                    return validatorValue.LastModified.CompareTo(parsedIfModifiedSince.Value) <= 0;
                 }
 
                 // can only check if we can parse it. Invalid values must be ignored.
@@ -326,13 +326,13 @@ namespace Marvin.Cache.Headers
             // generate the request key
             var storeKey = await _storeKeyGenerator.GenerateStoreKey(httpContext.Request, _validationModelOptions);
 
-            // find the validationValue with this key in the store
-            var validationValue = await _store.GetAsync(storeKey);
+            // find the validatorValue with this key in the store
+            var validatorValue = await _store.GetAsync(storeKey);
 
             // if there is no validation value in the store, we return false:
             // there is nothing to compare to, so the precondition can
             // never be ok - return a 412 response
-            if (validationValue?.ETag == null)
+            if (validatorValue?.ETag == null)
             {
                 _logger.LogInformation("No saved response found in store.");
                 return false;
@@ -340,11 +340,11 @@ namespace Marvin.Cache.Headers
 
             // check the ETags
             // return the combined result of all validators.
-            return CheckIfMatchIsValid(httpContext, validationValue) &&
-                   await CheckIfUnmodifiedSinceIsValid(httpContext, validationValue);
+            return CheckIfMatchIsValid(httpContext, validatorValue) &&
+                   await CheckIfUnmodifiedSinceIsValid(httpContext, validatorValue);
         }
 
-        private bool CheckIfMatchIsValid(HttpContext httpContext, ValidationValue validationValue)
+        private bool CheckIfMatchIsValid(HttpContext httpContext, ValidatorValue validatorValue)
         {
             if (!httpContext.Request.Headers.Keys.Contains(HeaderNames.IfMatch))
             {
@@ -371,9 +371,9 @@ namespace Marvin.Cache.Headers
 
             // for concurrency checks, we use the strong
             // comparison function.
-            if (eTagsFromIfMatchHeader.Any(eTag => ETagsMatch(validationValue.ETag, eTag.Trim(), true)))
+            if (eTagsFromIfMatchHeader.Any(eTag => ETagsMatch(validatorValue.ETag, eTag.Trim(), true)))
             {
-                _logger.LogInformation($"ETag valid: {validationValue.ETag}.");
+                _logger.LogInformation($"ETag valid: {validatorValue.ETag}.");
                 return true;
             }
 
@@ -385,7 +385,7 @@ namespace Marvin.Cache.Headers
             return false;
         }
 
-        private async Task<bool> CheckIfUnmodifiedSinceIsValid(HttpContext httpContext, ValidationValue validationValue)
+        private async Task<bool> CheckIfUnmodifiedSinceIsValid(HttpContext httpContext, ValidatorValue validatorValue)
         {
             // Either the ETag matches (or one of them), or there was no IfMatch header.
             // Continue with checking the IfUnModifiedSince header, if it exists.
@@ -402,7 +402,7 @@ namespace Marvin.Cache.Headers
                 {
                     // If the LastModified date is smaller than the IfUnmodifiedSince date,
                     // the precondition is valid.
-                    return validationValue.LastModified.CompareTo(parsedIfUnmodifiedSince.Value) < 0;
+                    return validatorValue.LastModified.CompareTo(parsedIfUnmodifiedSince.Value) < 0;
                 }
 
                 // can only check if we can parse it. Invalid values must be ignored.
@@ -516,7 +516,7 @@ namespace Marvin.Cache.Headers
             var lastModifiedValue = await _dateParser.LastModifiedToString(lastModified);
 
             // store the ETag & LastModified date with the request key as key in the ETag store
-            await _store.SetAsync(storeKey, new ValidationValue(eTag, lastModified));
+            await _store.SetAsync(storeKey, new ValidatorValue(eTag, lastModified));
 
             // set the ETag and LastModified header
             headers[HeaderNames.ETag] = eTag.ToString();

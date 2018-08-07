@@ -11,6 +11,11 @@ namespace Microsoft.AspNetCore.Builder
     /// </summary>
     public static class AppBuilderExtensions
     {
+        /// <summary>
+        /// Add HttpCacheHeaders to the request pipeline.
+        /// </summary>
+        /// <param name="builder">The <see cref="IApplicationBuilder"/>.</param>
+        /// <returns></returns>
         public static IApplicationBuilder UseHttpCacheHeaders(this IApplicationBuilder builder)
         {
             if (builder == null)

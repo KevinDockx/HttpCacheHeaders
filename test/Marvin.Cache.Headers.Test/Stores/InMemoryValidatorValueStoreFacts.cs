@@ -9,10 +9,10 @@ using Xunit;
 
 namespace Marvin.Cache.Headers.Test.Stores
 {
-    public class InMemoryValidationValueStoreFacts
+    public class InMemoryValidatorValueStoreFacts
     {
         [Fact]
-        public async Task GetAsync_Returns_Stored_ValidationValue()
+        public async Task GetAsync_Returns_Stored_ValidatorValue()
         {
             // arrange
             var referenceTime = DateTimeOffset.UtcNow;
@@ -23,8 +23,8 @@ namespace Marvin.Cache.Headers.Test.Stores
                 { "requestHeaderValues", string.Join("-", new List<string> {"text/plain", "gzip"})}
             };
 
-            var target = new InMemoryValidationValueStore();
-            await target.SetAsync(requestKey, new ValidationValue(new ETag(ETagType.Strong, "test"), referenceTime));
+            var target = new InMemoryValidatorValueStore();
+            await target.SetAsync(requestKey, new ValidatorValue(new ETag(ETagType.Strong, "test"), referenceTime));
 
             // act
             var result = await target.GetAsync(requestKey);
@@ -37,7 +37,7 @@ namespace Marvin.Cache.Headers.Test.Stores
         }
 
         [Fact]
-        public async Task GetAsync_DoesNotReturn_Unknown_ValidationValue()
+        public async Task GetAsync_DoesNotReturn_Unknown_ValidatorValue()
         {
             // arrange
             var referenceTime = DateTimeOffset.UtcNow;
@@ -54,8 +54,8 @@ namespace Marvin.Cache.Headers.Test.Stores
                 { "requestHeaderValues", string.Join("-", new List<string> {"text/plain", "gzip"})}
             };
 
-            var target = new InMemoryValidationValueStore();
-            await target.SetAsync(requestKey, new ValidationValue(new ETag(ETagType.Strong, "test"), referenceTime));
+            var target = new InMemoryValidatorValueStore();
+            await target.SetAsync(requestKey, new ValidatorValue(new ETag(ETagType.Strong, "test"), referenceTime));
 
             // act
             var result = await target.GetAsync(requestKey2);

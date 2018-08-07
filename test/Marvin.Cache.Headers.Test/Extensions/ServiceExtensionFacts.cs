@@ -23,7 +23,7 @@ namespace Marvin.Cache.Headers.Test.Extensions
                     .ConfigureServices(service => service.AddHttpCacheHeaders());
 
             var testServer = new TestServer(hostBuilder);
-            var middleware = testServer.Host.Services.GetService(typeof(IValidationValueStore));
+            var middleware = testServer.Host.Services.GetService(typeof(IValidatorValueStore));
             Assert.NotNull(middleware);
         }
 
