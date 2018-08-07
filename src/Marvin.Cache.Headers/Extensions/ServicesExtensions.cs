@@ -33,6 +33,23 @@ namespace Microsoft.Extensions.DependencyInjection
 
         public static IServiceCollection AddHttpCacheHeaders(
             this IServiceCollection services,
+            Func<IServiceProvider, IDateParser> dateParserFunc = null,
+            Func<IServiceProvider, IValidationValueStore> storeFunc = null,
+            Func<IServiceProvider, IStoreKeyGenerator> storeKeyGeneratorFunc = null,
+            Func<IServiceProvider, IETagGenerator> eTagGeneratorFunc = null)
+        {
+            AddModularParts(
+                services,
+                dateParserFunc,
+                storeFunc,
+                storeKeyGeneratorFunc,
+                eTagGeneratorFunc);
+
+            return services;
+        }
+
+        public static IServiceCollection AddHttpCacheHeaders(
+            this IServiceCollection services,
             Action<ExpirationModelOptions> configureExpirationModelOptions,
             IDateParser dateParser = null,
             IValidationValueStore store = null,
@@ -47,6 +64,26 @@ namespace Microsoft.Extensions.DependencyInjection
                 store,
                 storeKeyGenerator,
                 eTagGenerator);
+
+            return services;
+        }
+
+        public static IServiceCollection AddHttpCacheHeaders(
+            this IServiceCollection services,
+            Action<ExpirationModelOptions> configureExpirationModelOptions,
+            Func<IServiceProvider, IDateParser> dateParserFunc = null,
+            Func<IServiceProvider, IValidationValueStore> storeFunc = null,
+            Func<IServiceProvider, IStoreKeyGenerator> storeKeyGeneratorFunc = null,
+            Func<IServiceProvider, IETagGenerator> eTagGeneratorFunc = null)
+        {
+            AddConfigureExpirationModelOptions(services, configureExpirationModelOptions);
+
+            AddModularParts(
+                services,
+                dateParserFunc,
+                storeFunc,
+                storeKeyGeneratorFunc,
+                eTagGeneratorFunc);
 
             return services;
         }
@@ -73,6 +110,26 @@ namespace Microsoft.Extensions.DependencyInjection
 
         public static IServiceCollection AddHttpCacheHeaders(
             this IServiceCollection services,
+            Action<ValidationModelOptions> configureValidationModelOptions,
+            Func<IServiceProvider, IDateParser> dateParserFunc = null,
+            Func<IServiceProvider, IValidationValueStore> storeFunc = null,
+            Func<IServiceProvider, IStoreKeyGenerator> storeKeyGeneratorFunc = null,
+            Func<IServiceProvider, IETagGenerator> eTagGeneratorFunc = null)
+        {
+            AddConfigureValidationModelOptions(services, configureValidationModelOptions);
+
+            AddModularParts(
+                services,
+                dateParserFunc,
+                storeFunc,
+                storeKeyGeneratorFunc,
+                eTagGeneratorFunc);
+
+            return services;
+        }
+
+        public static IServiceCollection AddHttpCacheHeaders(
+            this IServiceCollection services,
             Action<ExpirationModelOptions> configureExpirationModelOptions,
             Action<ValidationModelOptions> configureValidationModelOptions,
             IDateParser dateParser = null,
@@ -89,6 +146,28 @@ namespace Microsoft.Extensions.DependencyInjection
                 store,
                 storeKeyGenerator,
                 eTagGenerator);
+
+            return services;
+        }
+
+        public static IServiceCollection AddHttpCacheHeaders(
+            this IServiceCollection services,
+            Action<ExpirationModelOptions> configureExpirationModelOptions,
+            Action<ValidationModelOptions> configureValidationModelOptions,
+            Func<IServiceProvider, IDateParser> dateParserFunc = null,
+            Func<IServiceProvider, IValidationValueStore> storeFunc = null,
+            Func<IServiceProvider, IStoreKeyGenerator> storeKeyGeneratorFunc = null,
+            Func<IServiceProvider, IETagGenerator> eTagGeneratorFunc = null)
+        {
+            AddConfigureExpirationModelOptions(services, configureExpirationModelOptions);
+            AddConfigureValidationModelOptions(services, configureValidationModelOptions);
+
+            AddModularParts(
+                services,
+                dateParserFunc,
+                storeFunc,
+                storeKeyGeneratorFunc,
+                eTagGeneratorFunc);
 
             return services;
         }
@@ -106,72 +185,97 @@ namespace Microsoft.Extensions.DependencyInjection
             AddETagGenerator(services, eTagGenerator);
         }
 
+        private static void AddModularParts(
+            IServiceCollection services,
+            Func<IServiceProvider, IDateParser> dateParserFunc,
+            Func<IServiceProvider, IValidationValueStore> storeFunc,
+            Func<IServiceProvider, IStoreKeyGenerator> storeKeyGeneratorFunc,
+            Func<IServiceProvider, IETagGenerator> eTagGeneratorFunc)
+        {
+            AddDateParser(services, dateParserFunc);
+            AddValidationValueStore(services, storeFunc);
+            AddStoreKeyGenerator(services, storeKeyGeneratorFunc);
+            AddETagGenerator(services, eTagGeneratorFunc);
+        }
+
+        private static void AddDateParser(IServiceCollection services, IDateParser dateParser)
+            => AddDateParser(services, _ => dateParser ?? new DefaultDateParser());
+
         private static void AddDateParser(
             IServiceCollection services,
-            IDateParser dateParser)
+            Func<IServiceProvider, IDateParser> dateParserFunc)
         {
             if (services == null)
             {
                 throw new ArgumentNullException(nameof(services));
             }
 
-            if (dateParser == null)
+            if (dateParserFunc == null)
             {
-                dateParser = new DefaultDateParser();
+                dateParserFunc = _ => new DefaultDateParser();
             }
 
-            services.Add(ServiceDescriptor.Singleton(typeof(IDateParser), dateParser));
+            services.Add(ServiceDescriptor.Singleton(typeof(IDateParser), dateParserFunc));
         }
+
+        private static void AddValidationValueStore(IServiceCollection services, IValidationValueStore store)
+            => AddValidationValueStore(services, _ => store ?? new InMemoryValidationValueStore());
 
         private static void AddValidationValueStore(
             IServiceCollection services,
-            IValidationValueStore store)
+            Func<IServiceProvider, IValidationValueStore> validationValueStoreFunc)
         {
             if (services == null)
             {
                 throw new ArgumentNullException(nameof(services));
             }
 
-            if (store == null)
+            if (validationValueStoreFunc == null)
             {
-                store = new InMemoryValidationValueStore();
+                validationValueStoreFunc = _ => new InMemoryValidationValueStore();
             }
 
-            services.Add(ServiceDescriptor.Singleton(typeof(IValidationValueStore), store));
+            services.Add(ServiceDescriptor.Singleton(typeof(IValidationValueStore), validationValueStoreFunc));
         }
+
+        private static void AddStoreKeyGenerator(IServiceCollection services, IStoreKeyGenerator storeKeyGenerator)
+            => AddStoreKeyGenerator(services, _ => storeKeyGenerator ?? new DefaultStoreKeyGenerator());
 
         private static void AddStoreKeyGenerator(
             IServiceCollection services,
-            IStoreKeyGenerator storeKeyGenerator)
+            Func<IServiceProvider, IStoreKeyGenerator> storeKeyGeneratorFunc)
         {
             if (services == null)
             {
                 throw new ArgumentNullException(nameof(services));
             }
 
-            if (storeKeyGenerator == null)
+            if (storeKeyGeneratorFunc == null)
             {
-                storeKeyGenerator = new DefaultStoreKeyGenerator();
+                storeKeyGeneratorFunc = _ => new DefaultStoreKeyGenerator();
             }
 
-            services.Add(ServiceDescriptor.Singleton(typeof(IStoreKeyGenerator), storeKeyGenerator));
+            services.Add(ServiceDescriptor.Singleton(typeof(IStoreKeyGenerator), storeKeyGeneratorFunc));
         }
+
+        private static void AddETagGenerator(IServiceCollection services, IETagGenerator eTagGenerator)
+            => AddETagGenerator(services, _ => eTagGenerator ?? new DefaultStrongETagGenerator());
 
         private static void AddETagGenerator(
             IServiceCollection services,
-            IETagGenerator eTagGenerator)
+            Func<IServiceProvider, IETagGenerator> eTagGeneratorFunc)
         {
             if (services == null)
             {
                 throw new ArgumentNullException(nameof(services));
             }
 
-            if (eTagGenerator == null)
+            if (eTagGeneratorFunc == null)
             {
-                eTagGenerator = new DefaultStrongETagGenerator();
+                eTagGeneratorFunc = _ => new DefaultStrongETagGenerator();
             }
 
-            services.Add(ServiceDescriptor.Singleton(typeof(IETagGenerator), eTagGenerator));
+            services.Add(ServiceDescriptor.Singleton(typeof(IETagGenerator), eTagGeneratorFunc));
         }
 
         private static void AddConfigureExpirationModelOptions(
