@@ -13,24 +13,7 @@ namespace Microsoft.Extensions.DependencyInjection
     /// Extension methods for the HttpCache middleware (on IServiceCollection)
     /// </summary>
     public static class ServicesExtensions
-    {
-        public static IServiceCollection AddHttpCacheHeaders(
-            this IServiceCollection services,
-            IDateParser dateParser = null,
-            IValidationValueStore store = null,
-            IStoreKeyGenerator storeKeyGenerator = null,
-            IETagGenerator eTagGenerator = null)
-        {
-            AddModularParts(
-                services,
-                dateParser,
-                store,
-                storeKeyGenerator,
-                eTagGenerator);
-
-            return services;
-        }
-
+    {     
         public static IServiceCollection AddHttpCacheHeaders(
             this IServiceCollection services,
             Func<IServiceProvider, IDateParser> dateParserFunc = null,
@@ -51,26 +34,6 @@ namespace Microsoft.Extensions.DependencyInjection
         public static IServiceCollection AddHttpCacheHeaders(
             this IServiceCollection services,
             Action<ExpirationModelOptions> configureExpirationModelOptions,
-            IDateParser dateParser = null,
-            IValidationValueStore store = null,
-            IStoreKeyGenerator storeKeyGenerator = null,
-            IETagGenerator eTagGenerator = null)
-        {
-            AddConfigureExpirationModelOptions(services, configureExpirationModelOptions);
-
-            AddModularParts(
-                services,
-                dateParser,
-                store,
-                storeKeyGenerator,
-                eTagGenerator);
-
-            return services;
-        }
-
-        public static IServiceCollection AddHttpCacheHeaders(
-            this IServiceCollection services,
-            Action<ExpirationModelOptions> configureExpirationModelOptions,
             Func<IServiceProvider, IDateParser> dateParserFunc = null,
             Func<IServiceProvider, IValidationValueStore> storeFunc = null,
             Func<IServiceProvider, IStoreKeyGenerator> storeKeyGeneratorFunc = null,
@@ -84,26 +47,6 @@ namespace Microsoft.Extensions.DependencyInjection
                 storeFunc,
                 storeKeyGeneratorFunc,
                 eTagGeneratorFunc);
-
-            return services;
-        }
-
-        public static IServiceCollection AddHttpCacheHeaders(
-            this IServiceCollection services,
-            Action<ValidationModelOptions> configureValidationModelOptions,
-            IDateParser dateParser = null,
-            IValidationValueStore store = null,
-            IStoreKeyGenerator storeKeyGenerator = null,
-            IETagGenerator eTagGenerator = null)
-        {
-            AddConfigureValidationModelOptions(services, configureValidationModelOptions);
-
-            AddModularParts(
-                services,
-                dateParser,
-                store,
-                storeKeyGenerator,
-                eTagGenerator);
 
             return services;
         }
@@ -132,28 +75,6 @@ namespace Microsoft.Extensions.DependencyInjection
             this IServiceCollection services,
             Action<ExpirationModelOptions> configureExpirationModelOptions,
             Action<ValidationModelOptions> configureValidationModelOptions,
-            IDateParser dateParser = null,
-            IValidationValueStore store = null,
-            IStoreKeyGenerator storeKeyGenerator = null,
-            IETagGenerator eTagGenerator = null)
-        {
-            AddConfigureExpirationModelOptions(services, configureExpirationModelOptions);
-            AddConfigureValidationModelOptions(services, configureValidationModelOptions);
-
-            AddModularParts(
-                services,
-                dateParser,
-                store,
-                storeKeyGenerator,
-                eTagGenerator);
-
-            return services;
-        }
-
-        public static IServiceCollection AddHttpCacheHeaders(
-            this IServiceCollection services,
-            Action<ExpirationModelOptions> configureExpirationModelOptions,
-            Action<ValidationModelOptions> configureValidationModelOptions,
             Func<IServiceProvider, IDateParser> dateParserFunc = null,
             Func<IServiceProvider, IValidationValueStore> storeFunc = null,
             Func<IServiceProvider, IStoreKeyGenerator> storeKeyGeneratorFunc = null,
@@ -170,19 +91,6 @@ namespace Microsoft.Extensions.DependencyInjection
                 eTagGeneratorFunc);
 
             return services;
-        }
-
-        private static void AddModularParts(
-            IServiceCollection services,
-            IDateParser dateParser,
-            IValidationValueStore store,
-            IStoreKeyGenerator storeKeyGenerator,
-            IETagGenerator eTagGenerator)
-        {
-            AddDateParser(services, dateParser);
-            AddValidationValueStore(services, store);
-            AddStoreKeyGenerator(services, storeKeyGenerator);
-            AddETagGenerator(services, eTagGenerator);
         }
 
         private static void AddModularParts(
