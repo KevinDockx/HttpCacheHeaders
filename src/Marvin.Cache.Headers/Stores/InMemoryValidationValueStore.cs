@@ -12,21 +12,21 @@ namespace Marvin.Cache.Headers.Stores
         private readonly ConcurrentDictionary<string, ValidationValue> _store
             = new ConcurrentDictionary<string, ValidationValue>();
 
-        public Task<ValidationValue> GetAsync(string key)
+        public Task<ValidationValue> GetAsync(StoreKey key) => GetAsync(key.ToString());
+
+        public Task SetAsync(StoreKey key, ValidationValue eTag) => SetAsync(key.ToString(), eTag);
+
+        private Task<ValidationValue> GetAsync(string key)
         {
             return _store.ContainsKey(key) && _store[key] is ValidationValue eTag
                 ? Task.FromResult(eTag)
                 : Task.FromResult<ValidationValue>(null);
         }
 
-        public Task SetAsync(string key, ValidationValue eTag)
+        private Task SetAsync(string key, ValidationValue eTag)
         {
             _store[key] = eTag;
             return Task.FromResult(0);
         }
-
-        public Task<ValidationValue> GetAsync(RequestKey key) => GetAsync(key.ToString());
-
-        public Task SetAsync(RequestKey key, ValidationValue eTag) => SetAsync(key.ToString(), eTag);
     }
 }

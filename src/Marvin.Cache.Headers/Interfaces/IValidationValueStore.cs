@@ -7,10 +7,7 @@ namespace Marvin.Cache.Headers.Interfaces
 {
     public interface IValidationValueStore
     {
-        Task<ValidationValue> GetAsync(string key);
-        Task SetAsync(string key, ValidationValue eTag);
-
-        Task<ValidationValue> GetAsync(RequestKey key);
-        Task SetAsync(RequestKey key, ValidationValue eTag);
+        Task<ValidationValue> GetAsync(StoreKey key);
+        Task SetAsync(StoreKey key, ValidationValue eTag);
     }
 }

@@ -1,6 +1,10 @@
-﻿using System;
+﻿// Any comments, input: @KevinDockx
+// Any issues, requests: https://github.com/KevinDockx/HttpCacheHeaders
+
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Marvin.Cache.Headers.Extensions;
 using Microsoft.AspNetCore.Mvc.Filters;
 
 namespace Marvin.Cache.Headers
@@ -80,7 +84,7 @@ namespace Marvin.Cache.Headers
         {
             await next();
 
-            context.HttpContext.Items[HttpCacheHeadersMiddleware.ContextItemsValidationModelOptions] = _validationModelOptions.Value;
+            context.HttpContext.Items[HttpContextExtensions.ContextItemsValidationModelOptions] = _validationModelOptions.Value;
         }
     }
 }

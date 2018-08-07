@@ -1,5 +1,9 @@
-﻿using System;
+﻿// Any comments, input: @KevinDockx
+// Any issues, requests: https://github.com/KevinDockx/HttpCacheHeaders
+
+using System;
 using System.Threading.Tasks;
+using Marvin.Cache.Headers.Extensions;
 using Microsoft.AspNetCore.Mvc.Filters;
 
 namespace Marvin.Cache.Headers
@@ -68,7 +72,7 @@ namespace Marvin.Cache.Headers
         {
             await next();
 
-            context.HttpContext.Items[HttpCacheHeadersMiddleware.ContextItemsExpirationModelOptions] = _expirationModelOptions.Value;
+            context.HttpContext.Items[HttpContextExtensions.ContextItemsExpirationModelOptions] = _expirationModelOptions.Value;
         }
     }
 }

@@ -14,6 +14,19 @@ namespace Marvin.Cache.Headers
             Value = value;
         }
 
-        public override string ToString() => Value;
+        public override string ToString()
+        {
+            switch (ETagType)
+            {
+                case ETagType.Strong:
+                    return  $"\"{Value}\"";
+
+                case ETagType.Weak:
+                    return  $"W\"{Value}\"";
+
+                default:
+                    return $"\"{Value}\"";
+            }
+        }
     }
 }
