@@ -17,6 +17,9 @@ namespace Marvin.Cache.Headers.Sample
 
             services.AddResponseCaching();
 
+            // Add HttpCacheHeaders services with default options
+            // services.AddHttpCacheHeaders();
+
             // Add HttpCacheHeaders services with custom options
             services.AddHttpCacheHeaders(
                 expirationModelOptions =>

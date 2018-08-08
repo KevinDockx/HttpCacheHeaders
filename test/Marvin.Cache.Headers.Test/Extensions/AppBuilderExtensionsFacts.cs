@@ -20,7 +20,7 @@ namespace Marvin.Cache.Headers.Test.Extensions
             var testServer = new TestServer(hostBuilder);
 
             // not sure this is the correct way to test if the middleware is registered
-            var middleware = testServer.Host.Services.GetService(typeof(IValidationValueStore));
+            var middleware = testServer.Host.Services.GetService(typeof(IValidatorValueStore));
             Assert.NotNull(middleware);
         }
 
