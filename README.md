@@ -5,6 +5,8 @@ The middleware itself does not store responses.  Looking at [this description]( 
 
 It can be used together with a shared cache (eg: Microsoft.AspNetCore.ResponseCaching - to be injected in the request pipeline before this component), a private cache or both.  In the sample, the Microsoft.AspNetCore.ResponseCaching cache store is used to effectively cache the responses.  
 
+[![NuGet version](https://badge.fury.io/nu/marvin.cache.headers.svg)](https://badge.fury.io/nu/marvin.cache.headers)
+
 # Usage
 
 First, register the services with ASP.NET Core's dependency injection container (in the ConfigureServices method on the Startup class)
