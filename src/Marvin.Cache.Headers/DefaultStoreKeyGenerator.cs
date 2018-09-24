@@ -1,16 +1,14 @@
 ﻿// Any comments, input: @KevinDockx
 // Any issues, requests: https://github.com/KevinDockx/HttpCacheHeaders
 
+using Marvin.Cache.Headers.Domain;
+using Marvin.Cache.Headers.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Marvin.Cache.Headers;
-using Marvin.Cache.Headers.Domain;
-using Marvin.Cache.Headers.Interfaces;
-using Microsoft.AspNetCore.Http;
 
-namespace Marvin.Cache.Header
+namespace Marvin.Cache.Headers
 {
     public class DefaultStoreKeyGenerator : IStoreKeyGenerator
     {
