@@ -5,16 +5,10 @@ using System;
 using System.Text;
 using System.Threading.Tasks;
 using Marvin.Cache.Headers.Extensions;
+using Marvin.Cache.Headers.Interfaces;
 
 namespace Marvin.Cache.Headers
 {
-    public interface IETagGenerator
-    {
-        Task<ETag> GenerateETag(
-            StoreKey storeKey,
-            string responseBodyContent);
-    }
-
     public class DefaultStrongETagGenerator : IETagGenerator
     {
         // Key = generated from request URI & headers (if VaryBy is set, only use those headers)
