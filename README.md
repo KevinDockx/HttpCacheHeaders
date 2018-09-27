@@ -12,7 +12,7 @@ It can be used together with a shared cache (eg: Microsoft.AspNetCore.ResponseCa
 Install-Package Marvin.Cache.Headers
 ```
 
-# Usage
+# Usage 
 
 First, register the services with ASP.NET Core's dependency injection container (in the ConfigureServices method on the Startup class)
 
@@ -60,3 +60,92 @@ public IEnumerable<string> Get()
 }
 ```
 Both override the global options.  Controller-level configuration overrides action-level configuration.
+
+# Extensibility
+
+The middleware is very extensible. If you have a look at the AddHttpCacheHeaders method you'll notice it allows injecting custom implementations of 
+IValidatorValueStore, IStoreKeyGenerator, IETagGenerator and/or IDateParser (via actions). 
+
+## IValidatorValueStore
+
+A validator value store stores validator values.  A validator value is used by the cache validation model when checking if a cached item is still valid.  It contains ETag and LastModified properties.  The default IValidatorValueStore implementation (InMemoryValidatorValueStore) is an in-memory store that stores items in a ConcurrentDictionary<string, ValidatorValue>. 
+
+```
+/// <summary>
+/// Contract for a store for validator values.  Each item is stored with a <see cref="StoreKey" /> as key```
+/// and a <see cref="ValidatorValue" /> as value (consisting of an ETag and Last-Modified date).   
+/// </summary>
+public interface IValidatorValueStore
+{
+    /// <summary>
+    /// Get a value from the store.
+    /// </summary>
+    /// <param name="key">The <see cref="StoreKey"/> of the value to get.</param>
+    /// <returns></returns>
+    Task<ValidatorValue> GetAsync(StoreKey key);
+
+    /// <summary>
+    /// Set a value in the store.
+    /// </summary>
+    /// <param name="key">The <see cref="StoreKey"/> of the value to store.</param>
+    /// <param name="validatorValue">The <see cref="ValidatorValue"/> to store.</param>
+    /// <returns></returns>
+    Task SetAsync(StoreKey key, ValidatorValue validatorValue);
+}
+```
+
+## IStoreKeyGenerator
+The StoreKey, as used by the IValidatorValueStore as key, can be customized as well.  To do so, implement the IStoreKeyGenerator interface.  The default implementation (DefaultStoreKeyGenerator) generates a key from the request path, request query string and request header values (taking VaryBy into account). Through StoreKeyContext you can access all applicable values that can be useful for generating such a key. 
+
+```
+/// <summary>
+/// Contract for a key generator, used to generate a <see cref="StoreKey" /> ```
+/// </summary>
+public interface IStoreKeyGenerator
+{
+    /// <summary>
+    /// Generate a key for storing a <see cref="ValidatorValue"/> in a <see cref="IValidatorValueStore"/>.
+    /// </summary>
+    /// <param name="context">The <see cref="StoreKeyContext"/>.</param>         
+    /// <returns></returns>
+    Task<StoreKey> GenerateStoreKey(
+        StoreKeyContext context);
+}
+```
+
+## IETagGenerator
+
+You can inject an IETagGenerator-implementing class to modify how ETags are generated (ETags are part of a ValidatorValue). The default implementation (DefaultStrongETagGenerator) generates strong Etags from the request key + response body (MD5 hjsh from combined bytes). 
+
+```
+/// <summary>
+/// Contract for an E-Tag Generator, used to generate the unique weak or strong E-Tags for cache items
+/// </summary>
+public interface IETagGenerator
+{
+    Task<ETag> GenerateETag(
+        StoreKey storeKey,
+        string responseBodyContent);
+}
+```
+
+
+## IDateParser 
+
+Through IDateParser you can inject a custom date parser in case you want to override the default way dates are stringified.  The default implementation (DefaultDateParser) uses the RFC1123 pattern (https://msdn.microsoft.com/en-us/library/az4se3k1(v=vs.110).aspx). 
+
+```
+/// <summary>
+/// Contract for a date parser, used to parse Last-Modified, Expires, If-Modified-Since and If-Unmodified-Since headers.
+/// </summary>
+public interface IDateParser
+{
+    Task<string> LastModifiedToString(DateTimeOffset lastModified);
+
+    Task<string> ExpiresToString(DateTimeOffset lastModified);
+
+    Task<DateTimeOffset?> IfModifiedSinceToDateTimeOffset(string ifModifiedSince);
+
+    Task<DateTimeOffset?> IfUnmodifiedSinceToDateTimeOffset(string ifUnmodifiedSince);
+}
+```
