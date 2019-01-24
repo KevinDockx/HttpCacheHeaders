@@ -1,6 +1,7 @@
 ﻿// Any comments, input: @KevinDockx
 // Any issues, requests: https://github.com/KevinDockx/HttpCacheHeaders
 
+using Microsoft.AspNetCore.Http;
 using System.Threading.Tasks;
 
 namespace Marvin.Cache.Headers.Interfaces
@@ -10,6 +11,9 @@ namespace Marvin.Cache.Headers.Interfaces
     /// </summary>
     public interface IETagGenerator
     {
+        Task<ETag> GenerateETag(
+            HttpContext httpContext);
+
         Task<ETag> GenerateETag(
             StoreKey storeKey,
             string responseBodyContent);

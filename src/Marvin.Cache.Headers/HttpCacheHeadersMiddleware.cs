@@ -488,11 +488,45 @@ namespace Marvin.Cache.Headers
             // that response body - if the update was succesful but nothing was changed,
             // in those cases the original ETag for other users/caches will still be sufficient.
 
-            // if the response body cannot be read, we can never
-            // generate correct ETags (and it should never be cached)
-            if (!httpContext.Response.Body.CanRead)
+            // Provide an opportunity to acquire the ETag from the http context. This allows the user
+            // of this package to provide a custom mechanism to send an ETag through the pipeline.
+            // For example, an earlier action in the pipeline could insert the ETag from a cosmos Db 
+            // document into the HttpContext.Items dictionary element (e.g., HttpContext.Items.Add("ETag", eTag);).
+            // This method could then read that eTag and make it available for the cache header. In this example the
+            // ETag could then be used during the update\delete calls to the CosmosDb.
+            // If an ETag is acquired through this method, we can bypass preping the response body
+            // for ETag generation.
+            var eTag = await _eTagGenerator.GenerateETag(httpContext);
+
+            // get the request key
+            var storeKey = await _storeKeyGenerator.GenerateStoreKey(
+                ConstructStoreKeyContext(httpContext.Request, _validationModelOptions));
+
+            if (eTag == null)
             {
-                return;
+                // if the response body cannot be read, we can never
+                // generate correct ETags (and it should never be cached)
+                if (!httpContext.Response.Body.CanRead)
+                {
+                    return;
+                }
+
+                // get the response bytes
+                if (httpContext.Response.Body.CanSeek)
+                {
+                    httpContext.Response.Body.Position = 0;
+                }
+
+                var responseBodyContent = new StreamReader(httpContext.Response.Body).ReadToEnd();
+
+                // Calculate the ETag to store in the store.
+                eTag = await _eTagGenerator.GenerateETag(storeKey, responseBodyContent);
+
+                _logger.LogInformation("ETag generated from storeKey and responseBodyContent.");
+            }
+            else
+            {
+                _logger.LogInformation("ETag generated from HttpContext.");
             }
 
             _logger.LogInformation("Generating Validation headers.");
@@ -502,21 +536,6 @@ namespace Marvin.Cache.Headers
             // remove any other ETag and Last-Modified headers (could be set by other pieces of code)
             headers.Remove(HeaderNames.ETag);
             headers.Remove(HeaderNames.LastModified);
-
-            // get the request key
-            var storeKey = await _storeKeyGenerator.GenerateStoreKey(
-                ConstructStoreKeyContext(httpContext.Request, _validationModelOptions));
-
-            // get the response bytes
-            if (httpContext.Response.Body.CanSeek)
-            {
-                httpContext.Response.Body.Position = 0;
-            }
-
-            var responseBodyContent = new StreamReader(httpContext.Response.Body).ReadToEnd();
-
-            // Calculate the ETag to store in the store.
-            var eTag = await _eTagGenerator.GenerateETag(storeKey, responseBodyContent);
 
             var lastModified = GetUtcNowWithoutMilliseconds();
             var lastModifiedValue = await _dateParser.LastModifiedToString(lastModified);

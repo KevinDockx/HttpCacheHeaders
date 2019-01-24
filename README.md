@@ -115,7 +115,15 @@ public interface IStoreKeyGenerator
 
 ## IETagGenerator
 
-You can inject an IETagGenerator-implementing class to modify how ETags are generated (ETags are part of a ValidatorValue). The default implementation (DefaultStrongETagGenerator) generates strong Etags from the request key + response body (MD5 hjsh from combined bytes). 
+You can inject an IETagGenerator-implementing class to modify how ETags are generated (ETags are part 
+of a ValidatorValue). Etags provided by the GenerateETag method accepting the *httpContext* are given priority
+over Etags generated from the GenerateETag method accepting *storeKey* and *responseBodycontent*.
+
+The default implementation (DefaultStrongETagGenerator) GenerateETag method that 
+accepts a HttpConext checks the context's Items dictionary for the key `ETag` (e.g., `httpContext.Items["ETag"]`).
+If the key is available, the value is used as an Etag. This is useful if you want to 
+use an Etag from your persistence layer (e.g., the _etag property of a CosmosDb document). 
+The second GenerateETag method generates strong Etags from the request key + response body (MD5 hash from combined bytes). 
 
 ```
 /// <summary>
@@ -124,11 +132,13 @@ You can inject an IETagGenerator-implementing class to modify how ETags are gene
 public interface IETagGenerator
 {
     Task<ETag> GenerateETag(
+        HttpContext httpContext);
+
+    Task<ETag> GenerateETag(
         StoreKey storeKey,
         string responseBodyContent);
 }
 ```
-
 
 ## IDateParser 
 
