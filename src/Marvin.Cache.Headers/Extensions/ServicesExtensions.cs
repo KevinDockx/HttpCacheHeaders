@@ -27,10 +27,11 @@ namespace Microsoft.Extensions.DependencyInjection
                 null,
                 null,
                 null,
+                null,
                 null);
 
             return services;
-        } 
+        }
 
         /// <summary>
         /// Add HttpCacheHeaders services to the specified <see cref="IServiceCollection" />.
@@ -40,23 +41,26 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <param name="validatorValueStoreFunc">Func to provide a custom <see cref="IValidatorValueStore" /></param>
         /// <param name="storeKeyGeneratorFunc">Func to provide a custom <see cref="IStoreKeyGenerator" /></param>
         /// <param name="eTagGeneratorFunc">Func to provide a custom <see cref="IETagGenerator" /></param>
+        /// <param name="validatorValueGenerator">Func to provide a custom <see cref="IValidatorValueGenerator" /></param>
         /// <returns></returns>
         public static IServiceCollection AddHttpCacheHeaders(
             this IServiceCollection services,
             Func<IServiceProvider, IDateParser> dateParserFunc = null,
             Func<IServiceProvider, IValidatorValueStore> validatorValueStoreFunc = null,
             Func<IServiceProvider, IStoreKeyGenerator> storeKeyGeneratorFunc = null,
-            Func<IServiceProvider, IETagGenerator> eTagGeneratorFunc = null)
-        { 
+            Func<IServiceProvider, IETagGenerator> eTagGeneratorFunc = null,
+            Func<IServiceProvider, IValidatorValueGenerator> validatorValueGenerator = null)
+        {
             AddModularParts(
                 services,
                 dateParserFunc,
                 validatorValueStoreFunc,
                 storeKeyGeneratorFunc,
-                eTagGeneratorFunc);
+                eTagGeneratorFunc,
+                validatorValueGenerator);
 
             return services;
-        } 
+        }
 
         /// <summary>
         /// Add HttpCacheHeaders services to the specified <see cref="IServiceCollection" />.
@@ -67,13 +71,15 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <param name="validatorValueStoreFunc">Func to provide a custom <see cref="IValidatorValueStore" /></param>
         /// <param name="storeKeyGeneratorFunc">Func to provide a custom <see cref="IStoreKeyGenerator" /></param>
         /// <param name="eTagGeneratorFunc">Func to provide a custom <see cref="IETagGenerator" /></param>
+        /// <param name="validatorValueGenerator">Func to provide a custom <see cref="IValidatorValueGenerator" /></param>
         public static IServiceCollection AddHttpCacheHeaders(
             this IServiceCollection services,
             Action<ExpirationModelOptions> expirationModelOptionsAction,
             Func<IServiceProvider, IDateParser> dateParserFunc = null,
             Func<IServiceProvider, IValidatorValueStore> validatorValueStoreFunc = null,
             Func<IServiceProvider, IStoreKeyGenerator> storeKeyGeneratorFunc = null,
-            Func<IServiceProvider, IETagGenerator> eTagGeneratorFunc = null)
+            Func<IServiceProvider, IETagGenerator> eTagGeneratorFunc = null,
+            Func<IServiceProvider, IValidatorValueGenerator> validatorValueGenerator = null)
         {
             AddConfigureExpirationModelOptions(services, expirationModelOptionsAction);
 
@@ -82,7 +88,8 @@ namespace Microsoft.Extensions.DependencyInjection
                 dateParserFunc,
                 validatorValueStoreFunc,
                 storeKeyGeneratorFunc,
-                eTagGeneratorFunc);
+                eTagGeneratorFunc,
+                validatorValueGenerator);
 
             return services;
         }
@@ -96,13 +103,15 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <param name="validatorValueStoreFunc">Func to provide a custom <see cref="IValidatorValueStore" /></param>
         /// <param name="storeKeyGeneratorFunc">Func to provide a custom <see cref="IStoreKeyGenerator" /></param>
         /// <param name="eTagGeneratorFunc">Func to provide a custom <see cref="IETagGenerator" /></param>
+        /// <param name="validatorValueGenerator">Func to provide a custom <see cref="IValidatorValueGenerator" /></param>
         public static IServiceCollection AddHttpCacheHeaders(
             this IServiceCollection services,
             Action<ValidationModelOptions> validationModelOptionsAction,
             Func<IServiceProvider, IDateParser> dateParserFunc = null,
             Func<IServiceProvider, IValidatorValueStore> validatorValueStoreFunc = null,
             Func<IServiceProvider, IStoreKeyGenerator> storeKeyGeneratorFunc = null,
-            Func<IServiceProvider, IETagGenerator> eTagGeneratorFunc = null)
+            Func<IServiceProvider, IETagGenerator> eTagGeneratorFunc = null,
+            Func<IServiceProvider, IValidatorValueGenerator> validatorValueGenerator = null)
         {
             AddConfigureValidationModelOptions(services, validationModelOptionsAction);
 
@@ -111,7 +120,8 @@ namespace Microsoft.Extensions.DependencyInjection
                 dateParserFunc,
                 validatorValueStoreFunc,
                 storeKeyGeneratorFunc,
-                eTagGeneratorFunc);
+                eTagGeneratorFunc,
+                validatorValueGenerator);
 
             return services;
         }
@@ -126,6 +136,7 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <param name="validatorValueStoreFunc">Func to provide a custom <see cref="IValidatorValueStore" /></param>
         /// <param name="storeKeyGeneratorFunc">Func to provide a custom <see cref="IStoreKeyGenerator" /></param>
         /// <param name="eTagGeneratorFunc">Func to provide a custom <see cref="IETagGenerator" /></param>
+        /// <param name="validatorValueGenerator">Func to provide a custom <see cref="IValidatorValueGenerator" /></param>
         public static IServiceCollection AddHttpCacheHeaders(
             this IServiceCollection services,
             Action<ExpirationModelOptions> expirationModelOptionsAction,
@@ -133,7 +144,8 @@ namespace Microsoft.Extensions.DependencyInjection
             Func<IServiceProvider, IDateParser> dateParserFunc = null,
             Func<IServiceProvider, IValidatorValueStore> validatorValueStoreFunc = null,
             Func<IServiceProvider, IStoreKeyGenerator> storeKeyGeneratorFunc = null,
-            Func<IServiceProvider, IETagGenerator> eTagGeneratorFunc = null)
+            Func<IServiceProvider, IETagGenerator> eTagGeneratorFunc = null,
+            Func<IServiceProvider, IValidatorValueGenerator> validatorValueGenerator = null)
         {
             AddConfigureExpirationModelOptions(services, expirationModelOptionsAction);
             AddConfigureValidationModelOptions(services, validationModelOptionsAction);
@@ -143,7 +155,8 @@ namespace Microsoft.Extensions.DependencyInjection
                 dateParserFunc,
                 validatorValueStoreFunc,
                 storeKeyGeneratorFunc,
-                eTagGeneratorFunc);
+                eTagGeneratorFunc,
+                validatorValueGenerator);
 
             return services;
         }
@@ -153,14 +166,16 @@ namespace Microsoft.Extensions.DependencyInjection
             Func<IServiceProvider, IDateParser> dateParserFunc,
             Func<IServiceProvider, IValidatorValueStore> validatorValueStoreFunc,
             Func<IServiceProvider, IStoreKeyGenerator> storeKeyGeneratorFunc,
-            Func<IServiceProvider, IETagGenerator> eTagGeneratorFunc)
+            Func<IServiceProvider, IETagGenerator> eTagGeneratorFunc,
+            Func<IServiceProvider, IValidatorValueGenerator> validatorValueGenerator)
         {
             AddDateParser(services, dateParserFunc);
             AddValidatorValueStore(services, validatorValueStoreFunc);
             AddStoreKeyGenerator(services, storeKeyGeneratorFunc);
             AddETagGenerator(services, eTagGeneratorFunc);
+            AddValidatorValueGenerator(services, validatorValueGenerator);
         }
-        
+
         private static void AddDateParser(
             IServiceCollection services,
             Func<IServiceProvider, IDateParser> dateParserFunc)
@@ -227,6 +242,23 @@ namespace Microsoft.Extensions.DependencyInjection
             }
 
             services.Add(ServiceDescriptor.Singleton(typeof(IETagGenerator), eTagGeneratorFunc));
+        }
+
+        private static void AddValidatorValueGenerator(
+            IServiceCollection services,
+            Func<IServiceProvider, IValidatorValueGenerator> validatorValueGenerator)
+        {
+            if (services == null)
+            {
+                throw new ArgumentNullException(nameof(services));
+            }
+
+            if (validatorValueGenerator == null)
+            {
+                validatorValueGenerator = _ => new DefaultValidatorValueGenerator();
+            }
+
+            services.Add(ServiceDescriptor.Singleton(typeof(IValidatorValueGenerator), validatorValueGenerator));
         }
 
         private static void AddConfigureExpirationModelOptions(

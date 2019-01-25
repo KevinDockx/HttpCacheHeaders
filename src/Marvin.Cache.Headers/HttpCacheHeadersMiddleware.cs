@@ -13,7 +13,6 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Marvin.Cache.Headers.Extensions;
-using System.Collections.Generic;
 using Marvin.Cache.Headers.Domain;
 
 namespace Marvin.Cache.Headers
@@ -29,7 +28,8 @@ namespace Marvin.Cache.Headers
         private readonly IValidatorValueStore _store;
         private readonly IStoreKeyGenerator _storeKeyGenerator;
         private readonly IETagGenerator _eTagGenerator;
-
+        private readonly IValidatorValueGenerator _validatorValueGenerator;
+        
         private readonly ValidationModelOptions _validationModelOptions;
         private readonly ExpirationModelOptions _expirationModelOptions;
 
@@ -40,6 +40,7 @@ namespace Marvin.Cache.Headers
             IValidatorValueStore store,
             IStoreKeyGenerator storeKeyGenerator,
             IETagGenerator eTagGenerator,
+            IValidatorValueGenerator validatorValueGenerator,
             IOptions<ExpirationModelOptions> expirationModelOptions,
             IOptions<ValidationModelOptions> validationModelOptions)
         {
@@ -64,6 +65,7 @@ namespace Marvin.Cache.Headers
             _store = store ?? throw new ArgumentNullException(nameof(store));
             _storeKeyGenerator = storeKeyGenerator ?? throw new ArgumentNullException(nameof(storeKeyGenerator));
             _eTagGenerator = eTagGenerator ?? throw new ArgumentNullException(nameof(eTagGenerator));
+            _validatorValueGenerator = validatorValueGenerator ?? throw new ArgumentNullException(nameof(eTagGenerator));
 
             _expirationModelOptions = expirationModelOptions.Value;
             _validationModelOptions = validationModelOptions.Value;
@@ -436,6 +438,8 @@ namespace Marvin.Cache.Headers
         private async Task GenerateResponseFromStore(HttpContext httpContext)
         {
             var logInformation = string.Empty;
+            var etagLogInformation = "NA";
+            var lastModifiedLogInformation = "NA";
 
             var headers = httpContext.Response.Headers;
 
@@ -449,22 +453,23 @@ namespace Marvin.Cache.Headers
             var storeKey = await _storeKeyGenerator.GenerateStoreKey(
                 ConstructStoreKeyContext(httpContext.Request, _validationModelOptions));
 
-            // set LastModified
-            var lastModified = GetUtcNowWithoutMilliseconds();
-            var lastModifiedValue = await _dateParser.LastModifiedToString(lastModified);
-            headers[HeaderNames.LastModified] = lastModifiedValue;
+            // Get the ValidatorValue for this storeKey.
+            var savedValidatorValue = await _store.GetAsync(storeKey);
 
-            // take ETag value from the store (if it's found)
-            var savedResponse = await _store.GetAsync(storeKey);
-            if (savedResponse?.ETag != null)
+            if (savedValidatorValue != null)
             {
-                var eTag = new ETag(savedResponse.ETag.ETagType, savedResponse.ETag.Value);
-                headers[HeaderNames.ETag] = savedResponse.ETag.ToString();
-                logInformation = $"ETag: {eTag.ETagType}, {eTag}, ";
+                if (savedValidatorValue.ETag != null)
+                {
+                    headers[HeaderNames.ETag] = savedValidatorValue.ETag.ToString();
+                    etagLogInformation = $"{savedValidatorValue.ETag.Value}, {savedValidatorValue.ETag}";
+                }
+
+                // set LastModified
+                lastModifiedLogInformation = await _dateParser.LastModifiedToString(savedValidatorValue.LastModified);
+                headers[HeaderNames.LastModified] = lastModifiedLogInformation;
             }
 
-            logInformation += $"Last-Modified: {lastModifiedValue}.";
-            _logger.LogInformation($"Generation done. {logInformation}");
+            _logger.LogInformation($"Generation done. ETag: {etagLogInformation}, Last-Modified: {lastModifiedLogInformation}");
         }
 
         private async Task GenerateValidationHeadersOnResponse(HttpContext httpContext)
@@ -488,6 +493,15 @@ namespace Marvin.Cache.Headers
             // that response body - if the update was succesful but nothing was changed,
             // in those cases the original ETag for other users/caches will still be sufficient.
 
+            // remove any other ETag and Last-Modified headers (could be set by other pieces of code)
+            var headers = httpContext.Response.Headers;
+            headers.Remove(HeaderNames.ETag);
+            headers.Remove(HeaderNames.LastModified);
+            
+            // get the request key
+            var storeKey = await _storeKeyGenerator.GenerateStoreKey(
+                ConstructStoreKeyContext(httpContext.Request, _validationModelOptions));
+
             // Provide an opportunity to acquire the ETag from the http context. This allows the user
             // of this package to provide a custom mechanism to send an ETag through the pipeline.
             // For example, an earlier action in the pipeline could insert the ETag from a cosmos Db 
@@ -496,58 +510,26 @@ namespace Marvin.Cache.Headers
             // ETag could then be used during the update\delete calls to the CosmosDb.
             // If an ETag is acquired through this method, we can bypass preping the response body
             // for ETag generation.
-            var eTag = await _eTagGenerator.GenerateETag(httpContext);
+            var validatorValue = await _validatorValueGenerator.Generate(storeKey, httpContext, _eTagGenerator);
 
-            // get the request key
-            var storeKey = await _storeKeyGenerator.GenerateStoreKey(
-                ConstructStoreKeyContext(httpContext.Request, _validationModelOptions));
-
-            if (eTag == null)
+            // If no validator value was produced, no reason to cache this response. 
+            if (validatorValue == null)
             {
-                // if the response body cannot be read, we can never
-                // generate correct ETags (and it should never be cached)
-                if (!httpContext.Response.Body.CanRead)
-                {
-                    return;
-                }
-
-                // get the response bytes
-                if (httpContext.Response.Body.CanSeek)
-                {
-                    httpContext.Response.Body.Position = 0;
-                }
-
-                var responseBodyContent = new StreamReader(httpContext.Response.Body).ReadToEnd();
-
-                // Calculate the ETag to store in the store.
-                eTag = await _eTagGenerator.GenerateETag(storeKey, responseBodyContent);
-
-                _logger.LogInformation("ETag generated from storeKey and responseBodyContent.");
-            }
-            else
-            {
-                _logger.LogInformation("ETag generated from HttpContext.");
+                _logger.LogInformation("No validator value generated.");
+                return;
             }
 
             _logger.LogInformation("Generating Validation headers.");
 
-            var headers = httpContext.Response.Headers;
-
-            // remove any other ETag and Last-Modified headers (could be set by other pieces of code)
-            headers.Remove(HeaderNames.ETag);
-            headers.Remove(HeaderNames.LastModified);
-
-            var lastModified = GetUtcNowWithoutMilliseconds();
-            var lastModifiedValue = await _dateParser.LastModifiedToString(lastModified);
-
             // store the ETag & LastModified date with the request key as key in the ETag store
-            await _store.SetAsync(storeKey, new ValidatorValue(eTag, lastModified));
+            await _store.SetAsync(storeKey, validatorValue);
 
-            // set the ETag and LastModified header
-            headers[HeaderNames.ETag] = eTag.ToString();
+            // set the ETag and Last-Modified header
+            var lastModifiedValue = await _dateParser.LastModifiedToString(validatorValue.LastModified);
+            headers[HeaderNames.ETag] = validatorValue.ETag.ToString();
             headers[HeaderNames.LastModified] = lastModifiedValue;
 
-            _logger.LogInformation($"Validation headers generated. ETag: {eTag.ETagType}, {eTag}. Last-Modified: {lastModifiedValue}");
+            _logger.LogInformation($"Validation headers generated. {validatorValue}");
         }
 
         private void GenerateVaryHeadersOnResponse(HttpContext httpContext, ValidationModelOptions validationModelOptions)
@@ -660,19 +642,6 @@ namespace Marvin.Cache.Headers
             return string.Equals(firstValueToCompare, secondValueToCompare, StringComparison.OrdinalIgnoreCase);
         }
 
-        private static DateTimeOffset GetUtcNowWithoutMilliseconds()
-        {
-            var now = DateTimeOffset.UtcNow;
-
-            return new DateTimeOffset(
-                now.Year,
-                now.Month,
-                now.Day,
-                now.Hour,
-                now.Minute,
-                now.Second,
-                now.Offset);
-        }
          
     }
 }

@@ -105,6 +105,10 @@ namespace Marvin.Cache.Headers.Test
                 Assert.Equal(
                     response1.Headers.GetValues(HeaderNames.ETag).First(),
                     response2.Headers.GetValues(HeaderNames.ETag).First());
+
+                Assert.Equal(
+                    lastmodified,
+                    response2.Content.Headers.LastModified);
             }
         }
     }

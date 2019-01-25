@@ -12,9 +12,6 @@ namespace Marvin.Cache.Headers.Interfaces
     public interface IETagGenerator
     {
         Task<ETag> GenerateETag(
-            HttpContext httpContext);
-
-        Task<ETag> GenerateETag(
             StoreKey storeKey,
             string responseBodyContent);
     }
