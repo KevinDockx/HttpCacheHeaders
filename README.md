@@ -115,15 +115,7 @@ public interface IStoreKeyGenerator
 
 ## IETagGenerator
 
-You can inject an IETagGenerator-implementing class to modify how ETags are generated (ETags are part 
-of a ValidatorValue). Etags provided by the GenerateETag method accepting the *httpContext* are given priority
-over Etags generated from the GenerateETag method accepting *storeKey* and *responseBodycontent*.
-
-The default implementation (DefaultStrongETagGenerator) GenerateETag method that 
-accepts a HttpConext checks the context's Items dictionary for the key `ETag` (e.g., `httpContext.Items["ETag"]`).
-If the key is available, the value is used as an Etag. This is useful if you want to 
-use an Etag from your persistence layer (e.g., the _etag property of a CosmosDb document). 
-The second GenerateETag method generates strong Etags from the request key + response body (MD5 hash from combined bytes). 
+You can inject an IETagGenerator-implementing class to modify how ETags are generated (ETags are part of a ValidatorValue). The default implementation (DefaultStrongETagGenerator) generates strong Etags from the request key + response body (MD5 hjsh from combined bytes). 
 
 ```
 /// <summary>
@@ -132,13 +124,108 @@ The second GenerateETag method generates strong Etags from the request key + res
 public interface IETagGenerator
 {
     Task<ETag> GenerateETag(
-        HttpContext httpContext);
-
-    Task<ETag> GenerateETag(
         StoreKey storeKey,
         string responseBodyContent);
 }
 ```
+
+## IValidatorValueGenerator
+
+You can inject an IValidatorValueGenerator-implementing class to modify how the header values 
+ETag and Last-Modified are generated. This interface is a superset of the IETagGenerator and 
+maintains backword compatibility with previous versions of this package (i.e., IETagGenerator
+will always generate the ETag if the IValidatorValueGenerator interface was unable to generate
+and ETag).
+
+```
+/// <summary>
+/// Contract for an Validator Value Generator, used to generate the unique weak or strong E-Tags for cache items and Last Modified Time.
+/// </summary>
+public interface IValidatorValueGenerator
+{
+    Task<ValidatorValue> Generate(
+        StoreKey storeKey,
+        HttpContext httpContext,
+        IETagGenerator eTagGenerator = null);
+}
+```
+
+The default implementation, implemented by the class *DefaultValidatorValueGenerator*, first examines the
+*Items* dictionary of the HttpContext to see if it contains values for the keys `ETag` and `Last-Modified` 
+(e.g., `httpContext.Items["ETag"]`). If ETag value is present, that value shall be used when creating the 
+ValidatorValue. If the ETag value is not acquired, the ETag shall be generated via the defined IETagGenerator.
+
+If the LastModified value is present, that value shall be used when creating the ValidatorValue; otherwise, the
+current time is applied.
+
+Below is an example of controller methods for reading a ToDo item and lists from repository using CosmosDB 
+as its underlying data storage system. First the method for reading a single ToDo item.
+
+```
+/// <summary>
+/// Get the ToDo item with the given id.
+/// </summary>
+[HttpHead("{id}", Name = "HeadToDo")]
+[HttpGet("{id}", Name = "GetToDo")]
+[ProducesResponseType(typeof(ToDoDto), StatusCodes.Status200OK)]
+[ProducesResponseType(StatusCodes.Status304NotModified)]
+[ProducesResponseType(StatusCodes.Status404NotFound)]
+[ProducesResponseType(typeof(ProblemDetailsExtendedDto), StatusCodes.Status500InternalServerError)]
+[ToDoResultFilter()]
+public async Task<IActionResult> Get(string id)
+{
+    var result = await _respository.GetToDoAsync(id);
+
+    if (result == null)
+        return NotFound();
+
+    // Place etag and unix time (converted to DateTimeOffset) in httpContext Items dictionary.
+    HttpContext.AddETag(result.ETag);
+    HttpContext.AddLastModified(result.Resource._ts);
+
+    return Ok(result.Resource);
+}
+```
+
+The *DefaultValidatorValueGenerator* will discover the ETag and LastModified values in the context's Items 
+dictionary and use these values for the ValidatorValue. This provides several benefits. The client of the API
+now has the true LastModified value of the resource for which better update decisions can be made. The ETag 
+provided can be used by our repository for concurrency checking. 
+
+
+Below is the controller method for getting a list of ToDos.
+
+```
+/// <summary>
+/// Get all available ToDos.
+/// </summary>
+/// <returns>
+/// </returns>
+[HttpHead(Name = "HeadToDos")]
+[HttpGet(Name = "GetToDos")]
+[ProducesResponseType(typeof(IEnumerable<ToDoDto>), StatusCodes.Status200OK)]
+[ProducesResponseType(StatusCodes.Status304NotModified)]
+[ProducesResponseType(typeof(ProblemDetailsExtendedDto), StatusCodes.Status500InternalServerError)]
+[ToDosResultFilter()]
+public async Task<IActionResult> Get()
+{
+    var result = await _respository.GetToDosAsync();
+
+    // Get the maximum timestamp to provide the last time any entry in this list was modified.
+    if (result.Count() > 0)
+    {
+        var maxLastModified = result.Max(todo => todo._ts);
+        HttpContext.AddLastModified(maxLastModified);
+    }
+
+    return Ok(result);
+}
+```
+In the case of the list, the ETag will be generated by this package, but the LastModified date will be 
+the latest date an item in the list was modified. The *DefaultValidatorValueGenerator* will discover 
+LastModified values in the context's Items dictionary, and since to ETag was not discovered, the 
+IETagGenerator generates an ETag.
+
 
 ## IDateParser 
 
