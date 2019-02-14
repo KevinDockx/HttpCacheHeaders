@@ -36,8 +36,7 @@ namespace Marvin.Cache.Headers.Sample
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
-        {
-            // test for issue https://github.com/KevinDockx/HttpCacheHeaders/issues/43
+        { 
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();

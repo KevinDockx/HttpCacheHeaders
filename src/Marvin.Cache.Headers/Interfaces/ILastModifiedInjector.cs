@@ -14,7 +14,6 @@ namespace Marvin.Cache.Headers.Interfaces
     public interface ILastModifiedInjector
     {
         Task<DateTimeOffset> CalculateLastModified(
-            StoreKey storeKey,
             ResourceContext context);
     }
      
