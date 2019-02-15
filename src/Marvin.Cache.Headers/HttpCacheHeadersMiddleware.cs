@@ -29,6 +29,7 @@ namespace Marvin.Cache.Headers
         private readonly IValidatorValueStore _store;
         private readonly IStoreKeyGenerator _storeKeyGenerator;
         private readonly IETagGenerator _eTagGenerator;
+        private readonly ILastModifiedInjector _lastModifiedInjector;
 
         private readonly ValidationModelOptions _validationModelOptions;
         private readonly ExpirationModelOptions _expirationModelOptions;
@@ -40,6 +41,7 @@ namespace Marvin.Cache.Headers
             IValidatorValueStore store,
             IStoreKeyGenerator storeKeyGenerator,
             IETagGenerator eTagGenerator,
+            ILastModifiedInjector lastModifiedInjector,
             IOptions<ExpirationModelOptions> expirationModelOptions,
             IOptions<ValidationModelOptions> validationModelOptions)
         {
@@ -64,6 +66,7 @@ namespace Marvin.Cache.Headers
             _store = store ?? throw new ArgumentNullException(nameof(store));
             _storeKeyGenerator = storeKeyGenerator ?? throw new ArgumentNullException(nameof(storeKeyGenerator));
             _eTagGenerator = eTagGenerator ?? throw new ArgumentNullException(nameof(eTagGenerator));
+            _lastModifiedInjector = lastModifiedInjector ?? throw new ArgumentNullException(nameof(lastModifiedInjector));
 
             _expirationModelOptions = expirationModelOptions.Value;
             _validationModelOptions = validationModelOptions.Value;
@@ -450,7 +453,8 @@ namespace Marvin.Cache.Headers
                 ConstructStoreKeyContext(httpContext.Request, _validationModelOptions));
 
             // set LastModified
-            var lastModified = GetUtcNowWithoutMilliseconds();
+            var lastModified = await _lastModifiedInjector.CalculateLastModified(
+                new ResourceContext(httpContext.Request, storeKey));
             var lastModifiedValue = await _dateParser.LastModifiedToString(lastModified);
             headers[HeaderNames.LastModified] = lastModifiedValue;
 
@@ -518,7 +522,8 @@ namespace Marvin.Cache.Headers
             // Calculate the ETag to store in the store.
             var eTag = await _eTagGenerator.GenerateETag(storeKey, responseBodyContent);
 
-            var lastModified = GetUtcNowWithoutMilliseconds();
+            var lastModified = await _lastModifiedInjector.CalculateLastModified(
+                new ResourceContext(httpContext.Request, storeKey));
             var lastModifiedValue = await _dateParser.LastModifiedToString(lastModified);
 
             // store the ETag & LastModified date with the request key as key in the ETag store
@@ -597,7 +602,7 @@ namespace Marvin.Cache.Headers
             _logger.LogInformation($"Expiration headers generated. Expires: {expiresValue}. Cache-Control: {cacheControlHeaderValue}.");
         }
 
-        private StoreKeyContext ConstructStoreKeyContext(HttpRequest request, 
+        private StoreKeyContext ConstructStoreKeyContext(HttpRequest request,
             ValidationModelOptions validationModelOptions)
         {
             return new StoreKeyContext(request, validationModelOptions.Vary, validationModelOptions.VaryByAll);
@@ -640,20 +645,5 @@ namespace Marvin.Cache.Headers
 
             return string.Equals(firstValueToCompare, secondValueToCompare, StringComparison.OrdinalIgnoreCase);
         }
-
-        private static DateTimeOffset GetUtcNowWithoutMilliseconds()
-        {
-            var now = DateTimeOffset.UtcNow;
-
-            return new DateTimeOffset(
-                now.Year,
-                now.Month,
-                now.Day,
-                now.Hour,
-                now.Minute,
-                now.Second,
-                now.Offset);
-        }
-         
     }
 }
