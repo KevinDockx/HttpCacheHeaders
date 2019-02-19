@@ -66,33 +66,6 @@ Both override the global options.  Controller-level configuration overrides acti
 The middleware is very extensible. If you have a look at the AddHttpCacheHeaders method you'll notice it allows injecting custom implementations of 
 IValidatorValueStore, IStoreKeyGenerator, IETagGenerator and/or IDateParser (via actions). 
 
-## IValidatorValueStore
-
-A validator value store stores validator values.  A validator value is used by the cache validation model when checking if a cached item is still valid.  It contains ETag and LastModified properties.  The default IValidatorValueStore implementation (InMemoryValidatorValueStore) is an in-memory store that stores items in a ConcurrentDictionary<string, ValidatorValue>. 
-
-```
-/// <summary>
-/// Contract for a store for validator values.  Each item is stored with a <see cref="StoreKey" /> as key```
-/// and a <see cref="ValidatorValue" /> as value (consisting of an ETag and Last-Modified date).   
-/// </summary>
-public interface IValidatorValueStore
-{
-    /// <summary>
-    /// Get a value from the store.
-    /// </summary>
-    /// <param name="key">The <see cref="StoreKey"/> of the value to get.</param>
-    /// <returns></returns>
-    Task<ValidatorValue> GetAsync(StoreKey key);
-
-    /// <summary>
-    /// Set a value in the store.
-    /// </summary>
-    /// <param name="key">The <see cref="StoreKey"/> of the value to store.</param>
-    /// <param name="validatorValue">The <see cref="ValidatorValue"/> to store.</param>
-    /// <returns></returns>
-    Task SetAsync(StoreKey key, ValidatorValue validatorValue);
-}
-```
 
 ## IStoreKeyGenerator
 The StoreKey, as used by the IValidatorValueStore as key, can be customized as well.  To do so, implement the IStoreKeyGenerator interface.  The default implementation (DefaultStoreKeyGenerator) generates a key from the request path, request query string and request header values (taking VaryBy into account). Through StoreKeyContext you can access all applicable values that can be useful for generating such a key. 
@@ -115,7 +88,7 @@ public interface IStoreKeyGenerator
 
 ## IETagGenerator
 
-You can inject an IETagGenerator-implementing class to modify how ETags are generated (ETags are part of a ValidatorValue). The default implementation (DefaultStrongETagGenerator) generates strong Etags from the request key + response body (MD5 hjsh from combined bytes). 
+You can inject an IETagGenerator-implementing class to modify how ETags are generated (ETags are part of a ValidatorValue). The default implementation (DefaultStrongETagGenerator) generates strong Etags from the request key + response body (MD5 hash from combined bytes). 
 
 ```
 /// <summary>
@@ -129,6 +102,21 @@ public interface IETagGenerator
 }
 ```
 
+## ILastModifiedInjector
+
+You can inject an ILastModifiedInjector-implementing class to modify how LastModified values are provided. The default implementation (DefaultLastModifiedInjector) injects the current UTC. 
+
+```
+/// <summary>
+/// Contract for a LastModifiedInjector, which can be used to inject custom last modified dates for resources
+/// of which you know when they were last modified (eg: a DB timestamp, custom logic, ...)
+/// </summary>
+public interface ILastModifiedInjector
+{
+    Task<DateTimeOffset> CalculateLastModified(
+        ResourceContext context);
+}
+```
 
 ## IDateParser 
 
