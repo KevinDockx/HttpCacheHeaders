@@ -22,5 +22,8 @@ namespace Marvin.Cache.Headers
                 now.Second,
                 now.Offset));
         }
+
+        public Task<DateTimeOffset> CalculateLastModified(ResourceContext context, ValidatorValue validatorValue) 
+            => CalculateLastModified(context);
     }
 }

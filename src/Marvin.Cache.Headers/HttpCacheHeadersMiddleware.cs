@@ -13,7 +13,6 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Marvin.Cache.Headers.Extensions;
-using System.Collections.Generic;
 using Marvin.Cache.Headers.Domain;
 
 namespace Marvin.Cache.Headers
@@ -451,13 +450,7 @@ namespace Marvin.Cache.Headers
             // generate key
             var storeKey = await _storeKeyGenerator.GenerateStoreKey(
                 ConstructStoreKeyContext(httpContext.Request, _validationModelOptions));
-
-            // set LastModified
-            var lastModified = await _lastModifiedInjector.CalculateLastModified(
-                new ResourceContext(httpContext.Request, storeKey));
-            var lastModifiedValue = await _dateParser.LastModifiedToString(lastModified);
-            headers[HeaderNames.LastModified] = lastModifiedValue;
-
+            
             // take ETag value from the store (if it's found)
             var savedResponse = await _store.GetAsync(storeKey);
             if (savedResponse?.ETag != null)
@@ -466,6 +459,12 @@ namespace Marvin.Cache.Headers
                 headers[HeaderNames.ETag] = savedResponse.ETag.ToString();
                 logInformation = $"ETag: {eTag.ETagType}, {eTag}, ";
             }
+
+            // set LastModified
+            var lastModified = await _lastModifiedInjector.CalculateLastModified(
+                new ResourceContext(httpContext.Request, storeKey), savedResponse);
+            var lastModifiedValue = await _dateParser.LastModifiedToString(lastModified);
+            headers[HeaderNames.LastModified] = lastModifiedValue;
 
             logInformation += $"Last-Modified: {lastModifiedValue}.";
             _logger.LogInformation($"Generation done. {logInformation}");
