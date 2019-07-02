@@ -462,7 +462,7 @@ namespace Marvin.Cache.Headers
 
             // set LastModified
             var lastModified = await _lastModifiedInjector.CalculateLastModified(
-                new ResourceContext(httpContext.Request, storeKey), savedResponse);
+                new ResourceContext(httpContext.Request, storeKey, savedResponse));
             var lastModifiedValue = await _dateParser.LastModifiedToString(lastModified);
             headers[HeaderNames.LastModified] = lastModifiedValue;
 

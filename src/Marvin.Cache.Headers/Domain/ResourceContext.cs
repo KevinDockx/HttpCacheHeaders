@@ -17,11 +17,26 @@ namespace Marvin.Cache.Headers.Domain
         /// </summary>
         public StoreKey StoreKey { get; }
 
-        public ResourceContext(HttpRequest httpRequest,
+        /// <summary>
+        /// The current <see cref="ValidatorValue"/> for the resource, if available
+        /// </summary>
+        public ValidatorValue ValidatorValue { get; }
+
+
+        public ResourceContext(
+            HttpRequest httpRequest,
             StoreKey storeKey)
         {
             HttpRequest = httpRequest;
             StoreKey = storeKey;
+        }
+
+        public ResourceContext(
+            HttpRequest httpRequest,
+            StoreKey storeKey,
+            ValidatorValue validatorValue) : this(httpRequest, storeKey)
+        {
+            ValidatorValue = validatorValue;
         }
     }
 }

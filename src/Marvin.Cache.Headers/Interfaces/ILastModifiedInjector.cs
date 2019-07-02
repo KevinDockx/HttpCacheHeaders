@@ -12,9 +12,5 @@ namespace Marvin.Cache.Headers.Interfaces
     {
         Task<DateTimeOffset> CalculateLastModified(
             ResourceContext context);
-
-        Task<DateTimeOffset> CalculateLastModified(
-            ResourceContext context, 
-            ValidatorValue validatorValue);
     }
 }
