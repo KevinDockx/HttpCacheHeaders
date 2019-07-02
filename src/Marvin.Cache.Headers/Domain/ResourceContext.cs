@@ -5,7 +5,7 @@ namespace Marvin.Cache.Headers.Domain
     /// <summary>
     /// Context containing information on a specific resource
     /// </summary>
-    public class ResourceContext
+    public sealed class ResourceContext
     {
         /// <summary>
         /// The current <see cref="HttpRequest"/>
