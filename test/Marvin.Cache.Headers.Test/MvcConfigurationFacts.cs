@@ -43,7 +43,7 @@ namespace Marvin.Cache.Headers.Test
         }
 
         [Fact]
-        public async Task Controller_Level_Validation_And_ExpirationHeaders_Override_Method_Level()
+        public async Task Method_Level_Validation_And_ExpirationHeaders_Override_Class_Level()
         {
             using (var client = _server.CreateClient())
             {
@@ -51,7 +51,7 @@ namespace Marvin.Cache.Headers.Test
 
                 Assert.True(response.IsSuccessStatusCode);
 
-                Assert.Contains(response.Headers, pair => pair.Key == HeaderNames.CacheControl && pair.Value.First() == "public, max-age=11111");
+                Assert.Contains(response.Headers, pair => pair.Key == HeaderNames.CacheControl && pair.Value.First() == "must-revalidate, max-age=99999, private");
             }
         }
     }
