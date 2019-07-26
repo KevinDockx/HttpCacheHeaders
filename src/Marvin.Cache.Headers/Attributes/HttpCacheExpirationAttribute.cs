@@ -72,7 +72,14 @@ namespace Marvin.Cache.Headers
         {
             await next();
 
-            context.HttpContext.Items[HttpContextExtensions.ContextItemsExpirationModelOptions] = _expirationModelOptions.Value;
+            // add options to Items dictionary.  If the dictionary already contains a value, don't overwrite it - this 
+            // means the value was already set at method level and the current class level attribute is trying
+            // to overwrite it.  Method (action) should win over class (controller).
+
+            if (!context.HttpContext.Items.ContainsKey(HttpContextExtensions.ContextItemsExpirationModelOptions))
+            {
+                context.HttpContext.Items[HttpContextExtensions.ContextItemsExpirationModelOptions] = _expirationModelOptions.Value;
+            }
         }
     }
 }

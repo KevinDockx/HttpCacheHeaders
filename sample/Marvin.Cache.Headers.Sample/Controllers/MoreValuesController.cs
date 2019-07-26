@@ -18,5 +18,12 @@ namespace Marvin.Cache.Headers.Sample.Controllers
         {
             return new[] { "anothervalue1", "anothervalue2" };
         }
+
+        // no expiration/validation attributes: must take controller level config
+        [HttpGet("{id}")]
+        public string GetOne(string id)
+        {
+            return "somevalue";
+        }
     }
 }
