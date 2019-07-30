@@ -95,7 +95,7 @@ namespace Marvin.Cache.Headers
             // returns 304 when the resource hasn't been modified
             if (await ConditionalGetOrHeadIsValid(httpContext))
             {
-                // still valid. Return 304, and update the Last-Modified date.
+                // still valid. Return 304
                 await Generate304NotModifiedResponse(httpContext);
 
                 // don't continue with the rest of the flow, we don't want
@@ -425,7 +425,7 @@ namespace Marvin.Cache.Headers
         {
             _logger.LogInformation("Generating 304 - Not Modified.");
             httpContext.Response.StatusCode = StatusCodes.Status304NotModified;
-            await GenerateResponseFromStore(httpContext);
+            await GenerateResponseFromStore(httpContext, false);
         }
 
         private async Task Generate412PreconditionFailedResponse(HttpContext httpContext)
@@ -435,7 +435,7 @@ namespace Marvin.Cache.Headers
             await GenerateResponseFromStore(httpContext);
         }
 
-        private async Task GenerateResponseFromStore(HttpContext httpContext)
+        private async Task GenerateResponseFromStore(HttpContext httpContext, bool updateLastModified = true)
         {
             var logInformation = string.Empty;
 
@@ -460,13 +460,22 @@ namespace Marvin.Cache.Headers
                 logInformation = $"ETag: {eTag.ETagType}, {eTag}, ";
             }
 
-            // set LastModified
-            var lastModified = await _lastModifiedInjector.CalculateLastModified(
-                new ResourceContext(httpContext.Request, storeKey, savedResponse));
+            DateTimeOffset lastModified;
+            if (updateLastModified)
+            {
+                // set LastModified
+                lastModified = await _lastModifiedInjector.CalculateLastModified(
+                    new ResourceContext(httpContext.Request, storeKey, savedResponse));
+            }
+            else
+            {
+                lastModified = savedResponse.LastModified;
+            }
+
             var lastModifiedValue = await _dateParser.LastModifiedToString(lastModified);
             headers[HeaderNames.LastModified] = lastModifiedValue;
-
             logInformation += $"Last-Modified: {lastModifiedValue}.";
+                    
             _logger.LogInformation($"Generation done. {logInformation}");
         }
 
