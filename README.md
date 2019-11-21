@@ -59,7 +59,7 @@ public IEnumerable<string> Get()
     return new[] { "value1", "value2" };
 }
 ```
-Both override the global options.  Controller-level configuration overrides action-level configuration.
+Both override the global options.  Action-level configuration overrides controller-level configuration.
 
 # Extensibility
 
