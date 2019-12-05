@@ -29,9 +29,10 @@ namespace Marvin.Cache.Headers
         private readonly IStoreKeyGenerator _storeKeyGenerator;
         private readonly IETagGenerator _eTagGenerator;
         private readonly ILastModifiedInjector _lastModifiedInjector;
-
         private readonly ValidationModelOptions _validationModelOptions;
         private readonly ExpirationModelOptions _expirationModelOptions;
+
+        private IValidatorValueInvalidator _validatorValueInvalidator;
 
         public HttpCacheHeadersMiddleware(
             RequestDelegate next,
@@ -73,8 +74,14 @@ namespace Marvin.Cache.Headers
             _logger = loggerFactory.CreateLogger<HttpCacheHeadersMiddleware>();
         }
 
-        public async Task Invoke(HttpContext httpContext)
+        public async Task Invoke(HttpContext httpContext, IValidatorValueInvalidator validatorValueInvalidator)
         {
+            // Use method injection for IValidatorValueInvalidator, as it's a scoped service.  Only singleton
+            // services can be injected via constructor injection when working with middleware
+
+            _validatorValueInvalidator = validatorValueInvalidator 
+                ?? throw new ArgumentNullException(nameof(validatorValueInvalidator));
+
             // check request ETag headers & dates
             if (await GetOrHeadIndicatesResourceStillValid(httpContext))
             {
@@ -178,6 +185,18 @@ namespace Marvin.Cache.Headers
                     // set the response body back to the original stream
                     httpContext.Response.Body = stream;
                 }
+            }
+
+            // Remove the items marked for invalidation.  It's important
+            // to do this here, AFTER the response has been generated/set, as to
+            // not interfere with that process for those cases where a user 
+            // wants to immediately remove the current response ValidatorValue
+            if (_validatorValueInvalidator.KeysMarkedForInvalidation.Any())
+            {
+                foreach (var key in _validatorValueInvalidator.KeysMarkedForInvalidation)
+                {
+                    await _store.RemoveAsync(key);
+                }               
             }
         }
 
