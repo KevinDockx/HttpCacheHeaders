@@ -242,21 +242,24 @@ namespace Marvin.Cache.Headers
                 return false;
             }
 
-            // check the ETags
-            // return the combined result of all validators.
-            return CheckIfNoneMatchIsValid(httpContext, validatorValue) &&
-                   await CheckIfModifiedSinceIsValid(httpContext, validatorValue);
+            if (httpContext.Request.Headers.Keys.Contains(HeaderNames.IfNoneMatch))
+            {
+                // check the ETags. If the Etag is present we should not check the If-Modified-Since header
+                // see issue https://github.com/KevinDockx/HttpCacheHeaders/issues/82
+                
+                // cfr: "If none of the entity tags match, then the server MAY perform the requested method as if the
+                // If-None-Match header field did not exist, but MUST also ignore any If-Modified-Since header field(s)
+                // in the request. That is, if no entity tags match, then the server MUST NOT return a 304(Not Modified) response."
+
+                return CheckIfNoneMatchIsValid(httpContext, validatorValue);
+            }
+
+            _logger.LogInformation("No If-None-Match header, don't check ETag.");
+            return await CheckIfModifiedSinceIsValid(httpContext, validatorValue);
         }
 
         private bool CheckIfNoneMatchIsValid(HttpContext httpContext, ValidatorValue validatorValue)
         {
-            if (!httpContext.Request.Headers.Keys.Contains(HeaderNames.IfNoneMatch))
-            {
-                // if there is no IfNoneMatch header, the tag precondition is valid.
-                _logger.LogInformation("No If-None-Match header, don't check ETag.");
-                return true;
-            }
-
             _logger.LogInformation("Checking If-None-Match.");
             var ifNoneMatchHeaderValue = httpContext.Request.Headers[HeaderNames.IfNoneMatch].ToString().Trim();
             _logger.LogInformation($"Checking If-None-Match: {ifNoneMatchHeaderValue}.");
@@ -277,13 +280,6 @@ namespace Marvin.Cache.Headers
                 _logger.LogInformation($"ETag valid: {validatorValue.ETag}.");
                 return true;
             }
-
-            // if there is an IfNoneMatch header, but none of the eTags match, we don't take the
-            // If-Modified-Since headers into account.
-            //
-            // cfr: "If none of the entity tags match, then the server MAY perform the requested method as if the
-            // If-None-Match header field did not exist, but MUST also ignore any If-Modified-Since header field(s)
-            // in the request. That is, if no entity tags match, then the server MUST NOT return a 304(Not Modified) response."
 
             _logger.LogInformation("Not valid. No match found for ETag.");
             return false;
