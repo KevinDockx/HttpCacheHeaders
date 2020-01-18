@@ -86,7 +86,7 @@ namespace Marvin.Cache.Headers.Test
         [InlineData(500)]
         [InlineData(1000)]
         [InlineData(1500)]
-        public async Task Return_302_When_Request_Is_Cached(int delayInMs)
+        public async Task Return_304_When_Request_Is_Cached(int delayInMs)
         {
             using (var client = _server.CreateClient())
             {
