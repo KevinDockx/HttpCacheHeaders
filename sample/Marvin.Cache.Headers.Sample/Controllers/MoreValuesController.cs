@@ -13,7 +13,7 @@ namespace Marvin.Cache.Headers.Sample.Controllers
     {
         [HttpGet]
         [HttpCacheExpiration(CacheLocation = CacheLocation.Private, MaxAge = 99999)]
-        [HttpCacheValidation(MustRevalidate = true)]
+        [HttpCacheValidation(MustRevalidate = true, Vary = new[] { "Test" })]
         public IEnumerable<string> Get()
         {
             return new[] { "anothervalue1", "anothervalue2" };

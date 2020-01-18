@@ -174,6 +174,10 @@ namespace Microsoft.Extensions.DependencyInjection
             AddStoreKeyGenerator(services, storeKeyGeneratorFunc);
             AddETagGenerator(services, eTagGeneratorFunc);
             AddLastModifiedInjector(services, lastModifiedInjectorFunc);
+
+            // add required additional services
+            services.AddScoped<IValidatorValueInvalidator, ValidatorValueInvalidator>();
+            services.AddTransient<IStoreKeyAccessor, StoreKeyAccessor>();
         }
 
         private static void AddLastModifiedInjector(
