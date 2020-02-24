@@ -61,6 +61,15 @@ public IEnumerable<string> Get()
 ```
 Both override the global options.  Action-level configuration overrides controller-level configuration.
 
+# Marking for Invalidation (v5 onwards)
+Cache invalidation essentially means wiping a response from the cache because you know it isn't the correct version anymore. Caches often partially automate this (a response can be invalidated when it becomes stale, for example) and/or expose an API to manually invalidate items.  
+
+The same goes for the cache headers middleware.  Sometimes resource manipulation has an effect on related resources.  Take a list of employees as an example.  If a PUT statement is sent to one employees resource that one employees will get a new Etag, but the employeess resource doesn’t automatically change. If the employee you just updated is one of the employees in the returned employees when fetching the employees resource, the employees resource is out of date.  Same goes for deleting or creating an employee: that, too, might have an effect on the employees resource.  
+
+To support this scenario the cache headers middleware allows marking an item for invalidation.  When doing that, the related item will be removed from the internal store, meaning that for subsequent requests a stored item will not be found.  
+
+To use this, inject an IValidatorValueInvalidator and call MarkForInvalidation on it, passing through the key(s) of the item(s) you want to be removed.  You can additionally inject an IStoreKeyAccessor, which contains methods that make it easy to find one or more keys from (part of) a URI.  
+
 # Extensibility
 
 The middleware is very extensible. If you have a look at the AddHttpCacheHeaders method you'll notice it allows injecting custom implementations of 
@@ -163,3 +172,5 @@ public interface IDateParser
     Task<DateTimeOffset?> IfUnmodifiedSinceToDateTimeOffset(string ifUnmodifiedSince);
 }
 ```
+
+
