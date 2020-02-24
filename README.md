@@ -173,4 +173,59 @@ public interface IDateParser
 }
 ```
 
+## IValidatorValueInvalidator
+
+An IValidatorValueInvalidator-implenting class is responsible for marking items for invalidation.
+
+```
+/// <summary>
+/// Contract for the <see cref="ValidatorValueInvalidator" />
+/// </summary>
+public interface IValidatorValueInvalidator
+{
+    /// <summary>
+    /// Get the list of <see cref="StoreKey" /> of items marked for invalidation
+    /// </summary>
+    List<StoreKey> KeysMarkedForInvalidation { get; }
+
+    /// <summary>
+    /// Mark an item stored with a <see cref="StoreKey" /> for invalidation
+    /// </summary>
+    /// <param name="storeKey">The <see cref="StoreKey" /></param>
+    /// <returns></returns>
+    Task MarkForInvalidation(StoreKey storeKey);
+
+    /// <summary>
+    /// Mark a set of items for invlidation by their collection of <see cref="StoreKey" /> 
+    /// </summary>
+    /// <param name="storeKeys">The collection of <see cref="StoreKey" /></param>
+    /// <returns></returns>
+    Task MarkForInvalidation(IEnumerable<StoreKey> storeKeys);
+}
+```
+
+## IStoreKeyAccessor
+
+The IStoreKeyAccessor contains helper methods for getting keys from parts of a URI.  Override this if you're not storing items with their default keys.
+
+```
+/// <summary>
+    /// Contract for finding (a) <see cref="StoreKey" />(s)
+    /// </summary>    
+    public interface IStoreKeyAccessor
+    {
+        /// <summary>
+        /// Find a  <see cref="StoreKey" /> by part of the key
+        /// </summary>
+        /// <param name="valueToMatch">The value to match as part of the key</param>
+        /// <returns></returns>
+        Task<IEnumerable<StoreKey>> FindByKeyPart(string valueToMatch);
+
+        /// <summary>
+        /// Find a  <see cref="StoreKey" /> of which the current resource path is part of the key
+        /// </summary>
+        /// <returns></returns>
+        Task<IEnumerable<StoreKey>> FindByCurrentResourcePath();
+    }
+```
 
