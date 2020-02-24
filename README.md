@@ -210,22 +210,22 @@ The IStoreKeyAccessor contains helper methods for getting keys from parts of a U
 
 ```
 /// <summary>
-    /// Contract for finding (a) <see cref="StoreKey" />(s)
-    /// </summary>    
-    public interface IStoreKeyAccessor
-    {
-        /// <summary>
-        /// Find a  <see cref="StoreKey" /> by part of the key
-        /// </summary>
-        /// <param name="valueToMatch">The value to match as part of the key</param>
-        /// <returns></returns>
-        Task<IEnumerable<StoreKey>> FindByKeyPart(string valueToMatch);
+/// Contract for finding (a) <see cref="StoreKey" />(s)
+/// </summary>    
+public interface IStoreKeyAccessor
+{
+    /// <summary>
+    /// Find a  <see cref="StoreKey" /> by part of the key
+    /// </summary>
+    /// <param name="valueToMatch">The value to match as part of the key</param>
+    /// <returns></returns>
+    Task<IEnumerable<StoreKey>> FindByKeyPart(string valueToMatch);
 
-        /// <summary>
-        /// Find a  <see cref="StoreKey" /> of which the current resource path is part of the key
-        /// </summary>
-        /// <returns></returns>
-        Task<IEnumerable<StoreKey>> FindByCurrentResourcePath();
-    }
+    /// <summary>
+    /// Find a  <see cref="StoreKey" /> of which the current resource path is part of the key
+    /// </summary>
+    /// <returns></returns>
+    Task<IEnumerable<StoreKey>> FindByCurrentResourcePath();
+}
 ```
 
