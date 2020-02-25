@@ -496,13 +496,24 @@ namespace Marvin.Cache.Headers
 
         private async Task GenerateValidationHeadersOnResponse(HttpContext httpContext)
         {
-            // don't generate these for 304 - that's taken care of at the
-            // start of the request
-            if (httpContext.Response.StatusCode == StatusCodes.Status304NotModified)
+            // only generate validation headers (and only store them) when the
+            // response is a level 200 status code.  Invalid responses should 
+            // not result in an ETag being stored.  
+            if (httpContext.Response.StatusCode != StatusCodes.Status200OK &&
+                httpContext.Response.StatusCode != StatusCodes.Status201Created &&
+                httpContext.Response.StatusCode != StatusCodes.Status202Accepted &&
+                httpContext.Response.StatusCode != StatusCodes.Status203NonAuthoritative &&
+                httpContext.Response.StatusCode != StatusCodes.Status204NoContent &&
+                httpContext.Response.StatusCode != StatusCodes.Status205ResetContent &&
+                httpContext.Response.StatusCode != StatusCodes.Status206PartialContent &&
+                httpContext.Response.StatusCode != StatusCodes.Status207MultiStatus &&
+                httpContext.Response.StatusCode != StatusCodes.Status208AlreadyReported &&
+                httpContext.Response.StatusCode != StatusCodes.Status226IMUsed)
             {
+                _logger.LogInformation("Not generating Validation headers as the response status code does not indicate succes.");
                 return;
             }
-
+            
             // This takes care of storing new tags, also after a succesful PUT/POST/PATCH.
             // Other PUT/POST/PATCH requests must thus include the new ETag as If-Match,
             // otherwise the precondition will fail.
