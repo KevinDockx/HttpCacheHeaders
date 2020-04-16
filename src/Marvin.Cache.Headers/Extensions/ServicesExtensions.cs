@@ -4,6 +4,8 @@
 using Marvin.Cache.Headers;
 using Marvin.Cache.Headers.Interfaces;
 using Marvin.Cache.Headers.Stores;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using System;
 
 namespace Microsoft.Extensions.DependencyInjection
@@ -174,6 +176,9 @@ namespace Microsoft.Extensions.DependencyInjection
             AddStoreKeyGenerator(services, storeKeyGeneratorFunc);
             AddETagGenerator(services, eTagGeneratorFunc);
             AddLastModifiedInjector(services, lastModifiedInjectorFunc);
+
+            // register dependencies for required services
+            services.TryAddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 
             // add required additional services
             services.AddScoped<IValidatorValueInvalidator, ValidatorValueInvalidator>();
