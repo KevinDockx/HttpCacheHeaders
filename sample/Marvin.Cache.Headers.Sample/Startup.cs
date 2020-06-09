@@ -4,6 +4,7 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 namespace Marvin.Cache.Headers.Sample
 {
@@ -13,7 +14,7 @@ namespace Marvin.Cache.Headers.Sample
         public void ConfigureServices(IServiceCollection services)
         {
             // Add framework services.
-            services.AddMvc();
+            services.AddControllersWithViews();
 
             services.AddResponseCaching();
 
@@ -35,7 +36,7 @@ namespace Marvin.Cache.Headers.Sample
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         { 
             if (env.IsDevelopment())
             {
@@ -48,7 +49,14 @@ namespace Marvin.Cache.Headers.Sample
             // add HttpCacheHeaders middleware to the request pipeline
             app.UseHttpCacheHeaders();
 
-            app.UseMvc();
+            app.UseRouting();         
+
+            app.UseEndpoints(endpoints =>
+            {
+                endpoints.MapControllerRoute(
+                    name: "default",
+                    pattern: "{controller=Home}/{action=Index}/{id?}");
+            });
         }
     }
 }
