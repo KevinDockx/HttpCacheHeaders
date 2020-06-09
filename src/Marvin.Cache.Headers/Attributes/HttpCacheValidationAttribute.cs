@@ -1,12 +1,10 @@
 ﻿// Any comments, input: @KevinDockx
 // Any issues, requests: https://github.com/KevinDockx/HttpCacheHeaders
 
-using Marvin.Cache.Headers.Extensions;
-
-using Microsoft.AspNetCore.Mvc.Filters;
-
 using System;
 using System.Threading.Tasks;
+using Marvin.Cache.Headers.Extensions;
+using Microsoft.AspNetCore.Mvc.Filters;
 
 namespace Marvin.Cache.Headers
 {
