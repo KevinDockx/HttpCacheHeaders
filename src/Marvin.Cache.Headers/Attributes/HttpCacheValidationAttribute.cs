@@ -2,7 +2,6 @@
 // Any issues, requests: https://github.com/KevinDockx/HttpCacheHeaders
 
 using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using Marvin.Cache.Headers.Extensions;
 using Microsoft.AspNetCore.Mvc.Filters;

@@ -79,7 +79,7 @@ namespace Marvin.Cache.Headers
             // Use method injection for IValidatorValueInvalidator, as it's a scoped service.  Only singleton
             // services can be injected via constructor injection when working with middleware
 
-            _validatorValueInvalidator = validatorValueInvalidator 
+            _validatorValueInvalidator = validatorValueInvalidator
                 ?? throw new ArgumentNullException(nameof(validatorValueInvalidator));
 
             // check request ETag headers & dates
@@ -196,7 +196,7 @@ namespace Marvin.Cache.Headers
                 foreach (var key in _validatorValueInvalidator.KeysMarkedForInvalidation)
                 {
                     await _store.RemoveAsync(key);
-                }               
+                }
             }
         }
 
@@ -246,7 +246,7 @@ namespace Marvin.Cache.Headers
             {
                 // check the ETags. If the Etag is present we should not check the If-Modified-Since header
                 // see issue https://github.com/KevinDockx/HttpCacheHeaders/issues/82
-                
+
                 // cfr: "If none of the entity tags match, then the server MAY perform the requested method as if the
                 // If-None-Match header field did not exist, but MUST also ignore any If-Modified-Since header field(s)
                 // in the request. That is, if no entity tags match, then the server MUST NOT return a 304(Not Modified) response."
@@ -465,7 +465,7 @@ namespace Marvin.Cache.Headers
             // generate key
             var storeKey = await _storeKeyGenerator.GenerateStoreKey(
                 ConstructStoreKeyContext(httpContext.Request, _validationModelOptions));
-            
+
             // take ETag value from the store (if it's found)
             var savedResponse = await _store.GetAsync(storeKey);
             if (savedResponse?.ETag != null)
@@ -490,7 +490,7 @@ namespace Marvin.Cache.Headers
             var lastModifiedValue = await _dateParser.LastModifiedToString(lastModified);
             headers[HeaderNames.LastModified] = lastModifiedValue;
             logInformation += $"Last-Modified: {lastModifiedValue}.";
-                    
+
             _logger.LogInformation($"Generation done. {logInformation}");
         }
 
@@ -513,7 +513,7 @@ namespace Marvin.Cache.Headers
                 _logger.LogInformation("Not generating Validation headers as the response status code does not indicate succes.");
                 return;
             }
-            
+
             // This takes care of storing new tags, also after a succesful PUT/POST/PATCH.
             // Other PUT/POST/PATCH requests must thus include the new ETag as If-Match,
             // otherwise the precondition will fail.
