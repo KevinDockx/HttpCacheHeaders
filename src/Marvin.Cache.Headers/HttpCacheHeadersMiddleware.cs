@@ -180,7 +180,11 @@ namespace Marvin.Cache.Headers
 
                     // Copy the buffer content to the original stream.
                     // This invokes Response.OnStarting (not used)
-                    await buffer.CopyToAsync(stream);
+                    // Do not write to the response body if there is no data (204 No Content, etc.)
+                    if (buffer.Length > 0)
+                    {
+                        await buffer.CopyToAsync(stream);
+                    }
 
                     // set the response body back to the original stream
                     httpContext.Response.Body = stream;
