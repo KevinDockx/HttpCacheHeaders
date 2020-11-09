@@ -41,7 +41,7 @@ namespace Marvin.Cache.Headers
         /// <summary>
         /// When true, the no-store directive is included in the Cache-Control header.
         /// When this directive is included, a cache must not store any part of the message,
-        /// mostly for confidentiality reasonse.
+        /// mostly for confidentiality reasons.
         ///
         /// Defaults to false.
         /// </summary>
