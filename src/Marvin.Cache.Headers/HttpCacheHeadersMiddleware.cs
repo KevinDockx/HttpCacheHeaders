@@ -297,7 +297,7 @@ namespace Marvin.Cache.Headers
                 // we can return a 304 Not Modified (If there's also a matching ETag).
                 // By adding an If-Modified-Since date
                 // to a GET/HEAD request, the consumer is stating that (s)he only wants the resource
-                // to be returned if if has been modified after that.
+                // to be returned if has been modified after that.
                 var ifModifiedSinceValue = httpContext.Request.Headers[HeaderNames.IfModifiedSince].ToString();
                 _logger.LogInformation($"Checking If-Modified-Since: {ifModifiedSinceValue}");
 
@@ -356,7 +356,7 @@ namespace Marvin.Cache.Headers
 
             // if there is no validation value in the store, we return false:
             // there is nothing to compare to, so the precondition can
-            // never be ok - return a 412 response
+            // never be OK - return a 412 response
             if (validatorValue?.ETag == null)
             {
                 _logger.LogInformation("No saved response found in store.");
@@ -514,11 +514,11 @@ namespace Marvin.Cache.Headers
                 httpContext.Response.StatusCode != StatusCodes.Status208AlreadyReported &&
                 httpContext.Response.StatusCode != StatusCodes.Status226IMUsed)
             {
-                _logger.LogInformation("Not generating Validation headers as the response status code does not indicate succes.");
+                _logger.LogInformation("Not generating Validation headers as the response status code does not indicate success.");
                 return;
             }
 
-            // This takes care of storing new tags, also after a succesful PUT/POST/PATCH.
+            // This takes care of storing new tags, also after a successful PUT/POST/PATCH.
             // Other PUT/POST/PATCH requests must thus include the new ETag as If-Match,
             // otherwise the precondition will fail.
             //
@@ -526,8 +526,8 @@ namespace Marvin.Cache.Headers
             // from an empty response - any other user/cache must GET the response again
             // before updating it.  Getting it will result in a new ETag value being generated.
             //
-            // If an API returns a 200 Ok after PUT/PATCH, the ETag will be generated from
-            // that response body - if the update was succesful but nothing was changed,
+            // If an API returns a 200 OK after PUT/PATCH, the ETag will be generated from
+            // that response body - if the update was successful but nothing was changed,
             // in those cases the original ETag for other users/caches will still be sufficient.
 
             // if the response body cannot be read, we can never

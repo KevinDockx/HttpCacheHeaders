@@ -24,7 +24,7 @@ namespace Marvin.Cache.Headers.Interfaces
         Task MarkForInvalidation(StoreKey storeKey);
 
         /// <summary>
-        /// Mark a set of items for invlidation by their collection of <see cref="StoreKey" /> 
+        /// Mark a set of items for invalidation by their collection of <see cref="StoreKey" /> 
         /// </summary>
         /// <param name="storeKeys">The collection of <see cref="StoreKey" /></param>
         /// <returns></returns>

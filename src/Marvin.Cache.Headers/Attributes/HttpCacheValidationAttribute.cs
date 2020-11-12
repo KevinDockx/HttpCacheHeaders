@@ -57,7 +57,7 @@ namespace Marvin.Cache.Headers
 
         /// <summary>
         /// When true, the proxy-revalidate directive is added to the Cache-Control header.
-        /// Exactly the same as must-revalidate, but only only for shared caches.
+        /// Exactly the same as must-revalidate, but only for shared caches.
         /// So: this tells a shared cache that if a response becomes stale, ie: it's expired, revalidation has to happen.
         /// By adding this directive, we can force revalidation by the cache even if the client
         /// has decided that stale responses are for a specified amount of time (which a client can

@@ -64,7 +64,7 @@ namespace Marvin.Cache.Headers.Sample.Controllers
         [HttpPost]
         public async Task<IActionResult> Post([FromBody] string value)
         {
-            // code to post ommitted
+            // code to post omitted
 
             // remove all items matching part of a resource path
 
@@ -82,11 +82,11 @@ namespace Marvin.Cache.Headers.Sample.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> Put(int id, [FromBody] string value)
         {
-            // code to update ommitted
+            // code to update omitted
 
             // remove items based on the current path
 
-            // 1) find the keys related t othe current resource path
+            // 1) find the keys related to the current resource path
             var matchingKeysByPath = await _storeKeyAccessor.FindByCurrentResourcePath();
             if (matchingKeysByPath.Any())
             {

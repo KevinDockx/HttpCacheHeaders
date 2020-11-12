@@ -36,7 +36,7 @@ namespace Marvin.Cache.Headers
                         .ToList();
             }
 
-            // get the resoure path
+            // get the resource path
             var resourcePath = context.HttpRequest.Path.ToString();
 
             // get the query string
