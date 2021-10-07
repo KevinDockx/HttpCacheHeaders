@@ -21,7 +21,7 @@ namespace Marvin.Cache.Headers
     {
         // RequestDelegate is the middleware delegate that should be called
         // after this middleware delegate is finished
-        private readonly RequestDelegate _next;
+        protected readonly RequestDelegate _next;
         private readonly ILogger _logger;
 
         private readonly IDateParser _dateParser;
@@ -74,7 +74,7 @@ namespace Marvin.Cache.Headers
             _logger = loggerFactory.CreateLogger<HttpCacheHeadersMiddleware>();
         }
 
-        public async Task Invoke(HttpContext httpContext, IValidatorValueInvalidator validatorValueInvalidator)
+        public virtual async Task Invoke(HttpContext httpContext, IValidatorValueInvalidator validatorValueInvalidator)
         {
             // Use method injection for IValidatorValueInvalidator, as it's a scoped service.  Only singleton
             // services can be injected via constructor injection when working with middleware
