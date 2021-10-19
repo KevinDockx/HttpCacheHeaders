@@ -20,7 +20,7 @@ First, register the services with ASP.NET Core's dependency injection container 
 services.AddHttpCacheHeaders();
 ```
 
-Then, add the middleware to the request pipeline.  Starting with version 6.0, the middleware must be added between UseRouting() and UseEndpoints.  
+Then, add the middleware to the request pipeline.  Starting with version 6.0, the middleware MUST be added between UseRouting() and UseEndpoints().  
 
 ```
 app.UseRouting(); 
