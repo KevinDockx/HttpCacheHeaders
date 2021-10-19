@@ -20,12 +20,14 @@ First, register the services with ASP.NET Core's dependency injection container 
 services.AddHttpCacheHeaders();
 ```
 
-Then, add the middleware to the request pipeline.  Add this before the MVC middleware, as the HttpCacheHeaders middleware will sometimes avoid continuing with the MVC delegate (to avoid unnecessarily generating response bodies).
+Then, add the middleware to the request pipeline.  Add this before the routing/endpoints middleware, as the HttpCacheHeaders middleware will sometimes avoid continuing with the next  delegate (to avoid unnecessarily generating response bodies).
 
 ```
 app.UseHttpCacheHeaders();
 
-app.UseMvc(); 
+app.UseRouting(); 
+
+app.UseEndpoints(...);
 ```
 
 # Configuring options
