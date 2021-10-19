@@ -143,14 +143,21 @@ namespace Marvin.Cache.Headers
             // otherwise we are unable to read it out (and thus cannot generate strong etags
             // correctly)
             // cfr: http://stackoverflow.com/questions/35458737/implement-http-cache-etag-in-asp-net-core-web-api
-            using (var buffer = new MemoryStream())
+
+            // ensure additional middleware can write to the response (cfr fix by MarinkoSpasojevic)
+            var buffer = new MemoryStream();
+            Stream stream = null;
+            bool isContinuation = false;
+            try
             {
                 // replace the context response with a temporary buffer
-                var stream = httpContext.Response.Body;
+                stream = httpContext.Response.Body;
                 httpContext.Response.Body = buffer;
 
                 // Call the next middleware delegate in the pipeline
                 await _next.Invoke(httpContext);
+
+                isContinuation = true;
 
                 // Grab possible cache overrides from the method
                 var expirationModelOptions = httpContext.ExpirationModelOptionsOrDefault(_expirationModelOptions);
@@ -188,6 +195,17 @@ namespace Marvin.Cache.Headers
 
                     // set the response body back to the original stream
                     httpContext.Response.Body = stream;
+                }
+            }
+            finally
+            {
+                if (!isContinuation)
+                {
+                    httpContext.Response.Body = stream;
+                }
+                if (buffer != null)
+                {
+                    buffer.Dispose();
                 }
             }
 
