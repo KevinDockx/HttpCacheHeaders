@@ -14,6 +14,8 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using Marvin.Cache.Headers.Extensions;
 using Marvin.Cache.Headers.Domain;
+using Microsoft.AspNetCore.Http.Features;
+using Microsoft.AspNetCore.Routing;
 
 namespace Marvin.Cache.Headers
 {
@@ -81,15 +83,28 @@ namespace Marvin.Cache.Headers
 
             _validatorValueInvalidator = validatorValueInvalidator
                 ?? throw new ArgumentNullException(nameof(validatorValueInvalidator));
+             
+            var hasHttpCacheIgnoreAttribute = httpContext.GetEndpoint()?.Metadata
+                .Any(m => m is HttpCacheIgnoreAttribute); 
+
+            if (hasHttpCacheIgnoreAttribute.HasValue && hasHttpCacheIgnoreAttribute.Value)
+            {                
+                // continue with the next delegate in line
+                await _next.Invoke(httpContext);
+                return;
+            }
+
 
             // check request ETag headers & dates
             if (await GetOrHeadIndicatesResourceStillValid(httpContext))
             {
+                // don't continue with the next delegate in line, a response (304) has been generated
                 return;
             }
 
             if (await PutOrPostIndicatesResourceHasChanged(httpContext))
-            {
+            {                
+                // don't continue with the next delegate in line, a response (412) has been generated
                 return;
             }
 
