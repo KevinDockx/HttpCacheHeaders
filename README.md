@@ -3,7 +3,7 @@ ASP.NET Core middleware that adds HttpCache headers to responses (Cache-Control,
 
 The middleware itself does not store responses.  Looking at [this description]( http://2ndscale.com/rtomayko/2008/things-caches-do "Things Caches Do"), this middleware handles the "backend"-part: it generates the correct cache-related headers, and ensures a cache can check for expiration (304 Not Modified) & preconditions (412 Precondition Failed) (often used for concurrency checks).
 
-It can be used together with a shared cache (eg: Microsoft.AspNetCore.ResponseCaching - to be injected in the request pipeline before this component), a private cache or both.  In the sample, the Microsoft.AspNetCore.ResponseCaching cache store is used to effectively cache the responses.  
+It can be used together with a shared cache, a private cache or both.  For production scenarios the best approach is to use this middleware to generate the ETags, combined with a cache server or CDN to inspect those tags and effectively cache the responses.  In the sample, the Microsoft.AspNetCore.ResponseCaching cache store is used to cache the responses.  
 
 [![NuGet version](https://badge.fury.io/nu/marvin.cache.headers.svg)](https://badge.fury.io/nu/marvin.cache.headers)
  
