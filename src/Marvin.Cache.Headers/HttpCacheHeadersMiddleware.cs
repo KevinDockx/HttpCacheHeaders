@@ -94,7 +94,6 @@ namespace Marvin.Cache.Headers
                 return;
             }
 
-
             // check request ETag headers & dates
             if (await GetOrHeadIndicatesResourceStillValid(httpContext))
             {
@@ -711,8 +710,8 @@ namespace Marvin.Cache.Headers
             }
 
             // for weak comparison, we only compare the parts of the eTags after the "W/"
-            var firstValueToCompare = eTag.ETagType == ETagType.Weak ? eTag.ToString().Substring(2) : eTag.ToString();
-            var secondValueToCompare = eTagToCompare.StartsWith("W/") ? eTagToCompare.Substring(2) : eTagToCompare;
+            var firstValueToCompare = eTag.ETagType == ETagType.Weak ? eTag.ToString()[2..] : eTag.ToString();
+            var secondValueToCompare = eTagToCompare.StartsWith("W/") ? eTagToCompare[2..] : eTagToCompare;
 
             return string.Equals(firstValueToCompare, secondValueToCompare, StringComparison.OrdinalIgnoreCase);
         }
