@@ -45,10 +45,10 @@ namespace Marvin.Cache.Headers.Sample
 
             // add Microsoft's ResponseCaching middleware to the request pipeline (with InMemory cache store)
             // app.UseResponseCaching();          
+            // add HttpCacheHeaders middleware to the request pipeline
 
             app.UseRouting();
 
-            // add HttpCacheHeaders middleware to the request pipeline
             app.UseHttpCacheHeaders();
 
             app.UseEndpoints(endpoints =>

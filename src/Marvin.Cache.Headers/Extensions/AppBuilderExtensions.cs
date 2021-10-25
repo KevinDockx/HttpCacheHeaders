@@ -2,6 +2,7 @@
 // Any issues, requests: https://github.com/KevinDockx/HttpCacheHeaders
 
 using Marvin.Cache.Headers;
+using Microsoft.AspNetCore.Routing;
 using System;
 
 namespace Microsoft.AspNetCore.Builder
@@ -21,6 +22,13 @@ namespace Microsoft.AspNetCore.Builder
             if (builder == null)
             {
                 throw new ArgumentNullException(nameof(builder));
+            }
+
+            // Check whether the EndpointDataSource class has been registered on the container (they are 
+            // required for getting endpoint metadata)
+            if (builder.ApplicationServices.GetService(typeof(EndpointDataSource)) == null)
+            {
+                throw new InvalidOperationException("Cannot resolve required routing services on the container.  ");
             }
 
             return builder.UseMiddleware<HttpCacheHeadersMiddleware>();
