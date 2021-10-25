@@ -20,7 +20,11 @@ namespace Marvin.Cache.Headers.Test.Extensions
             var hostBuilder =
                 new WebHostBuilder()
                     .Configure(app => app.UseHttpCacheHeaders())
-                    .ConfigureServices(service => service.AddHttpCacheHeaders());
+                      .ConfigureServices(service =>
+                      {
+                          service.AddControllers();
+                          service.AddHttpCacheHeaders();
+                      });
 
             var testServer = new TestServer(hostBuilder);
             var middleware = testServer.Host.Services.GetService(typeof(IValidatorValueStore));
@@ -34,7 +38,11 @@ namespace Marvin.Cache.Headers.Test.Extensions
             var hostBuilder =
                 new WebHostBuilder()
                     .Configure(app => app.UseHttpCacheHeaders())
-                    .ConfigureServices(service => service.AddHttpCacheHeaders(options => options.MaxAge = 1));
+                      .ConfigureServices(service =>
+                      {
+                          service.AddControllers();
+                          service.AddHttpCacheHeaders(options => options.MaxAge = 1);
+                      }); 
 
             var testServer = new TestServer(hostBuilder);
 
@@ -47,8 +55,11 @@ namespace Marvin.Cache.Headers.Test.Extensions
             var hostBuilder =
                 new WebHostBuilder()
                     .Configure(app => app.UseHttpCacheHeaders())
-                    .ConfigureServices(service => service
-                        .AddHttpCacheHeaders(options => options.NoCache = true));
+                      .ConfigureServices(service =>
+                      {
+                          service.AddControllers();
+                          service.AddHttpCacheHeaders(options => options.NoCache = true);
+                      });  
 
             var testServer = new TestServer(hostBuilder);
 
@@ -61,10 +72,13 @@ namespace Marvin.Cache.Headers.Test.Extensions
             var hostBuilder =
                 new WebHostBuilder()
                     .Configure(app => app.UseHttpCacheHeaders())
-                    .ConfigureServices(service => service
-                        .AddHttpCacheHeaders(
+                     .ConfigureServices(service =>
+                     {
+                         service.AddControllers();
+                         service.AddHttpCacheHeaders(
                             options => options.MaxAge = 1,
-                            options => options.NoCache = true));
+                            options => options.NoCache = true);
+                     }); 
 
             var testServer = new TestServer(hostBuilder);
 

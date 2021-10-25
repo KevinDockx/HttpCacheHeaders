@@ -16,7 +16,12 @@ namespace Marvin.Cache.Headers.Test.Extensions
         [Fact]
         public void Correctly_register_HttpCacheHeadersMiddleware()
         {
-            var hostBuilder = new WebHostBuilder().Configure(app => app.UseHttpCacheHeaders()).ConfigureServices(service => service.AddHttpCacheHeaders());
+            var hostBuilder = new WebHostBuilder().Configure(app => app.UseHttpCacheHeaders())
+                .ConfigureServices(service =>
+                {
+                    service.AddControllers();
+                    service.AddHttpCacheHeaders();
+                });
             var testServer = new TestServer(hostBuilder);
 
             // not sure this is the correct way to test if the middleware is registered

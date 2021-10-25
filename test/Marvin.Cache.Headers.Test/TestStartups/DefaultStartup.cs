@@ -22,12 +22,23 @@ namespace Marvin.Cache.Headers.Test.TestStartups
 
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddControllers();
+
             services.AddHttpCacheHeaders();
         }
 
         public void Configure(IApplicationBuilder app)
         {
+            app.UseRouting();
+
             app.UseHttpCacheHeaders();
+
+            app.UseEndpoints(endpoints =>
+            {
+                endpoints.MapControllerRoute(
+                    name: "default",
+                    pattern: "{controller=Home}/{action=Index}/{id?}");
+            });
 
             app.Run(async context =>
             {
