@@ -63,6 +63,19 @@ public IEnumerable<string> Get()
 ```
 Both override the global options.  Action-level configuration overrides controller-level configuration.
 
+# Ignoring cache headers / eTag generation
+
+You don't always want tags / headers to be generated for all resources (e.g.: for a large file).  You can ignore generation by applying the HttpCacheIgnore attribute at controller or action level. 
+
+```
+[HttpGet]
+[HttpCacheIgnore]
+public IEnumerable<string> Get()
+{
+    return new[] { "value1", "value2" };
+}
+```
+
 # Marking for Invalidation (v5 onwards)
 Cache invalidation essentially means wiping a response from the cache because you know it isn't the correct version anymore. Caches often partially automate this (a response can be invalidated when it becomes stale, for example) and/or expose an API to manually invalidate items.  
 
