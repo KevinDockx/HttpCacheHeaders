@@ -30,7 +30,7 @@ app.UseHttpCacheHeaders();
 app.UseEndpoints(...);
 ```
 
-# Configuring options
+# Configuring Options
 
 The middleware allows customization of how headers are generated.  The AddHttpCacheHeaders() method has overloads for configuring options related to expiration, validation or both.  
 
@@ -63,7 +63,7 @@ public IEnumerable<string> Get()
 ```
 Both override the global options.  Action-level configuration overrides controller-level configuration.
 
-# Ignoring cache headers / eTag generation
+# Ignoring Cache Headers / eTag Generation
 
 You don't always want tags / headers to be generated for all resources (e.g.: for a large file).  You can ignore generation by applying the HttpCacheIgnore attribute at controller or action level. 
 
