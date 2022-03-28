@@ -63,21 +63,36 @@ namespace Marvin.Cache.Headers.Stores
         /// </summary>
         /// <param name="valueToMatch">The value to match as (part of) the key</param>
         /// <returns></returns>
-        public Task<IEnumerable<StoreKey>> FindStoreKeysByKeyPartAsync(string valueToMatch)
+        public Task<IEnumerable<StoreKey>> FindStoreKeysByKeyPartAsync(string valueToMatch, 
+            bool ignoreCase)
         {
             var lstStoreKeysToReturn = new List<StoreKey>();
 
             // search for keys that contain valueToMatch
-            valueToMatch = valueToMatch.ToLowerInvariant();             
-
-            foreach (var key in _storeKeyStore.Keys
-                .Where(k => k.Contains(valueToMatch)))
+            if (ignoreCase)
             {
-                if (_storeKeyStore.TryGetValue(key, out StoreKey storeKey))
+                valueToMatch = valueToMatch.ToLowerInvariant();
+
+                foreach (var key in _storeKeyStore.Keys
+                .Where(k => k.ToLowerInvariant().Contains(valueToMatch)))
                 {
-                    lstStoreKeysToReturn.Add(storeKey);
+                    if (_storeKeyStore.TryGetValue(key, out StoreKey storeKey))
+                    {
+                        lstStoreKeysToReturn.Add(storeKey);
+                    }
                 }
             }
+            else
+            {
+                foreach (var key in _storeKeyStore.Keys
+                 .Where(k => k.Contains(valueToMatch)))
+                {
+                    if (_storeKeyStore.TryGetValue(key, out StoreKey storeKey))
+                    {
+                        lstStoreKeysToReturn.Add(storeKey);
+                    }
+                }
+            }            
 
             return Task.FromResult(lstStoreKeysToReturn.AsEnumerable());
         }

@@ -11,14 +11,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Marvin.Cache.Headers.Test",
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Marvin.Cache.Headers", "src\Marvin.Cache.Headers\Marvin.Cache.Headers.csproj", "{CDE1E3DF-1161-494E-B910-7A99A3E8B0C0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Marvin.Cache.Headers.Sample.NET6", "sample\Marvin.Cache.Headers.Sample.NET6\Marvin.Cache.Headers.Sample.NET6.csproj", "{08841873-CBB9-4E1A-92A3-4520DB27F764}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "01. Cache headers middleware", "01. Cache headers middleware", "{11D94255-869C-439F-8598-2453F58D4D4C}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "02. Samples", "02. Samples", "{9BF59485-942E-4AAA-A542-644518616E5F}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "03. Tests", "03. Tests", "{A82B2586-68B7-480B-846F-8BD184D90F1C}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -37,19 +29,9 @@ Global
 		{CDE1E3DF-1161-494E-B910-7A99A3E8B0C0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CDE1E3DF-1161-494E-B910-7A99A3E8B0C0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CDE1E3DF-1161-494E-B910-7A99A3E8B0C0}.Release|Any CPU.Build.0 = Release|Any CPU
-		{08841873-CBB9-4E1A-92A3-4520DB27F764}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{08841873-CBB9-4E1A-92A3-4520DB27F764}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{08841873-CBB9-4E1A-92A3-4520DB27F764}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{08841873-CBB9-4E1A-92A3-4520DB27F764}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
-	EndGlobalSection
-	GlobalSection(NestedProjects) = preSolution
-		{EF9AFF36-5688-4818-A463-0F8AA6F80419} = {9BF59485-942E-4AAA-A542-644518616E5F}
-		{714C7259-D574-490C-A04F-9F9A47295CE7} = {A82B2586-68B7-480B-846F-8BD184D90F1C}
-		{CDE1E3DF-1161-494E-B910-7A99A3E8B0C0} = {11D94255-869C-439F-8598-2453F58D4D4C}
-		{08841873-CBB9-4E1A-92A3-4520DB27F764} = {9BF59485-942E-4AAA-A542-644518616E5F}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {1DB7EC6B-6966-4A99-9FCA-F93364450822}
