@@ -90,11 +90,8 @@ namespace Marvin.Cache.Headers
 
             _validatorValueInvalidator = validatorValueInvalidator
                 ?? throw new ArgumentNullException(nameof(validatorValueInvalidator));
-             
-            var hasHttpCacheIgnoreAttribute = httpContext.GetEndpoint()?.Metadata
-                .Any(m => m is HttpCacheIgnoreAttribute); 
 
-            if (hasHttpCacheIgnoreAttribute.HasValue && hasHttpCacheIgnoreAttribute.Value)
+            if (ShouldCachingBeIgnored(httpContext))
             {                
                 // continue with the next delegate in line
                 await _next.Invoke(httpContext);
@@ -115,6 +112,25 @@ namespace Marvin.Cache.Headers
             }
 
             await HandleResponse(httpContext);
+        }
+
+        private bool ShouldCachingBeIgnored(HttpContext httpContext)
+        {
+
+            var hasHttpCacheIgnoreAttribute = httpContext.GetEndpoint()?.Metadata
+                .Any(m => m is HttpCacheIgnoreAttribute);
+
+            if (hasHttpCacheIgnoreAttribute.HasValue && hasHttpCacheIgnoreAttribute.Value)
+            {
+                return true;
+            }
+
+            if (_httpCacheHeadersMiddlewareOptions.IgnoreCaching)
+            {
+                return true;
+            }
+
+            return false;
         }
 
         private async Task<bool> GetOrHeadIndicatesResourceStillValid(HttpContext httpContext)
