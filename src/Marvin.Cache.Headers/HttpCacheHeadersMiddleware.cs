@@ -31,6 +31,7 @@ namespace Marvin.Cache.Headers
         private readonly IStoreKeyGenerator _storeKeyGenerator;
         private readonly IETagGenerator _eTagGenerator;
         private readonly ILastModifiedInjector _lastModifiedInjector;
+        private readonly IOptions<HttpCacheHeadersMiddlewareOptions> _httpCacheHeadersMiddlewareOptions;
         private readonly ValidationModelOptions _validationModelOptions;
         private readonly ExpirationModelOptions _expirationModelOptions;
 
@@ -44,12 +45,18 @@ namespace Marvin.Cache.Headers
             IStoreKeyGenerator storeKeyGenerator,
             IETagGenerator eTagGenerator,
             ILastModifiedInjector lastModifiedInjector,
-            IOptions<ExpirationModelOptions> expirationModelOptions,
+            IOptions<HttpCacheHeadersMiddlewareOptions> httpCacheHeadersMiddlewareOptions, 
+            IOptions<ExpirationModelOptions> expirationModelOptions, 
             IOptions<ValidationModelOptions> validationModelOptions)
         {
             if (loggerFactory == null)
             {
                 throw new ArgumentNullException(nameof(loggerFactory));
+            }
+
+            if (httpCacheHeadersMiddlewareOptions ==null)
+            {
+                throw new ArgumentNullException(nameof(httpCacheHeadersMiddlewareOptions));
             }
 
             if (validationModelOptions == null)
@@ -69,7 +76,7 @@ namespace Marvin.Cache.Headers
             _storeKeyGenerator = storeKeyGenerator ?? throw new ArgumentNullException(nameof(storeKeyGenerator));
             _eTagGenerator = eTagGenerator ?? throw new ArgumentNullException(nameof(eTagGenerator));
             _lastModifiedInjector = lastModifiedInjector ?? throw new ArgumentNullException(nameof(lastModifiedInjector));
-
+            _httpCacheHeadersMiddlewareOptions = httpCacheHeadersMiddlewareOptions;
             _expirationModelOptions = expirationModelOptions.Value;
             _validationModelOptions = validationModelOptions.Value;
 
