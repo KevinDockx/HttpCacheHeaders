@@ -31,6 +31,7 @@ namespace Marvin.Cache.Headers
         private readonly IStoreKeyGenerator _storeKeyGenerator;
         private readonly IETagGenerator _eTagGenerator;
         private readonly ILastModifiedInjector _lastModifiedInjector;
+        private readonly HttpCacheHeadersMiddlewareOptions _httpCacheHeadersMiddlewareOptions;
         private readonly ValidationModelOptions _validationModelOptions;
         private readonly ExpirationModelOptions _expirationModelOptions;
 
@@ -44,12 +45,18 @@ namespace Marvin.Cache.Headers
             IStoreKeyGenerator storeKeyGenerator,
             IETagGenerator eTagGenerator,
             ILastModifiedInjector lastModifiedInjector,
-            IOptions<ExpirationModelOptions> expirationModelOptions,
+            IOptions<HttpCacheHeadersMiddlewareOptions> httpCacheHeadersMiddlewareOptions, 
+            IOptions<ExpirationModelOptions> expirationModelOptions, 
             IOptions<ValidationModelOptions> validationModelOptions)
         {
             if (loggerFactory == null)
             {
                 throw new ArgumentNullException(nameof(loggerFactory));
+            }
+
+            if (httpCacheHeadersMiddlewareOptions ==null)
+            {
+                throw new ArgumentNullException(nameof(httpCacheHeadersMiddlewareOptions));
             }
 
             if (validationModelOptions == null)
@@ -69,7 +76,7 @@ namespace Marvin.Cache.Headers
             _storeKeyGenerator = storeKeyGenerator ?? throw new ArgumentNullException(nameof(storeKeyGenerator));
             _eTagGenerator = eTagGenerator ?? throw new ArgumentNullException(nameof(eTagGenerator));
             _lastModifiedInjector = lastModifiedInjector ?? throw new ArgumentNullException(nameof(lastModifiedInjector));
-
+            _httpCacheHeadersMiddlewareOptions = httpCacheHeadersMiddlewareOptions.Value;
             _expirationModelOptions = expirationModelOptions.Value;
             _validationModelOptions = validationModelOptions.Value;
 
@@ -83,11 +90,8 @@ namespace Marvin.Cache.Headers
 
             _validatorValueInvalidator = validatorValueInvalidator
                 ?? throw new ArgumentNullException(nameof(validatorValueInvalidator));
-             
-            var hasHttpCacheIgnoreAttribute = httpContext.GetEndpoint()?.Metadata
-                .Any(m => m is HttpCacheIgnoreAttribute); 
 
-            if (hasHttpCacheIgnoreAttribute.HasValue && hasHttpCacheIgnoreAttribute.Value)
+            if (ShouldCachingBeIgnored(httpContext))
             {                
                 // continue with the next delegate in line
                 await _next.Invoke(httpContext);
@@ -108,6 +112,25 @@ namespace Marvin.Cache.Headers
             }
 
             await HandleResponse(httpContext);
+        }
+
+        private bool ShouldCachingBeIgnored(HttpContext httpContext)
+        {
+
+            var hasHttpCacheIgnoreAttribute = httpContext.GetEndpoint()?.Metadata
+                .Any(m => m is HttpCacheIgnoreAttribute);
+
+            if (hasHttpCacheIgnoreAttribute.HasValue && hasHttpCacheIgnoreAttribute.Value)
+            {
+                return true;
+            }
+
+            if (_httpCacheHeadersMiddlewareOptions.IgnoreCaching)
+            {
+                return true;
+            }
+
+            return false;
         }
 
         private async Task<bool> GetOrHeadIndicatesResourceStillValid(HttpContext httpContext)
