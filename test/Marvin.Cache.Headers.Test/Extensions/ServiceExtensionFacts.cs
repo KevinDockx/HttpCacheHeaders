@@ -58,7 +58,7 @@ namespace Marvin.Cache.Headers.Test.Extensions
                       .ConfigureServices(service =>
                       {
                           service.AddControllers();
-                          service.AddHttpCacheHeaders(options => options.NoCache = true);
+                          service.AddHttpCacheHeaders(validationModelOptionsAction: options => options.NoCache = true);
                       });  
 
             var testServer = new TestServer(hostBuilder);
@@ -118,7 +118,7 @@ namespace Marvin.Cache.Headers.Test.Extensions
             IServiceCollection serviceCollection = null;
 
             Assert.Throws<ArgumentNullException>(
-                () => serviceCollection.AddHttpCacheHeaders(options => options.NoCache = true));
+                () => serviceCollection.AddHttpCacheHeaders(validationModelOptionsAction: options => options.NoCache = true));
         }
 
         [Fact]

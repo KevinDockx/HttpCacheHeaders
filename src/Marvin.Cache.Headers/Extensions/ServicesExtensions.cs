@@ -1,12 +1,12 @@
 ﻿// Any comments, input: @KevinDockx
 // Any issues, requests: https://github.com/KevinDockx/HttpCacheHeaders
 
+using System;
 using Marvin.Cache.Headers;
 using Marvin.Cache.Headers.Interfaces;
 using Marvin.Cache.Headers.Stores;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using System;
 
 namespace Microsoft.Extensions.DependencyInjection
 {
@@ -15,119 +15,6 @@ namespace Microsoft.Extensions.DependencyInjection
     /// </summary>
     public static class ServicesExtensions
     {
-
-        /// <summary>
-        /// Add HttpCacheHeaders services to the specified <see cref="IServiceCollection" />.
-        /// </summary>
-        /// <param name="services">The <see cref="IServiceCollection" /> to add services to.</param>
-        /// <returns>An <see cref="IServiceCollection" />.</returns>
-        public static IServiceCollection AddHttpCacheHeaders(
-          this IServiceCollection services)
-        {
-            AddModularParts(
-                services,
-                null,
-                null,
-                null,
-                null,
-                null);
-
-            return services;
-        }
-
-        /// <summary>
-        /// Add HttpCacheHeaders services to the specified <see cref="IServiceCollection" />.
-        /// </summary>
-        /// <param name="services">The <see cref="IServiceCollection" /> to add services to.</param>
-        /// <param name="dateParserFunc">Func to provide a custom <see cref="IDateParser" /></param>
-        /// <param name="validatorValueStoreFunc">Func to provide a custom <see cref="IValidatorValueStore" /></param>
-        /// <param name="storeKeyGeneratorFunc">Func to provide a custom <see cref="IStoreKeyGenerator" /></param>
-        /// <param name="eTagGeneratorFunc">Func to provide a custom <see cref="IETagGenerator" /></param>
-        /// <param name="lastModifiedInjectorFunc">Func to provide a custom <see cref="ILastModifiedInjector" /></param>
-        /// <returns></returns>
-        public static IServiceCollection AddHttpCacheHeaders(
-            this IServiceCollection services,
-            Func<IServiceProvider, IDateParser> dateParserFunc = null,
-            Func<IServiceProvider, IValidatorValueStore> validatorValueStoreFunc = null,
-            Func<IServiceProvider, IStoreKeyGenerator> storeKeyGeneratorFunc = null,
-            Func<IServiceProvider, IETagGenerator> eTagGeneratorFunc = null,
-            Func<IServiceProvider, ILastModifiedInjector> lastModifiedInjectorFunc = null)
-        { 
-            AddModularParts(
-                services,
-                dateParserFunc,
-                validatorValueStoreFunc,
-                storeKeyGeneratorFunc,
-                eTagGeneratorFunc,
-                lastModifiedInjectorFunc);
-
-            return services;
-        }
-
-        /// <summary>
-        /// Add HttpCacheHeaders services to the specified <see cref="IServiceCollection" />.
-        /// </summary>
-        /// <param name="services">The <see cref="IServiceCollection" /> to add services to.</param>
-        /// <param name="expirationModelOptionsAction">Action to provide custom <see cref="ExpirationModelOptions" /></param>
-        /// <param name="dateParserFunc">Func to provide a custom <see cref="IDateParser" /></param>
-        /// <param name="validatorValueStoreFunc">Func to provide a custom <see cref="IValidatorValueStore" /></param>
-        /// <param name="storeKeyGeneratorFunc">Func to provide a custom <see cref="IStoreKeyGenerator" /></param>
-        /// <param name="eTagGeneratorFunc">Func to provide a custom <see cref="IETagGenerator" /></param>
-        /// <param name="lastModifiedInjectorFunc">Func to provide a custom <see cref="ILastModifiedInjector" /></param>
-        public static IServiceCollection AddHttpCacheHeaders(
-            this IServiceCollection services,
-            Action<ExpirationModelOptions> expirationModelOptionsAction,
-            Func<IServiceProvider, IDateParser> dateParserFunc = null,
-            Func<IServiceProvider, IValidatorValueStore> validatorValueStoreFunc = null,
-            Func<IServiceProvider, IStoreKeyGenerator> storeKeyGeneratorFunc = null,
-            Func<IServiceProvider, IETagGenerator> eTagGeneratorFunc = null,
-            Func<IServiceProvider, ILastModifiedInjector> lastModifiedInjectorFunc = null)
-        {
-            AddConfigureExpirationModelOptions(services, expirationModelOptionsAction);
-
-            AddModularParts(
-                services,
-                dateParserFunc,
-                validatorValueStoreFunc,
-                storeKeyGeneratorFunc,
-                eTagGeneratorFunc,
-                lastModifiedInjectorFunc);
-
-            return services;
-        }
-
-        /// <summary>
-        /// Add HttpCacheHeaders services to the specified <see cref="IServiceCollection" />.
-        /// </summary>
-        /// <param name="services">The <see cref="IServiceCollection" /> to add services to.</param>
-        /// <param name="validationModelOptionsAction">Action to provide custom <see cref="ValidationModelOptions" /></param>
-        /// <param name="dateParserFunc">Func to provide a custom <see cref="IDateParser" /></param>
-        /// <param name="validatorValueStoreFunc">Func to provide a custom <see cref="IValidatorValueStore" /></param>
-        /// <param name="storeKeyGeneratorFunc">Func to provide a custom <see cref="IStoreKeyGenerator" /></param>
-        /// <param name="eTagGeneratorFunc">Func to provide a custom <see cref="IETagGenerator" /></param>
-        /// <param name="lastModifiedInjectorFunc">Func to provide a custom <see cref="ILastModifiedInjector" /></param>
-        public static IServiceCollection AddHttpCacheHeaders(
-            this IServiceCollection services,
-            Action<ValidationModelOptions> validationModelOptionsAction,
-            Func<IServiceProvider, IDateParser> dateParserFunc = null,
-            Func<IServiceProvider, IValidatorValueStore> validatorValueStoreFunc = null,
-            Func<IServiceProvider, IStoreKeyGenerator> storeKeyGeneratorFunc = null,
-            Func<IServiceProvider, IETagGenerator> eTagGeneratorFunc = null,
-            Func<IServiceProvider, ILastModifiedInjector> lastModifiedInjectorFunc = null)
-        {
-            AddConfigureValidationModelOptions(services, validationModelOptionsAction);
-
-            AddModularParts(
-                services,
-                dateParserFunc,
-                validatorValueStoreFunc,
-                storeKeyGeneratorFunc,
-                eTagGeneratorFunc,
-                lastModifiedInjectorFunc);
-
-            return services;
-        }
-
         /// <summary>
         /// Add HttpCacheHeaders services to the specified <see cref="IServiceCollection" />.
         /// </summary>
@@ -141,16 +28,21 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <param name="lastModifiedInjectorFunc">Func to provide a custom <see cref="ILastModifiedInjector" /></param>
         public static IServiceCollection AddHttpCacheHeaders(
             this IServiceCollection services,
-            Action<ExpirationModelOptions> expirationModelOptionsAction,
-            Action<ValidationModelOptions> validationModelOptionsAction,
+            Action<ExpirationModelOptions> expirationModelOptionsAction = null,
+            Action<ValidationModelOptions> validationModelOptionsAction = null,
+            Action<HttpCacheHeadersMiddlewareOptions> middlewareOptionsAction = null,
             Func<IServiceProvider, IDateParser> dateParserFunc = null,
             Func<IServiceProvider, IValidatorValueStore> validatorValueStoreFunc = null,
             Func<IServiceProvider, IStoreKeyGenerator> storeKeyGeneratorFunc = null,
             Func<IServiceProvider, IETagGenerator> eTagGeneratorFunc = null,
             Func<IServiceProvider, ILastModifiedInjector> lastModifiedInjectorFunc = null)
         {
-            AddConfigureExpirationModelOptions(services, expirationModelOptionsAction);
-            AddConfigureValidationModelOptions(services, validationModelOptionsAction);
+            if(expirationModelOptionsAction != null)
+                AddConfigureExpirationModelOptions(services, expirationModelOptionsAction);
+            if(validationModelOptionsAction != null)
+                AddConfigureValidationModelOptions(services, validationModelOptionsAction);
+            if(middlewareOptionsAction != null)
+                AddConfigureMiddlewareOptions(services, middlewareOptionsAction);
 
             AddModularParts(
                 services,
@@ -269,6 +161,23 @@ namespace Microsoft.Extensions.DependencyInjection
             }
 
             services.Add(ServiceDescriptor.Singleton(typeof(IETagGenerator), eTagGeneratorFunc));
+        }
+        
+        private static void AddConfigureMiddlewareOptions(
+            IServiceCollection services,
+            Action<HttpCacheHeadersMiddlewareOptions> configureExpirationModelOptions)
+        {
+            if (services == null)
+            {
+                throw new ArgumentNullException(nameof(services));
+            }
+
+            if (configureExpirationModelOptions == null)
+            {
+                throw new ArgumentNullException(nameof(configureExpirationModelOptions));
+            }
+
+            services.Configure(configureExpirationModelOptions);
         }
 
         private static void AddConfigureExpirationModelOptions(
