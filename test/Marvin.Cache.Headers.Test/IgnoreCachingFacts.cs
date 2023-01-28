@@ -1,7 +1,10 @@
 ﻿// Any comments, input: @KevinDockx
 // Any issues, requests: https://github.com/KevinDockx/HttpCacheHeaders
 
+using System;
+using System.Net.Http;
 using System.Threading.Tasks;
+using Marvin.Cache.Headers.Sample;
 using Marvin.Cache.Headers.Test.TestStartups;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
@@ -19,10 +22,7 @@ namespace Marvin.Cache.Headers.Test
         [Fact]
         public async Task Can_Ignore_Caching_Globally()
         {
-            _hostBuilder.ConfigureServices(services => services.AddOptions<HttpCacheHeadersMiddlewareOptions>()
-                .Configure(options => options.IgnoreCaching = true));
-
-            var server = new TestServer(_hostBuilder);
+            var server = GetTestServer(null, null, options => options.IgnoreCaching = true);
 
             using var client = server.CreateClient();
 
@@ -33,12 +33,18 @@ namespace Marvin.Cache.Headers.Test
             Assert.False(string.IsNullOrWhiteSpace(await response.Content.ReadAsStringAsync()));
         }
 
+        private static TestServer GetTestServer(Action<ValidationModelOptions> validationModelOptions, Action<ExpirationModelOptions> expirationModelOptions, Action<HttpCacheHeadersMiddlewareOptions> middlewareOptions)
+        {
+            var hostBuilder = new WebHostBuilder()
+                .UseStartup(_ => new ConfiguredStartup(validationModelOptions,expirationModelOptions, middlewareOptions));
+
+            return new TestServer(hostBuilder);
+        }
+
         [Fact]
         public async Task Dont_Ignore_Caching_Per_Default()
         {
-            _hostBuilder.ConfigureServices(services => services.AddOptions<HttpCacheHeadersMiddlewareOptions>());
-
-            var server = new TestServer(_hostBuilder);
+            var server = GetTestServer(null, null, null);
 
             using var client = server.CreateClient();
 
@@ -55,10 +61,7 @@ namespace Marvin.Cache.Headers.Test
         [Fact]
         public async Task Can_Ignore_Status_Codes()
         {
-            _hostBuilder.ConfigureServices(services => services.AddOptions<HttpCacheHeadersMiddlewareOptions>()
-                .Configure(options => options.IgnoredStatusCodes = new []{ 400, 500 }));
-
-            var server = new TestServer(_hostBuilder);
+            var server = GetTestServer(null, null, options => options.IgnoredStatusCodes = new[] { 400, 500 });
 
             using var client = server.CreateClient();
 
