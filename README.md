@@ -32,21 +32,30 @@ app.UseEndpoints(...);
 
 # Configuring Options
 
-The middleware allows customization of how headers are generated.  The AddHttpCacheHeaders() method has overloads for configuring options related to expiration, validation or both.  
+The middleware allows customization of how headers are generated. The AddHttpCacheHeaders() method has parameters for configuring options related to expiration, validation and middleware.  
 
-For example, this code will set the max-age directive to 600 seconds, and will add the must-revalidate directive.
+For example, this code will set the max-age directive to 600 seconds, add the must-revalidate directive and ignore caching for all responses with status code 500.
 
 ````csharp
 services.AddHttpCacheHeaders(
-    (expirationModelOptions) =>
+    expirationModelOptions =>
     {
         expirationModelOptions.MaxAge = 600;
     },
-    (validationModelOptions) =>
+    validationModelOptions =>
     {
         validationModelOptions.MustRevalidate = true;
+    },
+    middlewareOptions => 
+    {
+        middlewareOptions.IgnoreStatusCodes = new[] { 500 };
     });
 ````
+
+There are some predefined collections with status codes you can use when you want to ignore:
+- all server errors `HttpStatusCodes.ServerErrors`
+- all client errors `HttpStatusCodes.ClientErrors`
+- all errors `HttpStatusCodes.AllErrors`
 
 # Action (Resource) and Controller-level Header Configuration
 
@@ -247,4 +256,3 @@ public interface IStoreKeyAccessor
     Task<IEnumerable<StoreKey>> FindByCurrentResourcePath();
 }
 ````
-
