@@ -29,7 +29,7 @@ namespace Marvin.Cache.Headers
         private readonly IStoreKeyGenerator _storeKeyGenerator;
         private readonly IETagGenerator _eTagGenerator;
         private readonly ILastModifiedInjector _lastModifiedInjector;
-        private readonly HttpCacheHeadersMiddlewareOptions _httpCacheHeadersMiddlewareOptions;
+        private readonly MiddlewareOptions _middlewareOptions;
         private readonly ValidationModelOptions _validationModelOptions;
         private readonly ExpirationModelOptions _expirationModelOptions;
 
@@ -43,7 +43,7 @@ namespace Marvin.Cache.Headers
             IStoreKeyGenerator storeKeyGenerator,
             IETagGenerator eTagGenerator,
             ILastModifiedInjector lastModifiedInjector,
-            IOptions<HttpCacheHeadersMiddlewareOptions> httpCacheHeadersMiddlewareOptions, 
+            IOptions<MiddlewareOptions> httpCacheHeadersMiddlewareOptions, 
             IOptions<ExpirationModelOptions> expirationModelOptions, 
             IOptions<ValidationModelOptions> validationModelOptions)
         {
@@ -74,7 +74,7 @@ namespace Marvin.Cache.Headers
             _storeKeyGenerator = storeKeyGenerator ?? throw new ArgumentNullException(nameof(storeKeyGenerator));
             _eTagGenerator = eTagGenerator ?? throw new ArgumentNullException(nameof(eTagGenerator));
             _lastModifiedInjector = lastModifiedInjector ?? throw new ArgumentNullException(nameof(lastModifiedInjector));
-            _httpCacheHeadersMiddlewareOptions = httpCacheHeadersMiddlewareOptions.Value;
+            _middlewareOptions = httpCacheHeadersMiddlewareOptions.Value;
             _expirationModelOptions = expirationModelOptions.Value;
             _validationModelOptions = validationModelOptions.Value;
 
@@ -123,7 +123,7 @@ namespace Marvin.Cache.Headers
                 return true;
             }
 
-            if (_httpCacheHeadersMiddlewareOptions.IgnoreCaching)
+            if (_middlewareOptions.IgnoreCaching)
             {
                 return true;
             }
@@ -262,7 +262,7 @@ namespace Marvin.Cache.Headers
 
         private bool ShouldResponseBeIgnored(HttpContext httpContext)
         {
-            var isResponseStatusCodeIgnored = _httpCacheHeadersMiddlewareOptions.IgnoredStatusCodes.Contains(httpContext.Response.StatusCode);
+            var isResponseStatusCodeIgnored = _middlewareOptions.IgnoredStatusCodes.Contains(httpContext.Response.StatusCode);
 
             if (isResponseStatusCodeIgnored)
                 return true;

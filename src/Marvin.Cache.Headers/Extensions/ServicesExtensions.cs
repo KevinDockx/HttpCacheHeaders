@@ -30,7 +30,7 @@ namespace Microsoft.Extensions.DependencyInjection
             this IServiceCollection services,
             Action<ExpirationModelOptions> expirationModelOptionsAction = null,
             Action<ValidationModelOptions> validationModelOptionsAction = null,
-            Action<HttpCacheHeadersMiddlewareOptions> middlewareOptionsAction = null,
+            Action<MiddlewareOptions> middlewareOptionsAction = null,
             Func<IServiceProvider, IDateParser> dateParserFunc = null,
             Func<IServiceProvider, IValidatorValueStore> validatorValueStoreFunc = null,
             Func<IServiceProvider, IStoreKeyGenerator> storeKeyGeneratorFunc = null,
@@ -165,7 +165,7 @@ namespace Microsoft.Extensions.DependencyInjection
         
         private static void AddConfigureMiddlewareOptions(
             IServiceCollection services,
-            Action<HttpCacheHeadersMiddlewareOptions> configureExpirationModelOptions)
+            Action<MiddlewareOptions> configureExpirationModelOptions)
         {
             if (services == null)
             {

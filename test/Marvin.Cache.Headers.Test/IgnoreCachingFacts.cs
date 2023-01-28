@@ -33,7 +33,7 @@ namespace Marvin.Cache.Headers.Test
             Assert.False(string.IsNullOrWhiteSpace(await response.Content.ReadAsStringAsync()));
         }
 
-        private static TestServer GetTestServer(Action<ValidationModelOptions> validationModelOptions, Action<ExpirationModelOptions> expirationModelOptions, Action<HttpCacheHeadersMiddlewareOptions> middlewareOptions)
+        private static TestServer GetTestServer(Action<ValidationModelOptions> validationModelOptions, Action<ExpirationModelOptions> expirationModelOptions, Action<MiddlewareOptions> middlewareOptions)
         {
             var hostBuilder = new WebHostBuilder()
                 .UseStartup(_ => new ConfiguredStartup(validationModelOptions,expirationModelOptions, middlewareOptions));

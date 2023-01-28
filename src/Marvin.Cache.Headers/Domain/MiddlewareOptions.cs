@@ -9,7 +9,7 @@ namespace Marvin.Cache.Headers
     /// <summary>
     /// Options that have to do with the HttpCacheHeadersMiddleware, mainly with ignoring caching globally.
     /// </summary>
-    public class HttpCacheHeadersMiddlewareOptions
+    public class MiddlewareOptions
     {
         /// <summary>
         /// Ignore caching on a global level

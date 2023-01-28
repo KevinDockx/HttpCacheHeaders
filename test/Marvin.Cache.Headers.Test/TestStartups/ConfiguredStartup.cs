@@ -13,9 +13,9 @@ namespace Marvin.Cache.Headers.Test.TestStartups
     {
         private readonly Action<ValidationModelOptions> _validationModelOptions;
         private readonly Action<ExpirationModelOptions> _expirationModelOptions;
-        private readonly Action<HttpCacheHeadersMiddlewareOptions> _middlewareOptions;
+        private readonly Action<MiddlewareOptions> _middlewareOptions;
 
-        public ConfiguredStartup(Action<ValidationModelOptions> validationModelOptions, Action<ExpirationModelOptions> expirationModelOptions, Action<HttpCacheHeadersMiddlewareOptions> middlewareOptions)
+        public ConfiguredStartup(Action<ValidationModelOptions> validationModelOptions, Action<ExpirationModelOptions> expirationModelOptions, Action<MiddlewareOptions> middlewareOptions)
         {
             _validationModelOptions = validationModelOptions;
             _expirationModelOptions = expirationModelOptions;
