@@ -21,6 +21,7 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <param name="services">The <see cref="IServiceCollection" /> to add services to.</param>
         /// <param name="expirationModelOptionsAction">Action to provide custom <see cref="ExpirationModelOptions" /></param>
         /// <param name="validationModelOptionsAction">Action to provide custom <see cref="ValidationModelOptions" /></param>
+        /// <param name="middlewareOptionsAction">Action to provide custom <see cref="MiddlewareOptions" /></param>
         /// <param name="dateParserFunc">Func to provide a custom <see cref="IDateParser" /></param>
         /// <param name="validatorValueStoreFunc">Func to provide a custom <see cref="IValidatorValueStore" /></param>
         /// <param name="storeKeyGeneratorFunc">Func to provide a custom <see cref="IStoreKeyGenerator" /></param>
