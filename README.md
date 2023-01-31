@@ -34,7 +34,7 @@ app.UseEndpoints(...);
 
 The middleware allows customization of how headers are generated. The AddHttpCacheHeaders() method has parameters for configuring options related to expiration, validation and middleware.  
 
-For example, this code will set the max-age directive to 600 seconds, add the must-revalidate directive and ignore caching for all responses with status code 500.
+For example, this code will set the max-age directive to 600 seconds, add the must-revalidate directive and ignore header generation for all responses with status code 500.
 
 ````csharp
 services.AddHttpCacheHeaders(
@@ -85,7 +85,17 @@ public IEnumerable<string> Get()
 }
 ````
 
-# Marking for Invalidation (v5 onwards)
+If you want to globally disable automatic header generation, you can do so by setting DisableGlobalHeaderGeneration on the middleware options to true.
+
+````csharp
+services.AddHttpCacheHeaders(     
+    middlewareOptionsAction: middlewareOptions => 
+    {
+        middlewareOptions.DisableGlobalHeaderGeneration = true;
+    });
+````
+
+# Marking for Invalidation
 Cache invalidation essentially means wiping a response from the cache because you know it isn't the correct version anymore. Caches often partially automate this (a response can be invalidated when it becomes stale, for example) and/or expose an API to manually invalidate items.  
 
 The same goes for the cache headers middleware, which holds a store of records with previously generated cache headers & tags.  Replacement of store key records (/invalidation) is mostly automatic.  Say you're interacting with values/1. First time the backend is hit and you get back an eTag in the response headers. Next request you send is again a GET request with the "If-None-Match"-header set to the eTag: the backend won't be hit. Then, you send a PUT request to values/1, which potentially results in a change; if you send a GET request now, the backend will be hit again.  

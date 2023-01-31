@@ -1,6 +1,7 @@
 ﻿// Any comments, input: @KevinDockx
 // Any issues, requests: https://github.com/KevinDockx/HttpCacheHeaders
 
+using Marvin.Cache.Headers.Utils;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
@@ -22,16 +23,21 @@ namespace Marvin.Cache.Headers.Sample
             // services.AddHttpCacheHeaders();
 
             // Add HttpCacheHeaders services with custom options
-            services.AddHttpCacheHeaders(
-                expirationModelOptions =>
+            services.AddHttpCacheHeaders( 
+                expirationModelOptionsAction: expirationModelOptions =>
                 {
                     expirationModelOptions.MaxAge = 600;
                     expirationModelOptions.SharedMaxAge = 300;
                 },
-                validationModelOptions =>
+                validationModelOptionsAction: validationModelOptions =>
                 {
                     validationModelOptions.MustRevalidate = true;
                     validationModelOptions.ProxyRevalidate = true;
+                }, 
+                middlewareOptionsAction: middlewareOptions =>
+                {
+                    middlewareOptions.DisableGlobalHeaderGeneration = true;
+                    middlewareOptions.IgnoredStatusCodes = HttpStatusCodes.ServerErrors;
                 });
         }
 

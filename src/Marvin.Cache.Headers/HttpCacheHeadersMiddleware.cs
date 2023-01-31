@@ -89,7 +89,7 @@ namespace Marvin.Cache.Headers
             _validatorValueInvalidator = validatorValueInvalidator
                 ?? throw new ArgumentNullException(nameof(validatorValueInvalidator));
 
-            if (ShouldCachingBeIgnored(httpContext))
+            if (ShouldHeaderGenerationBeIgnored(httpContext))
             {                
                 // continue with the next delegate in line
                 await _next.Invoke(httpContext);
@@ -112,8 +112,21 @@ namespace Marvin.Cache.Headers
             await HandleResponse(httpContext);
         }
 
-        private bool ShouldCachingBeIgnored(HttpContext httpContext)
+        private bool ShouldHeaderGenerationBeIgnored(HttpContext httpContext)
         {
+            if (_middlewareOptions.DisableGlobalHeaderGeneration)
+            {
+                // unless an HttpCacheExpiration or HttpCacheValidation 
+                // attribute has been applied, this should result in 
+                // ignoring the middleware.
+                var hasHttpCacheExpirationOrValidationAttribute = httpContext.GetEndpoint()?.Metadata
+                    .Any(m => m is HttpCacheExpirationAttribute || m is HttpCacheValidationAttribute);
+
+                if (!(hasHttpCacheExpirationOrValidationAttribute.HasValue && hasHttpCacheExpirationOrValidationAttribute.Value))
+                {
+                    return true;
+                } 
+            }
 
             var hasHttpCacheIgnoreAttribute = httpContext.GetEndpoint()?.Metadata
                 .Any(m => m is HttpCacheIgnoreAttribute);
@@ -121,12 +134,7 @@ namespace Marvin.Cache.Headers
             if (hasHttpCacheIgnoreAttribute.HasValue && hasHttpCacheIgnoreAttribute.Value)
             {
                 return true;
-            }
-
-            if (_middlewareOptions.IgnoreCaching)
-            {
-                return true;
-            }
+            }         
 
             return false;
         }
@@ -265,7 +273,9 @@ namespace Marvin.Cache.Headers
             var isResponseStatusCodeIgnored = _middlewareOptions.IgnoredStatusCodes.Contains(httpContext.Response.StatusCode);
 
             if (isResponseStatusCodeIgnored)
-                return true;
+            { 
+                return true; 
+            }
 
             return false;
         }

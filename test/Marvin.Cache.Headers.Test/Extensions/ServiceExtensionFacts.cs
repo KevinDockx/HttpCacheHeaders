@@ -75,12 +75,12 @@ namespace Marvin.Cache.Headers.Test.Extensions
                     .ConfigureServices(service =>
                     {
                         service.AddControllers();
-                        service.AddHttpCacheHeaders(middlewareOptionsAction: options => options.IgnoreCaching = true);
+                        service.AddHttpCacheHeaders(middlewareOptionsAction: options => options.DisableGlobalHeaderGeneration = true);
                     });  
 
             var testServer = new TestServer(hostBuilder);
 
-            ValidateServiceOptions<MiddlewareOptions>(testServer, options => options.Value.IgnoreCaching);
+            ValidateServiceOptions<MiddlewareOptions>(testServer, options => options.Value.DisableGlobalHeaderGeneration);
         }
 
         [Fact]
@@ -115,14 +115,14 @@ namespace Marvin.Cache.Headers.Test.Extensions
                         service.AddHttpCacheHeaders(
                             options => options.MaxAge = 1,
                             options => options.NoCache = true,
-                            options => options.IgnoreCaching = true);
+                            options => options.DisableGlobalHeaderGeneration = true);
                     }); 
 
             var testServer = new TestServer(hostBuilder);
 
             ValidateServiceOptions<ExpirationModelOptions>(testServer, options => options.Value.MaxAge == 1);
             ValidateServiceOptions<ValidationModelOptions>(testServer, options => options.Value.NoCache);
-            ValidateServiceOptions<MiddlewareOptions>(testServer, options => options.Value.IgnoreCaching);
+            ValidateServiceOptions<MiddlewareOptions>(testServer, options => options.Value.DisableGlobalHeaderGeneration);
         }
 
         private static void ValidateServiceOptions<T>(TestServer testServer, Func<IOptions<T>, bool> validOptions) where T : class, new()

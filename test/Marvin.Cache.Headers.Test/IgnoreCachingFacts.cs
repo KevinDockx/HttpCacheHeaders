@@ -14,9 +14,9 @@ namespace Marvin.Cache.Headers.Test;
 public class IgnoreCachingFacts
 {
     [Fact]
-    public async Task Can_Ignore_Caching_Globally()
+    public async Task Can_Ignore_Header_Generation_Globally()
     {
-        var server = GetTestServer(null, null, options => options.IgnoreCaching = true);
+        var server = GetTestServer(null, null, options => options.DisableGlobalHeaderGeneration = true);
 
         using var client = server.CreateClient();
 
