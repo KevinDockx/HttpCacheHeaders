@@ -14,8 +14,6 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using Marvin.Cache.Headers.Extensions;
 using Marvin.Cache.Headers.Domain;
-using Microsoft.AspNetCore.Http.Features;
-using Microsoft.AspNetCore.Routing;
 
 namespace Marvin.Cache.Headers
 {
@@ -31,7 +29,7 @@ namespace Marvin.Cache.Headers
         private readonly IStoreKeyGenerator _storeKeyGenerator;
         private readonly IETagGenerator _eTagGenerator;
         private readonly ILastModifiedInjector _lastModifiedInjector;
-        private readonly HttpCacheHeadersMiddlewareOptions _httpCacheHeadersMiddlewareOptions;
+        private readonly MiddlewareOptions _middlewareOptions;
         private readonly ValidationModelOptions _validationModelOptions;
         private readonly ExpirationModelOptions _expirationModelOptions;
 
@@ -45,7 +43,7 @@ namespace Marvin.Cache.Headers
             IStoreKeyGenerator storeKeyGenerator,
             IETagGenerator eTagGenerator,
             ILastModifiedInjector lastModifiedInjector,
-            IOptions<HttpCacheHeadersMiddlewareOptions> httpCacheHeadersMiddlewareOptions, 
+            IOptions<MiddlewareOptions> middlewareOptions,
             IOptions<ExpirationModelOptions> expirationModelOptions, 
             IOptions<ValidationModelOptions> validationModelOptions)
         {
@@ -54,9 +52,9 @@ namespace Marvin.Cache.Headers
                 throw new ArgumentNullException(nameof(loggerFactory));
             }
 
-            if (httpCacheHeadersMiddlewareOptions ==null)
+            if (middlewareOptions ==null)
             {
-                throw new ArgumentNullException(nameof(httpCacheHeadersMiddlewareOptions));
+                throw new ArgumentNullException(nameof(middlewareOptions));
             }
 
             if (validationModelOptions == null)
@@ -76,7 +74,7 @@ namespace Marvin.Cache.Headers
             _storeKeyGenerator = storeKeyGenerator ?? throw new ArgumentNullException(nameof(storeKeyGenerator));
             _eTagGenerator = eTagGenerator ?? throw new ArgumentNullException(nameof(eTagGenerator));
             _lastModifiedInjector = lastModifiedInjector ?? throw new ArgumentNullException(nameof(lastModifiedInjector));
-            _httpCacheHeadersMiddlewareOptions = httpCacheHeadersMiddlewareOptions.Value;
+            _middlewareOptions = middlewareOptions.Value;
             _expirationModelOptions = expirationModelOptions.Value;
             _validationModelOptions = validationModelOptions.Value;
 
@@ -125,7 +123,7 @@ namespace Marvin.Cache.Headers
                 return true;
             }
 
-            if (_httpCacheHeadersMiddlewareOptions.IgnoreCaching)
+            if (_middlewareOptions.IgnoreCaching)
             {
                 return true;
             }
@@ -196,22 +194,25 @@ namespace Marvin.Cache.Headers
 
                 isContinuation = true;
 
-                // Grab possible cache overrides from the method
-                var expirationModelOptions = httpContext.ExpirationModelOptionsOrDefault(_expirationModelOptions);
-                var validationModelOptions = httpContext.ValidationModelOptionsOrDefault(_validationModelOptions);
+                if (!ShouldResponseBeIgnored(httpContext))
+                {
+                    // Grab possible cache overrides from the method
+                    var expirationModelOptions = httpContext.ExpirationModelOptionsOrDefault(_expirationModelOptions);
+                    var validationModelOptions = httpContext.ValidationModelOptionsOrDefault(_validationModelOptions);
 
-                // Handle the response (expiration, validation, vary headers)
+                    // Handle the response (expiration, validation, vary headers)
 
-                // Handle expiration: Expires & Cache-Control headers
-                // (these are also added for 304 / 412 responses)
-                await GenerateExpirationHeadersOnResponse(httpContext, expirationModelOptions, validationModelOptions);
+                    // Handle expiration: Expires & Cache-Control headers
+                    // (these are also added for 304 / 412 responses)
+                    await GenerateExpirationHeadersOnResponse(httpContext, expirationModelOptions, validationModelOptions);
 
-                // Handle validation: ETag and Last-Modified headers
-                await GenerateValidationHeadersOnResponse(httpContext);
+                    // Handle validation: ETag and Last-Modified headers
+                    await GenerateValidationHeadersOnResponse(httpContext);
 
-                // Generate Vary headers on the response
-                GenerateVaryHeadersOnResponse(httpContext, validationModelOptions);
-
+                    // Generate Vary headers on the response
+                    GenerateVaryHeadersOnResponse(httpContext, validationModelOptions);
+                }
+                
                 // reset the buffer, read out the contents & copy it to the original stream.  This
                 // will ensure our changes to the buffer are applied to the original stream.
                 buffer.Seek(0, SeekOrigin.Begin);
@@ -257,6 +258,16 @@ namespace Marvin.Cache.Headers
                     await _store.RemoveAsync(key);
                 }
             }
+        }
+
+        private bool ShouldResponseBeIgnored(HttpContext httpContext)
+        {
+            var isResponseStatusCodeIgnored = _middlewareOptions.IgnoredStatusCodes.Contains(httpContext.Response.StatusCode);
+
+            if (isResponseStatusCodeIgnored)
+                return true;
+
+            return false;
         }
 
         private async Task<bool> ConditionalGetOrHeadIsValid(HttpContext httpContext)
