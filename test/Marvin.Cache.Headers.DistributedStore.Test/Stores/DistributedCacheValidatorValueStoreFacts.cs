@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Marvin.Cache.Headers.DistributedStore.Interfaces;
 using Microsoft.Extensions.Caching.Distributed;
@@ -47,5 +48,6 @@ public class DistributedCacheValidatorValueStoreFacts
         var distributedCacheValidatorValueStore =new DistributedCacheValidatorValueStore(distributedCache.Object, distributedCacheKeyRetriever.Object);
         var exception = await Record.ExceptionAsync(() => distributedCacheValidatorValueStore.GetAsync(key));
         Assert.IsType<ArgumentNullException>(exception);
+        distributedCache.Verify(x =>x.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 }
