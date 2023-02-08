@@ -20,6 +20,10 @@ namespace Marvin.Cache.Headers.DistributedStore.Test.Stores
 
         public async Task<ValidatorValue> GetAsync(StoreKey key)
         {
+            if (key == null)
+            {
+                throw new ArgumentNullException(nameof(key));
+            }
             throw new NotImplementedException();
         }
 
