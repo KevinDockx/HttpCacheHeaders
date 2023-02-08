@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using Marvin.Cache.Headers.DistributedStore.Interfaces;
 using Marvin.Cache.Headers.Interfaces;
@@ -23,6 +24,12 @@ namespace Marvin.Cache.Headers.DistributedStore.Test.Stores
             if (key == null)
             {
                 throw new ArgumentNullException(nameof(key));
+            }
+
+            var result = await _distributedCache.GetAsync(key.ToString(), CancellationToken.None);
+            if (result == null)
+            {
+                return null;
             }
             throw new NotImplementedException();
         }
