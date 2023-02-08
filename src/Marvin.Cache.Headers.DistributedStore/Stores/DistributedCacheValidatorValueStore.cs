@@ -12,6 +12,11 @@ namespace Marvin.Cache.Headers.DistributedStore.Test.Stores
             {
                 throw new ArgumentNullException(nameof(distributedCache));
             }
+
+            if (distributedCacheKeyRetriever == null)
+            {
+                throw new ArgumentNullException(nameof(distributedCacheKeyRetriever));
+            }
             
             throw new NotImplementedException();
         }
