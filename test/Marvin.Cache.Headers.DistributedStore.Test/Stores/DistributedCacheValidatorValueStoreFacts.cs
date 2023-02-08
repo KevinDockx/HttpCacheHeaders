@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Marvin.Cache.Headers.DistributedStore.Interfaces;
@@ -49,5 +50,24 @@ public class DistributedCacheValidatorValueStoreFacts
         var exception = await Record.ExceptionAsync(() => distributedCacheValidatorValueStore.GetAsync(key));
         Assert.IsType<ArgumentNullException>(exception);
         distributedCache.Verify(x =>x.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+    
+    [Fact]
+    public async Task GetAsync_Returns_Null_When_The_Key_Is_Not_In_The_Cache()
+    {
+        var distributedCache = new Mock<IDistributedCache>();
+        var distributedCacheKeyRetriever = new Mock<IRetrieveDistributedCacheKeys>();
+        var key = new StoreKey
+        {
+            { "resourcePath", "/v1/gemeenten/11057" },
+            { "queryString", string.Empty },
+            { "requestHeaderValues", string.Join("-", new List<string> {"text/plain", "gzip"})}
+        };
+        var keyString = key.ToString();
+        distributedCache.Setup(x => x.GetAsync(keyString, CancellationToken.None)).Returns(Task.FromResult<byte[]?>(null));
+        var distributedCacheValidatorValueStore = new DistributedCacheValidatorValueStore(distributedCache.Object, distributedCacheKeyRetriever.Object);
+        var result = await distributedCacheValidatorValueStore.GetAsync(key);
+        Assert.Null(result);
+        distributedCache.Verify(x => x.GetAsync(It.Is<string>(x =>x.Equals(keyString, StringComparison.InvariantCulture)), It.IsAny<CancellationToken>()), Times.Once);
     }
 }
