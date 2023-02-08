@@ -29,6 +29,8 @@
 	</ItemGroup>
 	
 	<ItemGroup>
-	  <Folder Include="Stores\" />
+	  <Reference Include="Microsoft.Extensions.Caching.Abstractions">
+	    <HintPath>..\..\..\..\..\..\Program Files\dotnet\shared\Microsoft.AspNetCore.App\6.0.13\Microsoft.Extensions.Caching.Abstractions.dll</HintPath>
+	  </Reference>
 	</ItemGroup> 
 </Project>
