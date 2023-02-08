@@ -29,12 +29,7 @@ namespace Marvin.Cache.Headers.DistributedStore.Test.Stores
             }
 
             var result = await _distributedCache.GetAsync(key.ToString(), CancellationToken.None);
-            if (result == null)
-            {
-                return null;
-            }
-
-            return CreateValidatorValue(result);
+            return result == null ? null : CreateValidatorValue(result);
         }
 
         private ValidatorValue CreateValidatorValue(byte[] validatorValueBytes)
