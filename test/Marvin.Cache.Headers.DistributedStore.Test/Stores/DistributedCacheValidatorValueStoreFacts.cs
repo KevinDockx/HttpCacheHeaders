@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Marvin.Cache.Headers.DistributedStore.Interfaces;
@@ -70,4 +72,28 @@ public class DistributedCacheValidatorValueStoreFacts
         Assert.Null(result);
         distributedCache.Verify(x => x.GetAsync(It.Is<string>(x =>x.Equals(keyString, StringComparison.InvariantCulture)), It.IsAny<CancellationToken>()), Times.Once);
     }
+
+    [Fact]
+    public async Task GetAsync_Returns_The_Value_From_The_Cache_When_The_Key_Is_Found_In_The_Cache()
+    {
+        var distributedCache = new Mock<IDistributedCache>();
+        var distributedCacheKeyRetriever = new Mock<IRetrieveDistributedCacheKeys>();
+        var key = new StoreKey
+        {
+            { "resourcePath", "/v1/gemeenten/11057" },
+            { "queryString", string.Empty },
+            { "requestHeaderValues", string.Join("-", new List<string> {"text/plain", "gzip"})}
+        };
+        var keyString = key.ToString();
+        var referenceTime = DateTime.UtcNow;
+        var eTag = new ValidatorValue(new ETag(ETagType.Strong, "test"), referenceTime);
+        var eTagString = $"{ETagType.Strong} Value=\"Test\" LastModified ={referenceTime.ToString(CultureInfo.InvariantCulture)}";
+        var eTagBytes = Encoding.UTF8.GetBytes(eTagString);
+        distributedCache.Setup(x => x.GetAsync(keyString, CancellationToken.None)).ReturnsAsync(eTagBytes);
+        var distributedCacheValidatorValueStore = new DistributedCacheValidatorValueStore(distributedCache.Object, distributedCacheKeyRetriever.Object);
+        var result = await distributedCacheValidatorValueStore.GetAsync(key);
+        Assert.Equal(result, eTag);
+        distributedCache.Verify(x => x.GetAsync(It.Is<string>(x => x.Equals(keyString, StringComparison.InvariantCulture)), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
 }
