@@ -6,19 +6,13 @@ namespace Marvin.Cache.Headers.DistributedStore.Test.Stores
 {
     public class DistributedCacheValidatorValueStore
     {
+        private readonly IDistributedCache _distributedCache;
+        private readonly IRetrieveDistributedCacheKeys _distributedCacheKeyRetriever;
+
         public DistributedCacheValidatorValueStore(IDistributedCache distributedCache, IRetrieveDistributedCacheKeys distributedCacheKeyRetriever)
         {
-            if (distributedCache == null)
-            {
-                throw new ArgumentNullException(nameof(distributedCache));
-            }
-
-            if (distributedCacheKeyRetriever == null)
-            {
-                throw new ArgumentNullException(nameof(distributedCacheKeyRetriever));
-            }
-            
-            throw new NotImplementedException();
+            _distributedCache = distributedCache ?? throw new ArgumentNullException(nameof(distributedCache));
+            _distributedCacheKeyRetriever = distributedCacheKeyRetriever ?? throw new ArgumentNullException(nameof(distributedCacheKeyRetriever));
         }
     }
 }
