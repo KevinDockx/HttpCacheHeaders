@@ -13,7 +13,8 @@ public class DistributedCacheValidatorValueStoreFacts
     {
         IDistributedCache distributedCache = null;
         var distributedCacheKeyRetriever = new Mock<IRetrieveDistributedCacheKeys>();
-        Assert.Throws<ArgumentNullException>(() => new DistributedCacheValidatorValueStore(distributedCache, distributedCacheKeyRetriever.Object));
+        var exception = Record.Exception(() => new DistributedCacheValidatorValueStore(distributedCache, distributedCacheKeyRetriever.Object));
+        Assert.IsType<ArgumentNullException>(exception);
     }
 
     [Fact]
@@ -21,7 +22,8 @@ public class DistributedCacheValidatorValueStoreFacts
     {
         var distributedCache = new Mock<IDistributedCache>();
         IRetrieveDistributedCacheKeys distributedCacheKeyRetriever = null;
-        Assert.Throws<ArgumentNullException>(() => new DistributedCacheValidatorValueStore(distributedCache.Object, distributedCacheKeyRetriever));
+        var exception = Record.Exception(() => new DistributedCacheValidatorValueStore(distributedCache.Object, distributedCacheKeyRetriever));
+        Assert.IsType<ArgumentNullException>(exception);
     }
 
     [Fact]
