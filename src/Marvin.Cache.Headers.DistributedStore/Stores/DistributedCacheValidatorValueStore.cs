@@ -8,7 +8,7 @@ using Marvin.Cache.Headers.DistributedStore.Interfaces;
 using Marvin.Cache.Headers.Interfaces;
 using Microsoft.Extensions.Caching.Distributed;
 
-namespace Marvin.Cache.Headers.DistributedStore.Test.Stores
+namespace Marvin.Cache.Headers.DistributedStore.Stores
 {
     public class DistributedCacheValidatorValueStore : IValidatorValueStore
     {
@@ -37,7 +37,7 @@ namespace Marvin.Cache.Headers.DistributedStore.Test.Stores
             var validatorValueUtf8String = Encoding.UTF8.GetString(validatorValueBytes);
             var validatorValueETagTypeString = validatorValueUtf8String[..validatorValueUtf8String.IndexOf(" ", StringComparison.InvariantCulture)];
             var validatorValueETagType = Enum.Parse<ETagType>(validatorValueETagTypeString);
-            var validatorValueETagValueWithLastModifiedDate = validatorValueUtf8String.Substring(validatorValueETagTypeString.Length+7);
+            var validatorValueETagValueWithLastModifiedDate = validatorValueUtf8String[(validatorValueETagTypeString.Length+7)..];
             var lastModifiedIndex = validatorValueETagValueWithLastModifiedDate.LastIndexOf("LastModified=", StringComparison.InvariantCulture);
             var validatorValueETagValueWithQuotes = validatorValueETagValueWithLastModifiedDate.Substring(0, lastModifiedIndex-1);
             var validatorValueETagValue = validatorValueETagValueWithQuotes.Substring(1, validatorValueETagValueWithQuotes.Length - 2); //We can't use String.Replace here as we may have embedded quotes.
