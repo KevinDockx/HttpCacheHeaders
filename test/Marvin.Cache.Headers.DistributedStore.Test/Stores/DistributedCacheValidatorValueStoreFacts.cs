@@ -95,5 +95,4 @@ public class DistributedCacheValidatorValueStoreFacts
         Assert.Equal(result, eTag);
         distributedCache.Verify(x => x.GetAsync(It.Is<string>(x => x.Equals(keyString, StringComparison.InvariantCulture)), It.IsAny<CancellationToken>()), Times.Once);
     }
-
 }

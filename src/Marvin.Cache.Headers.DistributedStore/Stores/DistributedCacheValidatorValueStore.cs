@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Marvin.Cache.Headers.DistributedStore.Interfaces;
@@ -31,6 +33,22 @@ namespace Marvin.Cache.Headers.DistributedStore.Test.Stores
             {
                 return null;
             }
+
+            return CreateValidatorValue(result);
+        }
+
+        private ValidatorValue CreateValidatorValue(byte[] validatorValueBytes)
+        {
+            var validatorValueUtf8String = Encoding.UTF8.GetString(validatorValueBytes);
+            var validatorValueETagTypeString = validatorValueUtf8String[..validatorValueUtf8String.IndexOf(" ", StringComparison.InvariantCulture)];
+            var validatorValueETagType = Enum.Parse<ETagType>(validatorValueETagTypeString);
+            var validatorValueETagValueWithLastModifiedDate = validatorValueUtf8String.Substring(validatorValueETagTypeString.Length+7);
+            var lastModifiedIndex = validatorValueETagValueWithLastModifiedDate.LastIndexOf("LastModified=", StringComparison.InvariantCulture);
+            var validatorValueETagValueWithQuotes = validatorValueETagValueWithLastModifiedDate.Substring(0, lastModifiedIndex-1);
+            var validatorValueETagValue = validatorValueETagValueWithQuotes.Substring(1, validatorValueETagValueWithQuotes.Length - 2); //We can't use String.Replace here as we may have embedded quotes.
+            var lastModifiedDateString = validatorValueETagValueWithLastModifiedDate.Substring(validatorValueETagValueWithLastModifiedDate.LastIndexOf("=", StringComparison.InvariantCulture)+1);
+            DateTimeOffset parsedDateTime =DateTimeOffset.Parse(lastModifiedDateString, CultureInfo.InvariantCulture);
+            return new ValidatorValue(new ETag(validatorValueETagType, validatorValueETagValue), parsedDateTime);
             throw new NotImplementedException();
         }
 
