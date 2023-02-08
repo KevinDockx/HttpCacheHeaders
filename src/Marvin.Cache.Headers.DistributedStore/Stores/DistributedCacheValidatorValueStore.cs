@@ -49,7 +49,6 @@ namespace Marvin.Cache.Headers.DistributedStore.Test.Stores
             var lastModifiedDateString = validatorValueETagValueWithLastModifiedDate.Substring(validatorValueETagValueWithLastModifiedDate.LastIndexOf("=", StringComparison.InvariantCulture)+1);
             DateTimeOffset parsedDateTime =DateTimeOffset.Parse(lastModifiedDateString, CultureInfo.InvariantCulture);
             return new ValidatorValue(new ETag(validatorValueETagType, validatorValueETagValue), parsedDateTime);
-            throw new NotImplementedException();
         }
 
         public async Task SetAsync(StoreKey key, ValidatorValue validatorValue)

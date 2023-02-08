@@ -85,14 +85,16 @@ public class DistributedCacheValidatorValueStoreFacts
             { "requestHeaderValues", string.Join("-", new List<string> {"text/plain", "gzip"})}
         };
         var keyString = key.ToString();
-        var referenceTime = DateTime.UtcNow;
-        var eTag = new ValidatorValue(new ETag(ETagType.Strong, "test"), referenceTime);
+        var referenceTime = new DateTimeOffset(2022, 1, 31, 0, 0, 0, TimeSpan.Zero);
+        var eTag = new ValidatorValue(new ETag(ETagType.Strong, "Test"), referenceTime);
         var eTagString = $"{ETagType.Strong} Value=\"Test\" LastModified={referenceTime.ToString(CultureInfo.InvariantCulture)}";
         var eTagBytes = Encoding.UTF8.GetBytes(eTagString);
         distributedCache.Setup(x => x.GetAsync(keyString, CancellationToken.None)).ReturnsAsync(eTagBytes);
         var distributedCacheValidatorValueStore = new DistributedCacheValidatorValueStore(distributedCache.Object, distributedCacheKeyRetriever.Object);
         var result = await distributedCacheValidatorValueStore.GetAsync(key);
-        Assert.Equal(result, eTag);
+        Assert.Equal(result.LastModified, eTag.LastModified);
+        Assert.Equal(result.ETag.ETagType, eTag.ETag.ETagType);
+        Assert.Equal(result.ETag.Value, eTag.ETag.Value);
         distributedCache.Verify(x => x.GetAsync(It.Is<string>(x => x.Equals(keyString, StringComparison.InvariantCulture)), It.IsAny<CancellationToken>()), Times.Once);
     }
 }
