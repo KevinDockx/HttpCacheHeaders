@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 using Marvin.Cache.Headers.DistributedStore.Interfaces;
 using Microsoft.Extensions.Caching.Distributed;
 using Moq;
@@ -35,5 +36,16 @@ public class DistributedCacheValidatorValueStoreFacts
         var exception = Record.Exception(() => distributedCacheValidatorValueStore =new DistributedCacheValidatorValueStore(distributedCache.Object, distributedCacheKeyRetriever.Object));
         Assert.Null(exception);
         Assert.NotNull(distributedCacheValidatorValueStore);
+    }
+
+    [Fact]
+    public async Task GetAsync_Throws_An_ArgumentNullException_When_The_Key_Is_Null()
+    {
+        var distributedCache = new Mock<IDistributedCache>();
+        var distributedCacheKeyRetriever = new Mock<IRetrieveDistributedCacheKeys>();
+        StoreKey key = null;
+        var distributedCacheValidatorValueStore =new DistributedCacheValidatorValueStore(distributedCache.Object, distributedCacheKeyRetriever.Object);
+        var exception = await Record.ExceptionAsync(() => distributedCacheValidatorValueStore.GetAsync(key));
+        Assert.IsType<ArgumentNullException>(exception);
     }
 }
