@@ -65,6 +65,11 @@ namespace Marvin.Cache.Headers.DistributedStore.Stores
 
         public async Task<bool> RemoveAsync(StoreKey key)
         {
+            if (key == null)
+            {
+                throw new ArgumentNullException(nameof(key));
+            }
+
             throw new NotImplementedException();
         }
 
