@@ -165,4 +165,22 @@ public class DistributedCacheValidatorValueStoreFacts
         Assert.IsType<ArgumentNullException>(exception);
         distributedCache.Verify(x => x.RemoveAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
+
+    [Fact]
+    public async Task RemoveAsync_Attempts_To_Remove_The_Item_From_The_Cache_With_The_Passed_In_Key()
+    {
+        var distributedCache = new Mock<IDistributedCache>();
+        var distributedCacheKeyRetriever = new Mock<IRetrieveDistributedCacheKeys>();
+        var distributedCacheValidatorValueStore = new DistributedCacheValidatorValueStore(distributedCache.Object, distributedCacheKeyRetriever.Object);
+        var key = new StoreKey
+        {
+            { "resourcePath", "/v1/gemeenten/11057" },
+            { "queryString", string.Empty },
+            { "requestHeaderValues", string.Join("-", new List<string> {"text/plain", "gzip"})}
+        };
+        var keyString = key.ToString();
+        var exception = await Record.ExceptionAsync(() => distributedCacheValidatorValueStore.RemoveAsync(key));
+        Assert.Null(exception);
+        distributedCache.Verify(x => x.RemoveAsync(It.Is<string>(x =>x.Equals(keyString, StringComparison.InvariantCulture)), It.IsAny<CancellationToken>()), Times.Once);
+    }
 }
