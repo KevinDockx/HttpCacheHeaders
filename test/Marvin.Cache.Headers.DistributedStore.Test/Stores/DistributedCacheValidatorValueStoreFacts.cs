@@ -147,7 +147,7 @@ public class DistributedCacheValidatorValueStoreFacts
         var keyString = key.ToString();
         var referenceTime = new DateTimeOffset(2022, 1, 31, 0, 0, 0, TimeSpan.Zero);
         var eTag = new ValidatorValue(new ETag(ETagType.Strong, "Test"), referenceTime);
-        var eTagString = $"{ETagType.Strong} Value=\"Test\" LastModified={referenceTime.ToString(CultureInfo.InvariantCulture)}";
+        var eTagString =$"{eTag.ETag.ETagType} Value=\"{eTag.ETag.Value}\" LastModified={eTag.LastModified.ToString(CultureInfo.InvariantCulture)}";
         var eTagBytes = Encoding.UTF8.GetBytes(eTagString);
         distributedCache.Setup(x =>x.SetAsync(keyString, eTagBytes, It.IsAny<DistributedCacheEntryOptions>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         await distributedCacheValidatorValueStore.SetAsync(key, eTag);
