@@ -98,4 +98,18 @@ public class DistributedCacheValidatorValueStoreFacts
         Assert.Equal(result.ETag.Value, eTag.ETag.Value);
         distributedCache.Verify(x => x.GetAsync(It.Is<string>(x => x.Equals(keyString, StringComparison.InvariantCulture)), It.IsAny<CancellationToken>()), Times.Once);
     }
+
+    [Fact]
+    public async Task SetAsync_Throws_An_ArgumentNullException_When_The_Key_Is_null()
+    {
+        var distributedCache = new Mock<IDistributedCache>();
+        var distributedCacheKeyRetriever = new Mock<IRetrieveDistributedCacheKeys>();
+        var distributedCacheValidatorValueStore = new DistributedCacheValidatorValueStore(distributedCache.Object, distributedCacheKeyRetriever.Object);
+        StoreKey key = null;
+        var referenceTime = new DateTimeOffset(2022, 1, 31, 0, 0, 0, TimeSpan.Zero);
+        var eTag = new ValidatorValue(new ETag(ETagType.Strong, "Test"), referenceTime);
+        var exception = await Record.ExceptionAsync(() =>distributedCacheValidatorValueStore.SetAsync(key, eTag));
+        Assert.IsType<ArgumentNullException>(exception);
+        distributedCache.Verify(x => x.SetAsync(It.IsAny<string>(), It.IsAny<byte[]>(), It.IsAny<DistributedCacheEntryOptions>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
 }
