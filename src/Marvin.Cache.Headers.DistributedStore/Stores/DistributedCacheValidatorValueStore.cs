@@ -46,7 +46,7 @@ namespace Marvin.Cache.Headers.DistributedStore.Stores
             return new ValidatorValue(new ETag(validatorValueETagType, validatorValueETagValue), parsedDateTime);
         }
 
-        public async Task SetAsync(StoreKey key, ValidatorValue validatorValue)
+        public Task SetAsync(StoreKey key, ValidatorValue validatorValue)
         {
             if (key == null)
             {
@@ -57,7 +57,7 @@ namespace Marvin.Cache.Headers.DistributedStore.Stores
             {
                 throw new ArgumentNullException(nameof(validatorValue));
             }
-            
+
             throw new NotImplementedException();
         }
 
