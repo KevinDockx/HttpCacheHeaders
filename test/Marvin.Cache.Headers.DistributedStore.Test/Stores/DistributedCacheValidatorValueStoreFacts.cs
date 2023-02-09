@@ -112,4 +112,22 @@ public class DistributedCacheValidatorValueStoreFacts
         Assert.IsType<ArgumentNullException>(exception);
         distributedCache.Verify(x => x.SetAsync(It.IsAny<string>(), It.IsAny<byte[]>(), It.IsAny<DistributedCacheEntryOptions>(), It.IsAny<CancellationToken>()), Times.Never);
     }
+
+    [Fact]
+    public async Task SetAsync_Throws_An_ArgumentNullException_When_The_ValidatorValue_Is_null()
+    {
+        var distributedCache = new Mock<IDistributedCache>();
+        var distributedCacheKeyRetriever = new Mock<IRetrieveDistributedCacheKeys>();
+        var distributedCacheValidatorValueStore = new DistributedCacheValidatorValueStore(distributedCache.Object, distributedCacheKeyRetriever.Object);
+        var key = new StoreKey
+        {
+            { "resourcePath", "/v1/gemeenten/11057" },
+            { "queryString", string.Empty },
+            { "requestHeaderValues", string.Join("-", new List<string> {"text/plain", "gzip"})}
+        };
+        ValidatorValue eTag = null;
+        var exception = await Record.ExceptionAsync(() => distributedCacheValidatorValueStore.SetAsync(key, eTag));
+        Assert.IsType<ArgumentNullException>(exception);
+        distributedCache.Verify(x => x.SetAsync(It.IsAny<string>(), It.IsAny<byte[]>(), It.IsAny<DistributedCacheEntryOptions>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
 }
