@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -129,5 +130,27 @@ public class DistributedCacheValidatorValueStoreFacts
         var exception = await Record.ExceptionAsync(() => distributedCacheValidatorValueStore.SetAsync(key, eTag));
         Assert.IsType<ArgumentNullException>(exception);
         distributedCache.Verify(x => x.SetAsync(It.IsAny<string>(), It.IsAny<byte[]>(), It.IsAny<DistributedCacheEntryOptions>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task SetAsync_Adds_The_ValidatorValue_To_The_Cache_Using_The_Key()
+    {
+        var distributedCache = new Mock<IDistributedCache>();
+        var distributedCacheKeyRetriever = new Mock<IRetrieveDistributedCacheKeys>();
+        var distributedCacheValidatorValueStore = new DistributedCacheValidatorValueStore(distributedCache.Object, distributedCacheKeyRetriever.Object);
+        var key = new StoreKey
+        {
+            { "resourcePath", "/v1/gemeenten/11057" },
+            { "queryString", string.Empty },
+            { "requestHeaderValues", string.Join("-", new List<string> {"text/plain", "gzip"})}
+        };
+        var keyString = key.ToString();
+        var referenceTime = new DateTimeOffset(2022, 1, 31, 0, 0, 0, TimeSpan.Zero);
+        var eTag = new ValidatorValue(new ETag(ETagType.Strong, "Test"), referenceTime);
+        var eTagString = $"{ETagType.Strong} Value=\"Test\" LastModified={referenceTime.ToString(CultureInfo.InvariantCulture)}";
+        var eTagBytes = Encoding.UTF8.GetBytes(eTagString);
+        distributedCache.Setup(x =>x.SetAsync(keyString, eTagBytes, It.IsAny<DistributedCacheEntryOptions>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        await distributedCacheValidatorValueStore.SetAsync(key, eTag);
+        distributedCache.Verify(x => x.SetAsync(It.Is<string>(x =>x.Equals(keyString, StringComparison.InvariantCulture)), It.Is<byte[]>(x =>eTagBytes.SequenceEqual(x)), It.IsAny<DistributedCacheEntryOptions>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 }
