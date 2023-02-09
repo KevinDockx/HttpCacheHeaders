@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Marvin.Cache.Headers.DistributedStore.Interfaces;
 using Marvin.Cache.Headers.DistributedStore.Stores;
+using Microsoft.AspNetCore.DataProtection.KeyManagement;
 using Microsoft.Extensions.Caching.Distributed;
 using Moq;
 using Xunit;
@@ -183,4 +184,18 @@ public class DistributedCacheValidatorValueStoreFacts
         Assert.Null(exception);
         distributedCache.Verify(x => x.RemoveAsync(It.Is<string>(x =>x.Equals(keyString, StringComparison.InvariantCulture)), It.IsAny<CancellationToken>()), Times.Once);
     }
+
+    [Fact]
+    public async Task FindStoreKeysByKeyPartAsync_Throws_An_ArgumentNullException_WhenTheValue_To_Match_Parameter_Is_Null()
+    {
+        var distributedCache = new Mock<IDistributedCache>();
+        var distributedCacheKeyRetriever = new Mock<IRetrieveDistributedCacheKeys>();
+        var distributedCacheValidatorValueStore = new DistributedCacheValidatorValueStore(distributedCache.Object, distributedCacheKeyRetriever.Object);
+        string valueToMatch = null;
+        var ignoreCase = false;
+        var exception = await Record.ExceptionAsync(() => distributedCacheValidatorValueStore.FindStoreKeysByKeyPartAsync(valueToMatch, ignoreCase));
+        Assert.IsType<ArgumentNullException>(exception);
+distributedCacheKeyRetriever.Verify(x =>x.FindStoreKeysByKeyPartAsync(It.IsAny<string>(), It.IsAny<bool>()), Times.Never);
+    }
+
 }
