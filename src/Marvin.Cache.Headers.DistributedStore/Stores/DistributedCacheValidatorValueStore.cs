@@ -52,6 +52,11 @@ namespace Marvin.Cache.Headers.DistributedStore.Stores
             {
                 throw new ArgumentNullException(nameof(key));
             }
+
+            if (validatorValue == null)
+            {
+                throw new ArgumentNullException(nameof(validatorValue));
+            }
             
             throw new NotImplementedException();
         }
