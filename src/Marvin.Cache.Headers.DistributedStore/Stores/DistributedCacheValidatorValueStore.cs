@@ -77,6 +77,10 @@ namespace Marvin.Cache.Headers.DistributedStore.Stores
 
         public async Task<IEnumerable<StoreKey>> FindStoreKeysByKeyPartAsync(string valueToMatch, bool ignoreCase)
         {
+            if (valueToMatch == null)
+            {
+                throw new ArgumentNullException(nameof(valueToMatch));
+            }
             throw new NotImplementedException();
         }
     }
