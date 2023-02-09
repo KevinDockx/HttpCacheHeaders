@@ -70,7 +70,9 @@ namespace Marvin.Cache.Headers.DistributedStore.Stores
                 throw new ArgumentNullException(nameof(key));
             }
 
-            throw new NotImplementedException();
+            var keyString = key.ToString();
+            await _distributedCache.RemoveAsync(keyString);
+            return true;
         }
 
         public async Task<IEnumerable<StoreKey>> FindStoreKeysByKeyPartAsync(string valueToMatch, bool ignoreCase)
