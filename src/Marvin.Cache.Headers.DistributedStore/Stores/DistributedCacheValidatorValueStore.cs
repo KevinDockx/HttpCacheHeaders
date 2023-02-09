@@ -57,8 +57,10 @@ namespace Marvin.Cache.Headers.DistributedStore.Stores
             {
                 throw new ArgumentNullException(nameof(validatorValue));
             }
-
-            throw new NotImplementedException();
+            
+            var eTagString = $"{validatorValue.ETag.ETagType} Value=\"{validatorValue.ETag.Value}\" LastModified={validatorValue.LastModified.ToString(CultureInfo.InvariantCulture)}";
+            var eTagBytes = Encoding.UTF8.GetBytes(eTagString);
+            return _distributedCache.SetAsync(key.ToString(), eTagBytes);
         }
 
         public async Task<bool> RemoveAsync(StoreKey key)
