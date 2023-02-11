@@ -197,5 +197,18 @@ public class DistributedCacheValidatorValueStoreFacts
         Assert.IsType<ArgumentNullException>(exception);
 distributedCacheKeyRetriever.Verify(x =>x.FindStoreKeysByKeyPartAsync(It.IsAny<string>(), It.IsAny<bool>()), Times.Never);
     }
+    
+    [Fact]
+    public async Task FindStoreKeysByKeyPartAsync_Throws_An_ArgumentException_WhenTheValue_To_Match_Parameter_Is_An_Empty_String()
+    {
+        var distributedCache = new Mock<IDistributedCache>();
+        var distributedCacheKeyRetriever = new Mock<IRetrieveDistributedCacheKeys>();
+        var distributedCacheValidatorValueStore = new DistributedCacheValidatorValueStore(distributedCache.Object, distributedCacheKeyRetriever.Object);
+        string valueToMatch = String.Empty;
+        var ignoreCase = false;
+        var exception = await Record.ExceptionAsync(() => distributedCacheValidatorValueStore.FindStoreKeysByKeyPartAsync(valueToMatch, ignoreCase));
+        Assert.IsType<ArgumentException>(exception);
+        distributedCacheKeyRetriever.Verify(x => x.FindStoreKeysByKeyPartAsync(It.IsAny<string>(), It.IsAny<bool>()), Times.Never);
+    }
 
 }
