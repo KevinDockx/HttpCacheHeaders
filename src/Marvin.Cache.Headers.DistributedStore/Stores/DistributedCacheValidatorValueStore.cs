@@ -81,6 +81,11 @@ namespace Marvin.Cache.Headers.DistributedStore.Stores
             {
                 throw new ArgumentNullException(nameof(valueToMatch));
             }
+            else if (valueToMatch.Length is 0)
+            {
+                throw new ArgumentException();
+            }
+            
             throw new NotImplementedException();
         }
     }
