@@ -222,6 +222,6 @@ distributedCacheKeyRetriever.Verify(x =>x.FindStoreKeysByKeyPartAsync(It.IsAny<s
         var distributedCacheValidatorValueStore = new DistributedCacheValidatorValueStore(distributedCache.Object, distributedCacheKeyRetriever.Object);
         var exception = await Record.ExceptionAsync(() => distributedCacheValidatorValueStore.FindStoreKeysByKeyPartAsync(keyPrefix, ignoreCase));
         Assert.Null(exception);
-        distributedCacheKeyRetriever.Verify(x => x.FindStoreKeysByKeyPartAsync(It.Is<string>(y =>y.Equals(expectedKeyPrefix, StringComparison.InvariantCulture)), It.Is<bool>(y =>y ==ignoreCase)), Times.Once);
+        distributedCacheKeyRetriever.Verify(x => x.FindStoreKeysByKeyPartAsync(keyPrefix, ignoreCase), Times.Once);
     }
 }
