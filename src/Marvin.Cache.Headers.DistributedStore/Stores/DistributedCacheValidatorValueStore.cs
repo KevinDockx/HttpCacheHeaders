@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -85,8 +86,9 @@ namespace Marvin.Cache.Headers.DistributedStore.Stores
             {
                 throw new ArgumentException();
             }
-            
-            throw new NotImplementedException();
+
+            var foundKeys = await _distributedCacheKeyRetriever.FindStoreKeysByKeyPartAsync(valueToMatch, ignoreCase);
+            return foundKeys.Select(fk => new StoreKey());
         }
     }
 }
