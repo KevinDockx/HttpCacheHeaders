@@ -211,4 +211,16 @@ distributedCacheKeyRetriever.Verify(x =>x.FindStoreKeysByKeyPartAsync(It.IsAny<s
         distributedCacheKeyRetriever.Verify(x => x.FindStoreKeysByKeyPartAsync(It.IsAny<string>(), It.IsAny<bool>()), Times.Never);
     }
 
+    [Theory]
+    [InlineData("Test", true, "test")]
+    [InlineData("Test", false, "Test")]
+    public async Task FindStoreKeysByKeyPartAsync_AttemptsToFindTheKeysThatStartWithThePassedInKeyPrefix(string keyPrefix, bool ignoreCase, string expectedKeyPrefix)
+    {
+        var distributedCache = new Mock<IDistributedCache>();
+        var distributedCacheKeyRetriever = new Mock<IRetrieveDistributedCacheKeys>();
+        var distributedCacheValidatorValueStore = new DistributedCacheValidatorValueStore(distributedCache.Object, distributedCacheKeyRetriever.Object);
+        var exception = await Record.ExceptionAsync(() => distributedCacheValidatorValueStore.FindStoreKeysByKeyPartAsync(keyPrefix, ignoreCase));
+        Assert.Null(exception);
+        distributedCacheKeyRetriever.Verify(x => x.FindStoreKeysByKeyPartAsync(It.Is<string>(y =>y.Equals(expectedKeyPrefix, StringComparison.InvariantCulture)), It.Is<bool>(y =>y ==ignoreCase)), Times.Once);
+    }
 }
