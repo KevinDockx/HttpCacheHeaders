@@ -218,7 +218,7 @@ distributedCacheKeyRetriever.Verify(x =>x.FindStoreKeysByKeyPartAsync(It.IsAny<s
     {
         var distributedCache = new Mock<IDistributedCache>();
         var distributedCacheKeyRetriever = new Mock<IRetrieveDistributedCacheKeys>();
-        distributedCacheKeyRetriever.Setup(x => x.FindStoreKeysByKeyPartAsync(keyPrefix, ignoreCase));
+        distributedCacheKeyRetriever.Setup(x => x.FindStoreKeysByKeyPartAsync(keyPrefix, ignoreCase)).ReturnsAsync(Enumerable.Empty<string>());
         var distributedCacheValidatorValueStore = new DistributedCacheValidatorValueStore(distributedCache.Object, distributedCacheKeyRetriever.Object);
         var exception = await Record.ExceptionAsync(() => distributedCacheValidatorValueStore.FindStoreKeysByKeyPartAsync(keyPrefix, ignoreCase));
         Assert.Null(exception);
