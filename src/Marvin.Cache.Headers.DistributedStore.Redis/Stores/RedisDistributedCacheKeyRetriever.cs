@@ -9,6 +9,11 @@ namespace Marvin.Cache.Headers.DistributedStore.Redis.Stores
     {
         public RedisDistributedCacheKeyRetriever(IConnectionMultiplexer connectionMultiplexer, IOptions<RedisDistributedCacheKeyRetrieverOptions> redisDistributedCacheKeyRetrieverOptions)
         {
+            if (connectionMultiplexer == null)
+            {
+                throw new ArgumentNullException(nameof(connectionMultiplexer));
+            }
+            
             throw new NotImplementedException();
         }
     }
