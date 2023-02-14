@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -76,7 +77,7 @@ namespace Marvin.Cache.Headers.DistributedStore.Stores
             return true;
         }
 
-        public async Task<IEnumerable<StoreKey>> FindStoreKeysByKeyPartAsync(string valueToMatch, bool ignoreCase)
+        public async IAsyncEnumerable<StoreKey> FindStoreKeysByKeyPartAsync(string valueToMatch, bool ignoreCase)
         {
             if (valueToMatch == null)
             {
@@ -87,8 +88,11 @@ namespace Marvin.Cache.Headers.DistributedStore.Stores
                 throw new ArgumentException();
             }
 
-            var foundKeys = await _distributedCacheKeyRetriever.FindStoreKeysByKeyPartAsync(valueToMatch, ignoreCase);
-            return foundKeys.Select(fk => new StoreKey());
+            var foundKeys = _distributedCacheKeyRetriever.FindStoreKeysByKeyPartAsync(valueToMatch, ignoreCase);
+            await foreach (var foundKey in foundKeys.ConfigureAwait(false))
+            {
+                yield return new StoreKey();
+            }
         }
     }
 }

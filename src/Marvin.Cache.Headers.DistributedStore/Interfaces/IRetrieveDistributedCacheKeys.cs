@@ -5,6 +5,6 @@ namespace Marvin.Cache.Headers.DistributedStore.Interfaces
 {
     public interface IRetrieveDistributedCacheKeys
     {
-        Task<IEnumerable<string>> FindStoreKeysByKeyPartAsync(string valueToMatch, bool ignoreCase);
+        IAsyncEnumerable<string> FindStoreKeysByKeyPartAsync(string valueToMatch, bool ignoreCase);
     }
 }

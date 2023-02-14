@@ -1,15 +1,14 @@
-﻿using System;
+﻿using Marvin.Cache.Headers.DistributedStore.Interfaces;
+using Marvin.Cache.Headers.DistributedStore.Stores;
+using Microsoft.Extensions.Caching.Distributed;
+using Moq;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Marvin.Cache.Headers.DistributedStore.Interfaces;
-using Marvin.Cache.Headers.DistributedStore.Stores;
-using Microsoft.AspNetCore.DataProtection.KeyManagement;
-using Microsoft.Extensions.Caching.Distributed;
-using Moq;
 using Xunit;
 
 namespace Marvin.Cache.Headers.DistributedStore.Test.Stores;
@@ -193,7 +192,7 @@ public class DistributedCacheValidatorValueStoreFacts
         var distributedCacheValidatorValueStore = new DistributedCacheValidatorValueStore(distributedCache.Object, distributedCacheKeyRetriever.Object);
         string valueToMatch = null;
         var ignoreCase = false;
-        var exception = await Record.ExceptionAsync(() => distributedCacheValidatorValueStore.FindStoreKeysByKeyPartAsync(valueToMatch, ignoreCase));
+        var exception = await CaptureTheExceptionIfOneIsThrownFromAnIAsyncEnumerable(() =>distributedCacheValidatorValueStore.FindStoreKeysByKeyPartAsync(valueToMatch, ignoreCase));
         Assert.IsType<ArgumentNullException>(exception);
 distributedCacheKeyRetriever.Verify(x =>x.FindStoreKeysByKeyPartAsync(It.IsAny<string>(), It.IsAny<bool>()), Times.Never);
     }
@@ -206,7 +205,7 @@ distributedCacheKeyRetriever.Verify(x =>x.FindStoreKeysByKeyPartAsync(It.IsAny<s
         var distributedCacheValidatorValueStore = new DistributedCacheValidatorValueStore(distributedCache.Object, distributedCacheKeyRetriever.Object);
         string valueToMatch = String.Empty;
         var ignoreCase = false;
-        var exception = await Record.ExceptionAsync(() => distributedCacheValidatorValueStore.FindStoreKeysByKeyPartAsync(valueToMatch, ignoreCase));
+        var exception = await CaptureTheExceptionIfOneIsThrownFromAnIAsyncEnumerable(() => distributedCacheValidatorValueStore.FindStoreKeysByKeyPartAsync(valueToMatch, ignoreCase));
         Assert.IsType<ArgumentException>(exception);
         distributedCacheKeyRetriever.Verify(x => x.FindStoreKeysByKeyPartAsync(It.IsAny<string>(), It.IsAny<bool>()), Times.Never);
     }
@@ -218,10 +217,28 @@ distributedCacheKeyRetriever.Verify(x =>x.FindStoreKeysByKeyPartAsync(It.IsAny<s
     {
         var distributedCache = new Mock<IDistributedCache>();
         var distributedCacheKeyRetriever = new Mock<IRetrieveDistributedCacheKeys>();
-        distributedCacheKeyRetriever.Setup(x => x.FindStoreKeysByKeyPartAsync(keyPrefix, ignoreCase)).ReturnsAsync(Enumerable.Empty<string>());
+        distributedCacheKeyRetriever.Setup(x => x.FindStoreKeysByKeyPartAsync(keyPrefix, ignoreCase)).Returns(AsyncEnumerable.Empty<string>());
         var distributedCacheValidatorValueStore = new DistributedCacheValidatorValueStore(distributedCache.Object, distributedCacheKeyRetriever.Object);
-        var exception = await Record.ExceptionAsync(() => distributedCacheValidatorValueStore.FindStoreKeysByKeyPartAsync(keyPrefix, ignoreCase));
+        var exception = await CaptureTheExceptionIfOneIsThrownFromAnIAsyncEnumerable(() => distributedCacheValidatorValueStore.FindStoreKeysByKeyPartAsync(keyPrefix, ignoreCase));
         Assert.Null(exception);
         distributedCacheKeyRetriever.Verify(x => x.FindStoreKeysByKeyPartAsync(keyPrefix, ignoreCase), Times.Once);
+    }
+
+    private static async Task<Exception> CaptureTheExceptionIfOneIsThrownFromAnIAsyncEnumerable<T>(Func<IAsyncEnumerable<T>> sequenceGenerator)
+    {
+        try
+        {
+            await foreach (var item in sequenceGenerator())
+            {
+            }
+
+            return null;
+        }
+        catch (Exception e)
+        {
+            return e;
+        }
+
+        return null;
     }
 }
