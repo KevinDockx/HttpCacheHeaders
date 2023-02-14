@@ -63,7 +63,9 @@ namespace Marvin.Cache.Headers.Stores
         /// </summary>
         /// <param name="valueToMatch">The value to match as (part of) the key</param>
         /// <returns></returns>
-        public Task<IEnumerable<StoreKey>> FindStoreKeysByKeyPartAsync(string valueToMatch, 
+#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously - disabled, in-memory implementation doesn't need await.
+        public async IAsyncEnumerable<StoreKey> FindStoreKeysByKeyPartAsync(string valueToMatch,
+#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
             bool ignoreCase)
         {
             var lstStoreKeysToReturn = new List<StoreKey>();
@@ -92,9 +94,12 @@ namespace Marvin.Cache.Headers.Stores
                         lstStoreKeysToReturn.Add(storeKey);
                     }
                 }
-            }            
+            }
 
-            return Task.FromResult(lstStoreKeysToReturn.AsEnumerable());
+            for (int i = 0; i < lstStoreKeysToReturn.Count; i++)
+            {
+                yield return lstStoreKeysToReturn[i];
+            } 
         }
     }
 }

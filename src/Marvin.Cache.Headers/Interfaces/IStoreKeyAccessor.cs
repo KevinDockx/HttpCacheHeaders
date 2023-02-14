@@ -17,13 +17,13 @@ namespace Marvin.Cache.Headers
         /// <param name="valueToMatch">The value to match as part of the key</param>
         /// <param name="ignoreCase">Ignore case when matching (default = true)</param>
         /// <returns></returns>
-        Task<IEnumerable<StoreKey>> FindByKeyPart(string valueToMatch, bool ignoreCase = true);
+        IAsyncEnumerable<StoreKey> FindByKeyPart(string valueToMatch, bool ignoreCase = true);
 
         /// <summary>
         /// Find a  <see cref="StoreKey" /> of which the current resource path is part of the key
         /// </summary>
         /// <param name="ignoreCase">Ignore case when matching (default = true)</param>
         /// <returns></returns>
-        Task<IEnumerable<StoreKey>> FindByCurrentResourcePath(bool ignoreCase = true);
+        IAsyncEnumerable<StoreKey> FindByCurrentResourcePath(bool ignoreCase = true);
     }
 }

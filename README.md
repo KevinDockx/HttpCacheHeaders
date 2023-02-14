@@ -137,6 +137,47 @@ public interface IValidatorValueStore
     /// <param name="validatorValue">The <see cref="ValidatorValue"/> to store.</param>
     /// <returns></returns>
     Task SetAsync(StoreKey key, ValidatorValue validatorValue);
+
+    /// <summary>
+    /// Find one or more keys that contain the inputted valueToMatch 
+    /// </summary>
+    /// <param name="valueToMatch">The value to match as part of the key</param>
+    /// <param name="ignoreCase">Ignore case when matching</param>
+    /// <returns></returns>
+    Task<IEnumerable<StoreKey>> FindStoreKeysByKeyPartAsync(string valueToMatch, bool ignoreCase);
+}
+````
+
+BREAKING CHANGE from v7 onwards: the FindStoreKeysByKeyPartAsync methods return an IAsyncEnumerable<StoreKey> to enable async streaming of results.
+
+````csharp
+/// <summary>
+/// Contract for a store for validator values.  Each item is stored with a <see cref="StoreKey" /> as key```
+/// and a <see cref="ValidatorValue" /> as value (consisting of an ETag and Last-Modified date).   
+/// </summary>
+public interface IValidatorValueStore
+{
+    /// <summary>
+    /// Get a value from the store.
+    /// </summary>
+    /// <param name="key">The <see cref="StoreKey"/> of the value to get.</param>
+    /// <returns></returns>
+    Task<ValidatorValue> GetAsync(StoreKey key);
+    /// <summary>
+    /// Set a value in the store.
+    /// </summary>
+    /// <param name="key">The <see cref="StoreKey"/> of the value to store.</param>
+    /// <param name="validatorValue">The <see cref="ValidatorValue"/> to store.</param>
+    /// <returns></returns>
+    Task SetAsync(StoreKey key, ValidatorValue validatorValue);
+
+    /// <summary>
+    /// Find one or more keys that contain the inputted valueToMatch 
+    /// </summary>
+    /// <param name="valueToMatch">The value to match as part of the key</param>
+    /// <param name="ignoreCase">Ignore case when matching</param>
+    /// <returns></returns>
+    IAsyncEnumerable<StoreKey> FindStoreKeysByKeyPartAsync(string valueToMatch, bool ignoreCase);
 }
 ````
 
@@ -266,3 +307,27 @@ public interface IStoreKeyAccessor
     Task<IEnumerable<StoreKey>> FindByCurrentResourcePath();
 }
 ````
+
+BREAKING CHANGE from v7 onwards: the methods return an IAsyncEnumerable<StoreKey> to enable async streaming of results.
+
+````csharp
+/// <summary>
+/// Contract for finding (a) <see cref="StoreKey" />(s)
+/// </summary>    
+public interface IStoreKeyAccessor
+{
+    /// <summary>
+    /// Find a  <see cref="StoreKey" /> by part of the key
+    /// </summary>
+    /// <param name="valueToMatch">The value to match as part of the key</param>
+    /// <returns></returns>
+    IAsyncEnumerable<StoreKey> FindByKeyPart(string valueToMatch);
+
+    /// <summary>
+    /// Find a  <see cref="StoreKey" /> of which the current resource path is part of the key
+    /// </summary>
+    /// <returns></returns>
+    IAsyncEnumerable<StoreKey> FindByCurrentResourcePath();
+}
+````
+

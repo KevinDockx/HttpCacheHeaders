@@ -69,13 +69,16 @@ namespace Marvin.Cache.Headers.Sample.Controllers
             // remove all items matching part of a resource path
 
             // 1) find the keys matching a certain string
-            var matchingKeysByStringMatch = await _storeKeyAccessor.FindByKeyPart("api/storemanipulation");
-            if (matchingKeysByStringMatch.Any())
+            await foreach (var key in _storeKeyAccessor.FindByKeyPart("api/storemanipulation"))
             {
-                // 2) mark all matches for invalidation
-                await _validatorValueInvalidator.MarkForInvalidation(matchingKeysByStringMatch);
+                // 2) mark them (often just one) for invalidation
+                await _validatorValueInvalidator.MarkForInvalidation(key);
             }
 
+            // note: if you don't want to work with the IAsyncEnumerable, you can
+            // install the https://www.nuget.org/packages/System.Linq.Async/ package
+            // and call ToListAsync() to cast it to a regular list. 
+             
             return NoContent();
         }
 
@@ -87,12 +90,16 @@ namespace Marvin.Cache.Headers.Sample.Controllers
             // remove items based on the current path
 
             // 1) find the keys related to the current resource path
-            var matchingKeysByPath = await _storeKeyAccessor.FindByCurrentResourcePath();
-            if (matchingKeysByPath.Any())
-            {
+            await foreach (var key in _storeKeyAccessor.FindByCurrentResourcePath())
+            {  
                 // 2) mark them (often just one) for invalidation
-                await _validatorValueInvalidator.MarkForInvalidation(matchingKeysByPath);
+                await _validatorValueInvalidator.MarkForInvalidation(key);
             }
+
+            // note: if you don't want to work with the IAsyncEnumerable, you can
+            // install the https://www.nuget.org/packages/System.Linq.Async/ package
+            // and call ToListAsync() to cast it to a regular list.
+
 
             return NoContent();
         }

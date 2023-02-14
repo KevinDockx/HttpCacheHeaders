@@ -40,6 +40,6 @@ namespace Marvin.Cache.Headers.Interfaces
         /// <param name="valueToMatch">The value to match as part of the key</param>
         /// <param name="ignoreCase">Ignore case when matching</param>
         /// <returns></returns>
-        Task<IEnumerable<StoreKey>> FindStoreKeysByKeyPartAsync(string valueToMatch, bool ignoreCase);
+        IAsyncEnumerable<StoreKey> FindStoreKeysByKeyPartAsync(string valueToMatch, bool ignoreCase);
     }
 }

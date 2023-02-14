@@ -32,19 +32,25 @@ namespace Marvin.Cache.Headers
         /// </summary>
         /// <param name="valueToMatch">The value to match as part of the key</param>
         /// <returns></returns>
-        public async Task<IEnumerable<StoreKey>> FindByKeyPart(string valueToMatch, bool ignoreCase = true)
+        public async IAsyncEnumerable<StoreKey> FindByKeyPart(string valueToMatch, bool ignoreCase = true)
         {
-            return await _validatorValueStore.FindStoreKeysByKeyPartAsync(valueToMatch, ignoreCase); 
+            await foreach (var value in  _validatorValueStore.FindStoreKeysByKeyPartAsync(valueToMatch, ignoreCase))
+            {
+                yield return value;
+            }             
         }
 
         /// <summary>
         /// Find a  <see cref="StoreKey" /> of which the current resource path is part of the key
         /// </summary>
         /// <returns></returns>
-        public async Task<IEnumerable<StoreKey>> FindByCurrentResourcePath(bool ignoreCase = true)
+        public async IAsyncEnumerable<StoreKey> FindByCurrentResourcePath(bool ignoreCase = true)
         {
             string path = _httpContextAccessor.HttpContext.Request.Path.ToString();
-            return await _validatorValueStore.FindStoreKeysByKeyPartAsync(path, ignoreCase); 
+            await foreach (var value in _validatorValueStore.FindStoreKeysByKeyPartAsync(path, ignoreCase))
+            {
+                yield return value;
+            } 
         }         
     }
 }
