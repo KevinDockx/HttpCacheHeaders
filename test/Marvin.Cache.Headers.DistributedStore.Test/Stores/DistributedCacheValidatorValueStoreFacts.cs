@@ -1,4 +1,4 @@
-﻿using Marvin.Cache.Headers.DistributedStore.Interfaces;
+using Marvin.Cache.Headers.DistributedStore.Interfaces;
 using Marvin.Cache.Headers.DistributedStore.Stores;
 using Microsoft.Extensions.Caching.Distributed;
 using Moq;
