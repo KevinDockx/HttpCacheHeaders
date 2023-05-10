@@ -3,8 +3,8 @@
 	<PropertyGroup>
 		<TargetFrameworks>netcoreapp3.1;net50;net60;net70</TargetFrameworks>
 		<OutputType>Library</OutputType>
-		<AssemblyName>Marvin.Cache.Headers.DistributedStore</AssemblyName>
-		<PackageId>Marvin.Cache.Headers.DistributedStore</PackageId>
+		<AssemblyName>Marvin.Cache.Headers.DistributedStore.Redis</AssemblyName>
+		<PackageId>Marvin.Cache.Headers.DistributedStore.Redis</PackageId>
 		<GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
 		<GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
 		<GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>

@@ -2,8 +2,8 @@
 
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
-    <AssemblyName>Marvin.Cache.Headers.Test</AssemblyName>
-    <PackageId>Marvin.Cache.Headers.Test</PackageId>
+    <AssemblyName>Marvin.Cache.Headers.DistributedStore.Test</AssemblyName>
+    <PackageId>Marvin.Cache.Headers.DistributedStore.Test</PackageId>
     <GenerateRuntimeConfigurationFiles>false</GenerateRuntimeConfigurationFiles>
   </PropertyGroup>
 
