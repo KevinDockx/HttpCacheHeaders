@@ -2,10 +2,12 @@
 using Microsoft.Extensions.Options;
 using StackExchange.Redis;
 using System;
+using System.Collections.Generic;
+using Marvin.Cache.Headers.DistributedStore.Interfaces;
 
 namespace Marvin.Cache.Headers.DistributedStore.Redis.Stores
 {
-    public class RedisDistributedCacheKeyRetriever
+    public class RedisDistributedCacheKeyRetriever : IRetrieveDistributedCacheKeys
     {
         private readonly IConnectionMultiplexer _connectionMultiplexer;
         private readonly RedisDistributedCacheKeyRetrieverOptions _redisDistributedCacheKeyRetrieverOptions;
@@ -24,6 +26,11 @@ namespace Marvin.Cache.Headers.DistributedStore.Redis.Stores
             }
 
             _redisDistributedCacheKeyRetrieverOptions = redisDistributedCacheKeyRetrieverOptions.Value;
+        }
+
+        public IAsyncEnumerable<string> FindStoreKeysByKeyPartAsync(string valueToMatch, bool ignoreCase)
+        {
+            throw new NotImplementedException();
         }
     }
 }

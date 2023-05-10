@@ -31,5 +31,9 @@
 	<ItemGroup>
 	  <PackageReference Include="Microsoft.Extensions.Options" Version="7.0.1" />
 	  <PackageReference Include="StackExchange.Redis" Version="2.6.90" />
+	</ItemGroup>
+	
+	<ItemGroup>
+	  <ProjectReference Include="..\Marvin.Cache.Headers.DistributedStore\Marvin.Cache.Headers.DistributedStore.csproj" />
 	</ItemGroup> 
 </Project>
