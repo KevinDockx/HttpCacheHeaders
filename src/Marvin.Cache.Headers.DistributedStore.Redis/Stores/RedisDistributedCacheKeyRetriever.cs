@@ -7,23 +7,23 @@ namespace Marvin.Cache.Headers.DistributedStore.Redis.Stores
 {
     public class RedisDistributedCacheKeyRetriever
     {
+        private readonly IConnectionMultiplexer _connectionMultiplexer;
+        private readonly RedisDistributedCacheKeyRetrieverOptions _redisDistributedCacheKeyRetrieverOptions;
+
         public RedisDistributedCacheKeyRetriever(IConnectionMultiplexer connectionMultiplexer, IOptions<RedisDistributedCacheKeyRetrieverOptions> redisDistributedCacheKeyRetrieverOptions)
         {
-            if (connectionMultiplexer == null)
-            {
-                throw new ArgumentNullException(nameof(connectionMultiplexer));
-            }
-
+            _connectionMultiplexer = connectionMultiplexer ?? throw new ArgumentNullException(nameof(connectionMultiplexer));
             if (redisDistributedCacheKeyRetrieverOptions == null)
             {
                 throw new ArgumentNullException(nameof(redisDistributedCacheKeyRetrieverOptions));
             }
-            else if (redisDistributedCacheKeyRetrieverOptions.Value == null)
+
+            if (redisDistributedCacheKeyRetrieverOptions.Value == null)
             {
                 throw new ArgumentNullException(nameof(redisDistributedCacheKeyRetrieverOptions.Value));
             }
-            
-            throw new NotImplementedException();
+
+            _redisDistributedCacheKeyRetrieverOptions = redisDistributedCacheKeyRetrieverOptions.Value;
         }
     }
 }
