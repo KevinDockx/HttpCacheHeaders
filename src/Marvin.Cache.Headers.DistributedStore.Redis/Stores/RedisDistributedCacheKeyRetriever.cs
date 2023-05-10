@@ -13,6 +13,15 @@ namespace Marvin.Cache.Headers.DistributedStore.Redis.Stores
             {
                 throw new ArgumentNullException(nameof(connectionMultiplexer));
             }
+
+            if (redisDistributedCacheKeyRetrieverOptions == null)
+            {
+                throw new ArgumentNullException(nameof(redisDistributedCacheKeyRetrieverOptions));
+            }
+            else if (redisDistributedCacheKeyRetrieverOptions.Value == null)
+            {
+                throw new ArgumentNullException(nameof(redisDistributedCacheKeyRetrieverOptions.Value));
+            }
             
             throw new NotImplementedException();
         }
