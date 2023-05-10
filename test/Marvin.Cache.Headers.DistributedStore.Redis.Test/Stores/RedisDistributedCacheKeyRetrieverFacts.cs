@@ -38,4 +38,15 @@ public class RedisDistributedCacheKeyRetrieverFacts
         Assert.IsType<ArgumentNullException>(exception);
         redisDistributedCacheKeyRetrieverOptions.VerifyGet(x =>x.Value, Times.Exactly(1));
     }
+
+    [Fact]
+    public void Constructs_A_RedisDistributedCacheKeyRetriever_When_All_The_Passed_In_Parameters_Are_Valid()
+    {
+        var connectionMultiplexer = new Mock<IConnectionMultiplexer>();
+        var redisDistributedCacheKeyRetrieverOptions = new Mock<IOptions<RedisDistributedCacheKeyRetrieverOptions>>();
+        redisDistributedCacheKeyRetrieverOptions.SetupGet(x => x.Value).Returns(new RedisDistributedCacheKeyRetrieverOptions());
+        var redisDistributedCacheKeyRetriever = new RedisDistributedCacheKeyRetriever(connectionMultiplexer.Object, redisDistributedCacheKeyRetrieverOptions.Object);
+        Assert.NotNull(redisDistributedCacheKeyRetriever);
+        redisDistributedCacheKeyRetrieverOptions.VerifyGet(x => x.Value, Times.Exactly(1));
+    }
 }
