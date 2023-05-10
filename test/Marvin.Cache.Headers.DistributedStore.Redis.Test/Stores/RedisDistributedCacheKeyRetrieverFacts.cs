@@ -47,6 +47,6 @@ public class RedisDistributedCacheKeyRetrieverFacts
         redisDistributedCacheKeyRetrieverOptions.SetupGet(x => x.Value).Returns(new RedisDistributedCacheKeyRetrieverOptions());
         var redisDistributedCacheKeyRetriever = new RedisDistributedCacheKeyRetriever(connectionMultiplexer.Object, redisDistributedCacheKeyRetrieverOptions.Object);
         Assert.NotNull(redisDistributedCacheKeyRetriever);
-        redisDistributedCacheKeyRetrieverOptions.VerifyGet(x => x.Value, Times.Exactly(1));
+        redisDistributedCacheKeyRetrieverOptions.VerifyGet(x => x.Value, Times.Exactly(2));
     }
 }
