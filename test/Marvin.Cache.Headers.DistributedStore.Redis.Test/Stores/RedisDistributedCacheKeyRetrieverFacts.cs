@@ -4,6 +4,7 @@ using Microsoft.Extensions.Options;
 using Moq;
 using StackExchange.Redis;
 using System;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace Marvin.Cache.Headers.DistributedStore.Redis.Test.Stores;
@@ -48,5 +49,17 @@ public class RedisDistributedCacheKeyRetrieverFacts
         var redisDistributedCacheKeyRetriever = new RedisDistributedCacheKeyRetriever(connectionMultiplexer.Object, redisDistributedCacheKeyRetrieverOptions.Object);
         Assert.NotNull(redisDistributedCacheKeyRetriever);
         redisDistributedCacheKeyRetrieverOptions.VerifyGet(x => x.Value, Times.Exactly(2));
+    }
+
+    [Fact]
+    public void FindStoreKeysByKeyPartAsync_Throws_An_Argument_Null_Exception_When_The_valueToMatch_Passed_in_Is_null()
+    {
+        var connectionMultiplexer = new Mock<IConnectionMultiplexer>();
+        var redisDistributedCacheKeyRetrieverOptions = new Mock<IOptions<RedisDistributedCacheKeyRetrieverOptions>>();
+        redisDistributedCacheKeyRetrieverOptions.SetupGet(x => x.Value).Returns(new RedisDistributedCacheKeyRetrieverOptions());
+        var redisDistributedCacheKeyRetriever = new RedisDistributedCacheKeyRetriever(connectionMultiplexer.Object, redisDistributedCacheKeyRetrieverOptions.Object);
+        string? valueToMatch = null;
+        var exception = Record.Exception(() => redisDistributedCacheKeyRetriever.FindStoreKeysByKeyPartAsync(valueToMatch));
+        Assert.IsType<ArgumentNullException>(exception);
     }
 }

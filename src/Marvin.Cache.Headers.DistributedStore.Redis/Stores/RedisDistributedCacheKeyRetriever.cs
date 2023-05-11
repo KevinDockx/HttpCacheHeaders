@@ -28,7 +28,7 @@ namespace Marvin.Cache.Headers.DistributedStore.Redis.Stores
             _redisDistributedCacheKeyRetrieverOptions = redisDistributedCacheKeyRetrieverOptions.Value;
         }
 
-        public IAsyncEnumerable<string> FindStoreKeysByKeyPartAsync(string valueToMatch, bool ignoreCase)
+        public IAsyncEnumerable<string> FindStoreKeysByKeyPartAsync(string valueToMatch, bool ignoreCase =true)
         {
             throw new NotImplementedException();
         }
