@@ -4,6 +4,7 @@ using Microsoft.Extensions.Options;
 using Moq;
 using StackExchange.Redis;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Xunit;
@@ -96,4 +97,42 @@ public class RedisDistributedCacheKeyRetrieverFacts
         Assert.False(hasKeys);
         connectionMultiplexer.Verify(x => x.GetServers(), Times.Exactly(1));
     }
+
+    [Theory, CombinatorialData]
+    public async Task FindStoreKeysByKeyPartAsync_Returns_An_Empty_Collection_When_At_Least_One_Server_Is_Available_But_No_Keys_Exist_On_Any_Of_The_Available_Servers(bool onlyUseReplicas, bool ignoreCase, [CombinatorialRange(1, 1)] int numberOfServers)
+    {
+        var valueToMatch = GetValueToMatch(ignoreCase);
+        var redisDistributedCacheKeyRetrieverOptionsValue = new RedisDistributedCacheKeyRetrieverOptions
+        {
+            OnlyUseReplicas = onlyUseReplicas,
+            Database = 0
+        };
+
+        var connectionMultiplexer = new Mock<IConnectionMultiplexer>();
+        var servers = new List<Mock<IServer>>(numberOfServers);
+        for (int i = 0; i < numberOfServers; i++)
+        {
+            var server = new Mock<IServer>();
+            server.SetupGet(x => x.IsReplica).Returns(onlyUseReplicas);
+            server.Setup(x => x.KeysAsync(It.Is<int>(v =>v ==redisDistributedCacheKeyRetrieverOptionsValue.Database), It.Is<RedisValue>(v =>v.Equals(valueToMatch)), It.IsAny<int>(), It.IsAny<long>(), It.IsAny<int>(), It.IsAny<CommandFlags>())).Returns(AsyncEnumerable.Empty<RedisKey>());
+            servers.Add(server);
+        }
+        connectionMultiplexer.Setup(x => x.GetServers()).Returns(servers.Select(x =>x.Object).ToArray);
+        var redisDistributedCacheKeyRetrieverOptions = new Mock<IOptions<RedisDistributedCacheKeyRetrieverOptions>>();
+        redisDistributedCacheKeyRetrieverOptions.SetupGet(x => x.Value).Returns(redisDistributedCacheKeyRetrieverOptionsValue);
+        var redisDistributedCacheKeyRetriever = new RedisDistributedCacheKeyRetriever(connectionMultiplexer.Object, redisDistributedCacheKeyRetrieverOptions.Object);
+
+        var result = redisDistributedCacheKeyRetriever.FindStoreKeysByKeyPartAsync(valueToMatch);
+        var hasKeys = await result.AnyAsync();
+        Assert.False(hasKeys);
+        connectionMultiplexer.Verify(x => x.GetServers(), Times.Exactly(numberOfServers));
+        
+        foreach (var server in servers)
+        {
+            server.VerifyGet(x => x.IsReplica);
+            server.Verify(x => x.KeysAsync(It.Is<int>(v => v == redisDistributedCacheKeyRetrieverOptionsValue.Database), It.Is<RedisValue>(v => v.Equals(valueToMatch)), It.IsAny<int>(), It.IsAny<long>(), It.IsAny<int>(), It.IsAny<CommandFlags>()), Times.Exactly(1));
+        }
+    }
+
+    private static RedisValue GetValueToMatch(bool ignoreCase) => ignoreCase ? $"pattern: {"TestKey".ToLower()}" : "pattern: TestKey";
 }
