@@ -79,7 +79,7 @@ public class RedisDistributedCacheKeyRetrieverFacts
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
-    public async Task FindStoreKeysByKeyPartAsync_Returns_An_Empty_Collection_When_No_Servers_Are_available(bool onlyUseReplicas)
+    public async Task FindStoreKeysByKeyPartAsync_Returns_An_Empty_Collection_Of_Keys_When_No_Servers_Are_available(bool onlyUseReplicas)
     {
         var connectionMultiplexer = new Mock<IConnectionMultiplexer>();
         connectionMultiplexer.Setup(x => x.GetServers()).Returns(Array.Empty<IServer>());
@@ -92,8 +92,8 @@ public class RedisDistributedCacheKeyRetrieverFacts
         var redisDistributedCacheKeyRetriever = new RedisDistributedCacheKeyRetriever(connectionMultiplexer.Object, redisDistributedCacheKeyRetrieverOptions.Object);
         var valueToMatch = "test";
         var result = redisDistributedCacheKeyRetriever.FindStoreKeysByKeyPartAsync(valueToMatch);
-        var hasServers = await result.AnyAsync();
-        Assert.False(hasServers);
+        var hasKeys = await result.AnyAsync();
+        Assert.False(hasKeys);
         connectionMultiplexer.Verify(x => x.GetServers(), Times.Exactly(1));
     }
 }
