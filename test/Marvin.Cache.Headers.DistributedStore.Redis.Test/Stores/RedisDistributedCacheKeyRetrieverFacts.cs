@@ -4,6 +4,7 @@ using Microsoft.Extensions.Options;
 using Moq;
 using StackExchange.Redis;
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -73,5 +74,24 @@ public class RedisDistributedCacheKeyRetrieverFacts
         var valueToMatch = String.Empty;
         var exception = Record.Exception(() => redisDistributedCacheKeyRetriever.FindStoreKeysByKeyPartAsync(valueToMatch));
         Assert.IsType<ArgumentException>(exception);
+    }
+
+    [Fact]
+    public async Task FindStoreKeysByKeyPartAsync_Returns_An_Empty_Collection_When_We_Are_Not_Using_Only_Replicas_And_No_Servers_Are_Available()
+    {
+        var connectionMultiplexer = new Mock<IConnectionMultiplexer>();
+        connectionMultiplexer.Setup(x => x.GetServers()).Returns(Array.Empty<IServer>());
+        var redisDistributedCacheKeyRetrieverOptions = new Mock<IOptions<RedisDistributedCacheKeyRetrieverOptions>>();
+        var redisDistributedCacheKeyRetrieverOptionsValue = new RedisDistributedCacheKeyRetrieverOptions
+            {
+                OnlyUseReplicas = false
+            };
+        redisDistributedCacheKeyRetrieverOptions.SetupGet(x => x.Value).Returns(redisDistributedCacheKeyRetrieverOptionsValue);
+        var redisDistributedCacheKeyRetriever = new RedisDistributedCacheKeyRetriever(connectionMultiplexer.Object, redisDistributedCacheKeyRetrieverOptions.Object);
+        var valueToMatch = "test";
+        var result = redisDistributedCacheKeyRetriever.FindStoreKeysByKeyPartAsync(valueToMatch);
+        var hasServers = await result.AnyAsync();
+        Assert.False(hasServers);
+        connectionMultiplexer.Verify(x => x.GetServers(), Times.Exactly(1));
     }
 }
