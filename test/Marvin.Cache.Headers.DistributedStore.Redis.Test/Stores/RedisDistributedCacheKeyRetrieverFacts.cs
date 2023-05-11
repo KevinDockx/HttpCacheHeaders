@@ -99,7 +99,7 @@ public class RedisDistributedCacheKeyRetrieverFacts
     }
 
     [Theory, CombinatorialData]
-    public async Task FindStoreKeysByKeyPartAsync_Returns_An_Empty_Collection_Of_Keys_When_At_Least_One_Server_Is_Available_But_No_Keys_Exist_On_Any_Of_The_Available_Servers_That_Match_The_Past_in_Value_To_Match_In_The_Passed_In_Database(bool onlyUseReplicas, bool ignoreCase, [CombinatorialRange(1, 2)] int numberOfServers)
+    public async Task FindStoreKeysByKeyPartAsync_Returns_An_Empty_Collection_Of_Keys_When_At_Least_One_Server_Is_Available_But_No_Keys_Exist_On_Any_Of_The_Available_Servers_That_Match_The_Past_in_Value_To_Match_In_The_Database_Specified_In_The_Options_Passed_to_The_Constructor(bool onlyUseReplicas, bool ignoreCase, [CombinatorialRange(1, 2)] int numberOfServers)
     {
         var valueToMatch = GetValueToMatch(ignoreCase);
         var redisDistributedCacheKeyRetrieverOptionsValue = new RedisDistributedCacheKeyRetrieverOptions
@@ -125,7 +125,7 @@ public class RedisDistributedCacheKeyRetrieverFacts
         var result = redisDistributedCacheKeyRetriever.FindStoreKeysByKeyPartAsync(valueToMatch);
         var hasKeys = await result.AnyAsync();
         Assert.False(hasKeys);
-        connectionMultiplexer.Verify(x => x.GetServers(), Times.Exactly(numberOfServers));
+        connectionMultiplexer.Verify(x => x.GetServers(), Times.Exactly(1));
         
         foreach (var server in servers)
         {
