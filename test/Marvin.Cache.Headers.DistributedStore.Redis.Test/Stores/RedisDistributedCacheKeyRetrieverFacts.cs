@@ -78,6 +78,7 @@ public class RedisDistributedCacheKeyRetrieverFacts
 
     [Theory]
     [InlineData(false)]
+    [InlineData(true)]
     public async Task FindStoreKeysByKeyPartAsync_Returns_An_Empty_Collection_When_No_Servers_Are_available(bool onlyUseReplicas)
     {
         var connectionMultiplexer = new Mock<IConnectionMultiplexer>();
