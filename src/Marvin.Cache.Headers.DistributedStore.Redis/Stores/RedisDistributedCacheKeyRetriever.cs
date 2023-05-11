@@ -34,6 +34,11 @@ namespace Marvin.Cache.Headers.DistributedStore.Redis.Stores
             {
                 throw new ArgumentNullException(nameof(valueToMatch));
             }
+            else if (valueToMatch.Length is 0)
+            {
+                throw new ArgumentException(nameof(valueToMatch));
+            }
+            
             throw new NotImplementedException();
         }
     }
