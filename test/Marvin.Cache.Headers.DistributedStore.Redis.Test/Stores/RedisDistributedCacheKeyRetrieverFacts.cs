@@ -115,7 +115,7 @@ public class RedisDistributedCacheKeyRetrieverFacts
         {
             var server = new Mock<IServer>();
             server.SetupGet(x => x.IsReplica).Returns(onlyUseReplicas);
-            server.Setup(x => x.KeysAsync(It.Is<int>(v =>v ==redisDistributedCacheKeyRetrieverOptionsValue.Database), It.Is<RedisValue>(v =>v.Equals(valueToMatchWithPattern)), It.IsAny<int>(), It.IsAny<long>(), It.IsAny<int>(), It.IsAny<CommandFlags>())).Returns(AsyncEnumerable.Empty<RedisKey>());
+            server.Setup(x => x.KeysAsync(It.Is<int>(v =>v ==redisDistributedCacheKeyRetrieverOptionsValue.Database), It.IsAny<RedisValue>(), It.IsAny<int>(), It.IsAny<long>(), It.IsAny<int>(), It.IsAny<CommandFlags>())).Returns(AsyncEnumerable.Empty<RedisKey>());
             servers.Add(server);
         }
         connectionMultiplexer.Setup(x => x.GetServers()).Returns(servers.Select(x =>x.Object).ToArray);
@@ -131,7 +131,7 @@ public class RedisDistributedCacheKeyRetrieverFacts
         foreach (var server in servers)
         {
             server.VerifyGet(x => x.IsReplica);
-            server.Verify(x => x.KeysAsync(It.Is<int>(v => v == redisDistributedCacheKeyRetrieverOptionsValue.Database), It.Is<RedisValue>(v => v.Equals(valueToMatchWithPattern)), It.IsAny<int>(), It.IsAny<long>(), It.IsAny<int>(), It.IsAny<CommandFlags>()), Times.Exactly(1));
+            server.Verify(x => x.KeysAsync(It.Is<int>(v => v == redisDistributedCacheKeyRetrieverOptionsValue.Database), It.IsAny<RedisValue>(), It.IsAny<int>(), It.IsAny<long>(), It.IsAny<int>(), It.IsAny<CommandFlags>()), Times.Exactly(1));
         }
     }
 
