@@ -62,4 +62,16 @@ public class RedisDistributedCacheKeyRetrieverFacts
         var exception = Record.Exception(() => redisDistributedCacheKeyRetriever.FindStoreKeysByKeyPartAsync(valueToMatch));
         Assert.IsType<ArgumentNullException>(exception);
     }
+
+    [Fact]
+    public void FindStoreKeysByKeyPartAsync_Throws_An_Argument_Exception_When_The_valueToMatch_Passed_in_Is_an_empty_string()
+    {
+        var connectionMultiplexer = new Mock<IConnectionMultiplexer>();
+        var redisDistributedCacheKeyRetrieverOptions = new Mock<IOptions<RedisDistributedCacheKeyRetrieverOptions>>();
+        redisDistributedCacheKeyRetrieverOptions.SetupGet(x => x.Value).Returns(new RedisDistributedCacheKeyRetrieverOptions());
+        var redisDistributedCacheKeyRetriever = new RedisDistributedCacheKeyRetriever(connectionMultiplexer.Object, redisDistributedCacheKeyRetrieverOptions.Object);
+        var valueToMatch = String.Empty;
+        var exception = Record.Exception(() => redisDistributedCacheKeyRetriever.FindStoreKeysByKeyPartAsync(valueToMatch));
+        Assert.IsType<ArgumentException>(exception);
+    }
 }
