@@ -76,15 +76,16 @@ public class RedisDistributedCacheKeyRetrieverFacts
         Assert.IsType<ArgumentException>(exception);
     }
 
-    [Fact]
-    public async Task FindStoreKeysByKeyPartAsync_Returns_An_Empty_Collection_When_We_Are_Not_Using_Only_Replicas_And_No_Servers_Are_Available()
+    [Theory]
+    [InlineData(false)]
+    public async Task FindStoreKeysByKeyPartAsync_Returns_An_Empty_Collection_When_No_Servers_Are_available(bool onlyUseReplicas)
     {
         var connectionMultiplexer = new Mock<IConnectionMultiplexer>();
         connectionMultiplexer.Setup(x => x.GetServers()).Returns(Array.Empty<IServer>());
         var redisDistributedCacheKeyRetrieverOptions = new Mock<IOptions<RedisDistributedCacheKeyRetrieverOptions>>();
         var redisDistributedCacheKeyRetrieverOptionsValue = new RedisDistributedCacheKeyRetrieverOptions
             {
-                OnlyUseReplicas = false
+                OnlyUseReplicas = onlyUseReplicas
             };
         redisDistributedCacheKeyRetrieverOptions.SetupGet(x => x.Value).Returns(redisDistributedCacheKeyRetrieverOptionsValue);
         var redisDistributedCacheKeyRetriever = new RedisDistributedCacheKeyRetriever(connectionMultiplexer.Object, redisDistributedCacheKeyRetrieverOptions.Object);
