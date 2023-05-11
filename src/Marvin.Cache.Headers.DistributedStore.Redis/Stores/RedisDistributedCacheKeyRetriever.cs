@@ -3,6 +3,7 @@ using Microsoft.Extensions.Options;
 using StackExchange.Redis;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Marvin.Cache.Headers.DistributedStore.Interfaces;
 
 namespace Marvin.Cache.Headers.DistributedStore.Redis.Stores
@@ -38,8 +39,23 @@ namespace Marvin.Cache.Headers.DistributedStore.Redis.Stores
             {
                 throw new ArgumentException(nameof(valueToMatch));
             }
-            
-            throw new NotImplementedException();
+
+            if (!_redisDistributedCacheKeyRetrieverOptions.OnlyUseReplicas)
+            {
+                var servers =_connectionMultiplexer.GetServers();
+                if (!servers.Any())
+                {
+                    return AsyncEnumerable.Empty<string>();
+                }
+                else
+                {
+                    throw new NotImplementedException();
+                }
+            }
+            else
+            {
+                throw new NotImplementedException(); //We want to only use replicas.
+            }
         }
     }
 }
