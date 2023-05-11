@@ -30,6 +30,10 @@ namespace Marvin.Cache.Headers.DistributedStore.Redis.Stores
 
         public IAsyncEnumerable<string> FindStoreKeysByKeyPartAsync(string valueToMatch, bool ignoreCase =true)
         {
+            if (valueToMatch == null)
+            {
+                throw new ArgumentNullException(nameof(valueToMatch));
+            }
             throw new NotImplementedException();
         }
     }
