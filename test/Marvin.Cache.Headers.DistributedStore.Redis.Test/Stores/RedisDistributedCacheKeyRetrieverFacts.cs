@@ -99,7 +99,7 @@ public class RedisDistributedCacheKeyRetrieverFacts
     }
 
     [Theory, CombinatorialData]
-    public async Task FindStoreKeysByKeyPartAsync_Returns_An_Empty_Collection_When_At_Least_One_Server_Is_Available_But_No_Keys_Exist_On_Any_Of_The_Available_Servers(bool onlyUseReplicas, bool ignoreCase, [CombinatorialRange(1, 1)] int numberOfServers)
+    public async Task FindStoreKeysByKeyPartAsync_Returns_An_Empty_Collection_Of_Keys_When_At_Least_One_Server_Is_Available_But_No_Keys_Exist_On_Any_Of_The_Available_Servers_That_Match_The_Past_in_Value_To_Match_In_The_Passed_In_Database(bool onlyUseReplicas, bool ignoreCase, [CombinatorialRange(1, 2)] int numberOfServers)
     {
         var valueToMatch = GetValueToMatch(ignoreCase);
         var redisDistributedCacheKeyRetrieverOptionsValue = new RedisDistributedCacheKeyRetrieverOptions
