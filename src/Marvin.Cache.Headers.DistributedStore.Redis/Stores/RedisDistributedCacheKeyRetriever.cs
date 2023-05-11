@@ -40,22 +40,17 @@ namespace Marvin.Cache.Headers.DistributedStore.Redis.Stores
                 throw new ArgumentException(nameof(valueToMatch));
             }
 
-            if (!_redisDistributedCacheKeyRetrieverOptions.OnlyUseReplicas)
+            var servers = _connectionMultiplexer.GetServers();
+            if (_redisDistributedCacheKeyRetrieverOptions.OnlyUseReplicas)
             {
-                var servers =_connectionMultiplexer.GetServers();
-                if (!servers.Any())
-                {
-                    return AsyncEnumerable.Empty<string>();
-                }
-                else
-                {
-                    throw new NotImplementedException();
-                }
+                servers = servers.Where(x =>x.IsReplica).ToArray();
             }
-            else
+
+            if (!servers.Any())
             {
-                throw new NotImplementedException(); //We want to only use replicas.
+                return AsyncEnumerable.Empty<string>();
             }
+                throw new NotImplementedException();
         }
     }
 }
