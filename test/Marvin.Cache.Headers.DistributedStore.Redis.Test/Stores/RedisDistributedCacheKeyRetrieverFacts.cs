@@ -117,7 +117,7 @@ public class RedisDistributedCacheKeyRetrieverFacts
         redisDistributedCacheKeyRetrieverOptions.SetupGet(x => x.Value).Returns(redisDistributedCacheKeyRetrieverOptionsValue);
         var redisDistributedCacheKeyRetriever = new RedisDistributedCacheKeyRetriever(connectionMultiplexer.Object, redisDistributedCacheKeyRetrieverOptions.Object);
 
-        var result = redisDistributedCacheKeyRetriever.FindStoreKeysByKeyPartAsync(valueToMatch);
+        var result = redisDistributedCacheKeyRetriever.FindStoreKeysByKeyPartAsync(valueToMatch, ignoreCase);
         var hasKeys = await result.AnyAsync();
         Assert.False(hasKeys);
         connectionMultiplexer.Verify(x => x.GetServers(), Times.Exactly(1));
