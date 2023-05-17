@@ -35,7 +35,7 @@ namespace Marvin.Cache.Headers.DistributedStore.Redis.Stores
             {
                 throw new ArgumentNullException(nameof(valueToMatch));
             }
-            else if (valueToMatch.Length is 0)
+            else if (valueToMatch.Length == 0)
             {
                 throw new ArgumentException(nameof(valueToMatch));
             }
@@ -43,14 +43,27 @@ namespace Marvin.Cache.Headers.DistributedStore.Redis.Stores
             var servers = _connectionMultiplexer.GetServers();
             if (_redisDistributedCacheKeyRetrieverOptions.OnlyUseReplicas)
             {
-                servers = servers.Where(x =>x.IsReplica).ToArray();
+                servers = servers.Where(x => x.IsReplica).ToArray();
             }
 
-            if (!servers.Any())
+            if (!servers.Any()) 
+                {
+                    return AsyncEnumerable.Empty<string>();
+                }
+
+            RedisValue valueToMatchWithRedisPattern = ignoreCase ? $"pattern: {valueToMatch.ToLower()}" : $"pattern: {valueToMatch}";
+            List<string> foundKeys =new List<string>();
+            foreach (var server in servers)
+            {
+                var keys = server.KeysAsync(_redisDistributedCacheKeyRetrieverOptions.Database, valueToMatchWithRedisPattern).ToEnumerable();
+                foundKeys.AddRange(keys.Select(k =>k.ToString()));
+            }
+
+            if (!foundKeys.Any())
             {
                 return AsyncEnumerable.Empty<string>();
             }
-                throw new NotImplementedException();
+            throw new NotImplementedException();
         }
     }
 }
