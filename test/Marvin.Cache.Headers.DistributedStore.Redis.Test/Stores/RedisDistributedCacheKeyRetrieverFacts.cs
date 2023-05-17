@@ -130,7 +130,15 @@ public class RedisDistributedCacheKeyRetrieverFacts
         
         foreach (var server in servers)
         {
-            server.VerifyGet(x => x.IsReplica);
+            if (onlyUseReplicas)
+            {
+                server.VerifyGet(x => x.IsReplica, Times.Exactly(1));
+            }
+            else
+            {
+                server.VerifyGet(x => x.IsReplica, Times.Never);
+            }
+            
             server.Verify(x => x.KeysAsync(It.Is<int>(v => v == redisDistributedCacheKeyRetrieverOptionsValue.Database), It.IsAny<RedisValue>(), It.IsAny<int>(), It.IsAny<long>(), It.IsAny<int>(), It.IsAny<CommandFlags>()), Times.Exactly(1));
         }
     }
