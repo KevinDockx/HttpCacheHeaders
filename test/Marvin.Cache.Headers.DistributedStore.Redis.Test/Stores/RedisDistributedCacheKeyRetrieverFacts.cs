@@ -110,14 +110,8 @@ public class RedisDistributedCacheKeyRetrieverFacts
         };
 
         var connectionMultiplexer = new Mock<IConnectionMultiplexer>();
-        var servers = new List<Mock<IServer>>(numberOfServers);
-        for (int i = 0; i < numberOfServers; i++)
-        {
-            var server = new Mock<IServer>();
-            server.SetupGet(x => x.IsReplica).Returns(onlyUseReplicas);
-            server.Setup(x => x.KeysAsync(It.Is<int>(v =>v ==redisDistributedCacheKeyRetrieverOptionsValue.Database), It.IsAny<RedisValue>(), It.IsAny<int>(), It.IsAny<long>(), It.IsAny<int>(), It.IsAny<CommandFlags>())).Returns(AsyncEnumerable.Empty<RedisKey>());
-            servers.Add(server);
-        }
+        var servers = Enumerable.Range(0, numberOfServers - 1)
+            .Select(x =>SetupServer(onlyUseReplicas, redisDistributedCacheKeyRetrieverOptionsValue.Database)).ToArray();
         connectionMultiplexer.Setup(x => x.GetServers()).Returns(servers.Select(x =>x.Object).ToArray);
         var redisDistributedCacheKeyRetrieverOptions = new Mock<IOptions<RedisDistributedCacheKeyRetrieverOptions>>();
         redisDistributedCacheKeyRetrieverOptions.SetupGet(x => x.Value).Returns(redisDistributedCacheKeyRetrieverOptionsValue);
@@ -141,6 +135,14 @@ public class RedisDistributedCacheKeyRetrieverFacts
             
             server.Verify(x => x.KeysAsync(It.Is<int>(v => v == redisDistributedCacheKeyRetrieverOptionsValue.Database), It.IsAny<RedisValue>(), It.IsAny<int>(), It.IsAny<long>(), It.IsAny<int>(), It.IsAny<CommandFlags>()), Times.Exactly(1));
         }
+    }
+
+    private static Mock<IServer> SetupServer(bool isReplica, int database)
+    {
+        var server = new Mock<IServer>();
+        server.SetupGet(x => x.IsReplica).Returns(isReplica);
+        server.Setup(x => x.KeysAsync(It.Is<int>(v => v == database), It.IsAny<RedisValue>(), It.IsAny<int>(), It.IsAny<long>(), It.IsAny<int>(), It.IsAny<CommandFlags>())).Returns(AsyncEnumerable.Empty<RedisKey>());
+        return server;
     }
 
     private static RedisValue GetValueToMatchWithPattern(string valueToMatch, bool ignoreCase) => ignoreCase ? $"pattern: {valueToMatch.ToLower()}" : $"pattern: {valueToMatch}";
