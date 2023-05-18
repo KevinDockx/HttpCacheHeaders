@@ -61,8 +61,9 @@ public class RedisDistributedCacheKeyRetrieverFacts
         redisDistributedCacheKeyRetrieverOptions.SetupGet(x => x.Value).Returns(new RedisDistributedCacheKeyRetrieverOptions());
         var redisDistributedCacheKeyRetriever = new RedisDistributedCacheKeyRetriever(connectionMultiplexer.Object, redisDistributedCacheKeyRetrieverOptions.Object);
         string? valueToMatch = null;
-        var exception = Record.Exception(() => redisDistributedCacheKeyRetriever.FindStoreKeysByKeyPartAsync(valueToMatch));
-        Assert.IsType<ArgumentNullException>(exception);
+        var result = redisDistributedCacheKeyRetriever.FindStoreKeysByKeyPartAsync(valueToMatch);
+        var enumerator = result.GetAsyncEnumerator();
+        Assert.ThrowsAsync<ArgumentNullException>(async () => await enumerator.MoveNextAsync());
     }
 
     [Fact]
@@ -73,8 +74,9 @@ public class RedisDistributedCacheKeyRetrieverFacts
         redisDistributedCacheKeyRetrieverOptions.SetupGet(x => x.Value).Returns(new RedisDistributedCacheKeyRetrieverOptions());
         var redisDistributedCacheKeyRetriever = new RedisDistributedCacheKeyRetriever(connectionMultiplexer.Object, redisDistributedCacheKeyRetrieverOptions.Object);
         var valueToMatch = String.Empty;
-        var exception = Record.Exception(() => redisDistributedCacheKeyRetriever.FindStoreKeysByKeyPartAsync(valueToMatch));
-        Assert.IsType<ArgumentException>(exception);
+        var result = redisDistributedCacheKeyRetriever.FindStoreKeysByKeyPartAsync(valueToMatch);
+        var enumerator = result.GetAsyncEnumerator();
+        Assert.ThrowsAsync<ArgumentException>(async () =>await enumerator.MoveNextAsync());
     }
 
     [Theory]
