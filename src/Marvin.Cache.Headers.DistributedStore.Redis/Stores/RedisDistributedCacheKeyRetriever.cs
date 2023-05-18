@@ -66,7 +66,8 @@ namespace Marvin.Cache.Headers.DistributedStore.Redis.Stores
             {
                 return AsyncEnumerable.Empty<string>();
             }
-            throw new NotImplementedException();
+
+            return foundKeys.ToAsyncEnumerable();
         }
     }
 }
