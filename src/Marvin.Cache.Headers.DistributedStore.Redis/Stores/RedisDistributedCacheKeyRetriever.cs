@@ -56,12 +56,9 @@ namespace Marvin.Cache.Headers.DistributedStore.Redis.Stores
             foreach (var server in servers)
             {
                 var keys = server.KeysAsync(_redisDistributedCacheKeyRetrieverOptions.Database, valueToMatchWithRedisPattern);
-                if (keys != null)
-                {
                     foundKeys.AddRange(keys.ToEnumerable().Select(k => k.ToString()));
                 }
-            }
-
+            
             if (!foundKeys.Any())
             {
                 return AsyncEnumerable.Empty<string>();
