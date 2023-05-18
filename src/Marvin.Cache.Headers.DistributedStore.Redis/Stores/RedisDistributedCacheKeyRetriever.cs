@@ -46,11 +46,6 @@ namespace Marvin.Cache.Headers.DistributedStore.Redis.Stores
                 servers = servers.Where(x => x.IsReplica).ToArray();
             }
 
-            if (!servers.Any()) 
-                {
-                    return AsyncEnumerable.Empty<string>();
-                }
-
             RedisValue valueToMatchWithRedisPattern = ignoreCase ? $"pattern: {valueToMatch.ToLower()}" : $"pattern: {valueToMatch}";
             List<string> foundKeys =new List<string>();
             foreach (var server in servers)
