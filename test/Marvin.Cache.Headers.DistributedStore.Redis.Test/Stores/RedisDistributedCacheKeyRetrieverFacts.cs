@@ -111,7 +111,7 @@ public class RedisDistributedCacheKeyRetrieverFacts
 
         var connectionMultiplexer = new Mock<IConnectionMultiplexer>();
         var servers = Enumerable.Range(0, numberOfServers - 1)
-            .Select(x =>SetupServer(onlyUseReplicas, redisDistributedCacheKeyRetrieverOptionsValue.Database, valueToMatchWithPattern)).ToArray();
+            .Select(x =>SetupAServer(onlyUseReplicas, redisDistributedCacheKeyRetrieverOptionsValue.Database, valueToMatchWithPattern, Enumerable.Empty<RedisKey>())).ToArray();
         connectionMultiplexer.Setup(x => x.GetServers()).Returns(servers.Select(x =>x.Object).ToArray);
         var redisDistributedCacheKeyRetrieverOptions = new Mock<IOptions<RedisDistributedCacheKeyRetrieverOptions>>();
         redisDistributedCacheKeyRetrieverOptions.SetupGet(x => x.Value).Returns(redisDistributedCacheKeyRetrieverOptionsValue);
@@ -160,7 +160,7 @@ public class RedisDistributedCacheKeyRetrieverFacts
         var redisDistributedCacheKeyRetrieverOptions = new Mock<IOptions<RedisDistributedCacheKeyRetrieverOptions>>();
         redisDistributedCacheKeyRetrieverOptions.SetupGet(x => x.Value).Returns(redisDistributedCacheKeyRetrieverOptionsValue);
         var connectionMultiplexer = new Mock<IConnectionMultiplexer>();
-        var servers = groupedKeys.Select(groupKey => SetupAServerWithMultipleKeys(redisDistributedCacheKeyRetrieverOptionsValue.OnlyUseReplicas, redisDistributedCacheKeyRetrieverOptionsValue.Database, valueToMatchWithPattern, groupKey)).ToArray();
+        var servers = groupedKeys.Select(groupKey => SetupAServer(redisDistributedCacheKeyRetrieverOptionsValue.OnlyUseReplicas, redisDistributedCacheKeyRetrieverOptionsValue.Database, valueToMatchWithPattern, groupKey)).ToArray();
         connectionMultiplexer.Setup(x => x.GetServers()).Returns(servers.Select(x => x.Object).ToArray);
         var redisDistributedCacheKeyRetriever = new RedisDistributedCacheKeyRetriever(connectionMultiplexer.Object, redisDistributedCacheKeyRetrieverOptions.Object);
         var result = redisDistributedCacheKeyRetriever.FindStoreKeysByKeyPartAsync(valueToMatch, ignoreCase);
@@ -183,20 +183,12 @@ public class RedisDistributedCacheKeyRetrieverFacts
         }
     }
 
-    private static Mock<IServer> SetupAServerWithMultipleKeys(bool isReplica, int database, RedisValue valueToMatchWithPattern, IEnumerable<RedisKey> keysToReturn)
+    private static Mock<IServer> SetupAServer(bool isReplica, int database, RedisValue valueToMatchWithPattern, IEnumerable<RedisKey> keysToReturn)
     {
         var server = new Mock<IServer>();
         server.SetupGet(x => x.IsReplica).Returns(isReplica);
         var asyncKeys = keysToReturn.ToAsyncEnumerable();
         server.Setup(x => x.KeysAsync(It.Is<int>(v => v == database), It.Is<RedisValue>(v => v == valueToMatchWithPattern), It.IsAny<int>(), It.IsAny<long>(), It.IsAny<int>(), It.IsAny<CommandFlags>())).Returns(asyncKeys);
-        return server;
-    }
-
-    private static Mock<IServer> SetupServer(bool isReplica, int database, RedisValue valueToMatchWithPattern)
-    {
-        var server = new Mock<IServer>();
-        server.SetupGet(x => x.IsReplica).Returns(isReplica);
-        server.Setup(x => x.KeysAsync(It.Is<int>(v => v == database), It.Is<RedisValue>(v =>v == valueToMatchWithPattern), It.IsAny<int>(), It.IsAny<long>(), It.IsAny<int>(), It.IsAny<CommandFlags>())).Returns(AsyncEnumerable.Empty<RedisKey>());
         return server;
     }
 
