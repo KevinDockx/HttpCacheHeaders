@@ -29,7 +29,7 @@ namespace Marvin.Cache.Headers.DistributedStore.Redis.Stores
             _redisDistributedCacheKeyRetrieverOptions = redisDistributedCacheKeyRetrieverOptions.Value;
         }
 
-        public IAsyncEnumerable<string> FindStoreKeysByKeyPartAsync(string valueToMatch, bool ignoreCase =true)
+        public async IAsyncEnumerable<string> FindStoreKeysByKeyPartAsync(string valueToMatch, bool ignoreCase =true)
         {
             if (valueToMatch == null)
             {
@@ -51,15 +51,11 @@ namespace Marvin.Cache.Headers.DistributedStore.Redis.Stores
             foreach (var server in servers)
             {
                 var keys = server.KeysAsync(_redisDistributedCacheKeyRetrieverOptions.Database, valueToMatchWithRedisPattern);
-                    foundKeys.AddRange(keys.ToEnumerable().Select(k => k.ToString()));
+                await foreach (var key in keys)
+                {
+                    yield return key;
                 }
-            
-            if (!foundKeys.Any())
-            {
-                return AsyncEnumerable.Empty<string>();
+                }
             }
-
-            return foundKeys.ToAsyncEnumerable();
-        }
     }
 }
