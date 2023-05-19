@@ -166,7 +166,7 @@ public class RedisDistributedCacheKeyRetrieverFacts
         connectionMultiplexer.Setup(x => x.GetServers()).Returns(servers.Select(x => x.Object).ToArray);
         var redisDistributedCacheKeyRetriever = new RedisDistributedCacheKeyRetriever(connectionMultiplexer.Object, redisDistributedCacheKeyRetrieverOptions.Object);
         var result = redisDistributedCacheKeyRetriever.FindStoreKeysByKeyPartAsync(valueToMatch, ignoreCase);
-        var hasKeys = await result.AnyAsync();
+        var hasKeys = await result.CountAsync() >0;
         Assert.True(hasKeys);
         connectionMultiplexer.Verify(x => x.GetServers(), Times.Exactly(1));
 
