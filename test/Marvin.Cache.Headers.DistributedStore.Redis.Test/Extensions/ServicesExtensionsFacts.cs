@@ -7,6 +7,7 @@ using Microsoft.Extensions.Options;
 using Moq;
 using StackExchange.Redis;
 using System;
+using Marvin.Cache.Headers.Test.TestStartups;
 using Xunit;
 
 namespace Marvin.Cache.Headers.DistributedStore.Redis.Test.Extensions;
@@ -36,6 +37,7 @@ public class ServicesExtensionsFacts
         Action<IOptions<RedisDistributedCacheKeyRetrieverOptions>> redisDistributedCacheKeyRetrieverOptionsAction = o => hasTheRedisDistributedCacheKeyRetrieverOptionsActionBeenCalled = true;
         var connectionMultiplexer = new Mock<IConnectionMultiplexer>();
         var host = new WebHostBuilder()
+            .UseStartup<DefaultStartup>()
             .ConfigureServices(services =>
             {
                 services.AddSingleton<IConnectionMultiplexer>(connectionMultiplexer.Object);
