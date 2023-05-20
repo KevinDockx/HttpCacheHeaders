@@ -18,7 +18,7 @@ public class ServicesExtensionsFacts
     public void AddRedisKeyRetriever_Throws_An_Argument_Null_Exception_When_The_Services_Parameter_Passed_In_Is_Null()
     {
         IServiceCollection? services = null;
-        Action<IOptions<RedisDistributedCacheKeyRetrieverOptions>> redisDistributedCacheKeyRetrieverOptionsAction =o =>{};
+        Action<RedisDistributedCacheKeyRetrieverOptions> redisDistributedCacheKeyRetrieverOptionsAction =o =>{};
         Assert.Throws<ArgumentNullException>(() => services.AddRedisKeyRetriever(redisDistributedCacheKeyRetrieverOptionsAction));
     }
     
@@ -26,7 +26,7 @@ public class ServicesExtensionsFacts
     public void AddRedisKeyRetriever_Throws_An_Argument_Null_Exception_When_The_RedisDistributedCacheKeyRetrieverOptionsAction_Parameter_Passed_In_Is_Null()
     {
         var services = new Mock<IServiceCollection>();
-        Action<IOptions<RedisDistributedCacheKeyRetrieverOptions>>? redisDistributedCacheKeyRetrieverOptionsAction = null;
+        Action<RedisDistributedCacheKeyRetrieverOptions>? redisDistributedCacheKeyRetrieverOptionsAction = null;
         Assert.Throws<ArgumentNullException>(() => services.Object.AddRedisKeyRetriever(redisDistributedCacheKeyRetrieverOptionsAction));
     }
 
@@ -39,7 +39,7 @@ public class ServicesExtensionsFacts
             .ConfigureServices(services =>
             {
                 services.AddSingleton<IConnectionMultiplexer>(connectionMultiplexer.Object);
-                services.AddRedisKeyRetriever(Xunit => { });
+                services.AddRedisKeyRetriever(x => { });
             })
             .Build();
         Assert.NotNull(host.Services.GetService(typeof(IRetrieveDistributedCacheKeys)));
