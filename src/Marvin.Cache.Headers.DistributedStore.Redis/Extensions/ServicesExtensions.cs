@@ -1,9 +1,8 @@
-﻿using System;
-using Marvin.Cache.Headers.DistributedStore.Interfaces;
+﻿using Marvin.Cache.Headers.DistributedStore.Interfaces;
 using Marvin.Cache.Headers.DistributedStore.Redis.Options;
 using Marvin.Cache.Headers.DistributedStore.Redis.Stores;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
+using System;
 
 namespace Marvin.Cache.Headers.DistributedStore.Redis.Extensions
 {
@@ -17,7 +16,7 @@ namespace Marvin.Cache.Headers.DistributedStore.Redis.Extensions
         /// </summary>
         /// <param name="services">The <see cref="IServiceCollection" /> to add services to.</param>
         /// <param name="redisDistributedCacheKeyRetrieverOptionsAction">Action to provide custom <see cref="RedisDistributedCacheKeyRetrieverOptions" /></param>
-        public static IServiceCollection AddRedisKeyRetriever(this IServiceCollection services, Action<IOptions<RedisDistributedCacheKeyRetrieverOptions>> redisDistributedCacheKeyRetrieverOptionsAction)
+        public static IServiceCollection AddRedisKeyRetriever(this IServiceCollection services, Action<RedisDistributedCacheKeyRetrieverOptions> redisDistributedCacheKeyRetrieverOptionsAction)
         {
             if (services == null)
             {
