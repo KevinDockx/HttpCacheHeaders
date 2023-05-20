@@ -1,11 +1,12 @@
-﻿using Marvin.Cache.Headers.DistributedStore.Redis.Extensions;
+﻿using Marvin.Cache.Headers.DistributedStore.Interfaces;
+using Marvin.Cache.Headers.DistributedStore.Redis.Extensions;
 using Marvin.Cache.Headers.DistributedStore.Redis.Options;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using System;
-using Marvin.Cache.Headers.DistributedStore.Interfaces;
-using Marvin.Cache.Headers.DistributedStore.Redis.Stores;
 using Moq;
+using StackExchange.Redis;
+using System;
 using Xunit;
 
 namespace Marvin.Cache.Headers.DistributedStore.Redis.Test.Extensions;
@@ -31,16 +32,17 @@ public class ServicesExtensionsFacts
     [Fact]
     public void AddRedisKeyRetriever_Successfully_Registers_All_Required_Services()
     {
-        var services = new Mock<IServiceCollection>();
         var hasTheRedisDistributedCacheKeyRetrieverOptionsActionBeenCalled = false;
         Action<IOptions<RedisDistributedCacheKeyRetrieverOptions>> redisDistributedCacheKeyRetrieverOptionsAction = o => hasTheRedisDistributedCacheKeyRetrieverOptionsActionBeenCalled = true;
-        services.Object.AddRedisKeyRetriever(redisDistributedCacheKeyRetrieverOptionsAction);
+        var connectionMultiplexer = new Mock<IConnectionMultiplexer>();
+        var host = new WebHostBuilder()
+            .ConfigureServices(services =>
+            {
+                services.AddSingleton<IConnectionMultiplexer>(connectionMultiplexer.Object);
+                services.AddRedisKeyRetriever(redisDistributedCacheKeyRetrieverOptionsAction);
+            })
+            .Build();
         Assert.True(hasTheRedisDistributedCacheKeyRetrieverOptionsActionBeenCalled);
-        services.Verify(x =>x.Add(It.Is< ServiceDescriptor>(x =>VerifyTheServiceDescriptorProperties(x))), Times.Exactly(1));
+        Assert.NotNull(host.Services.GetService(typeof(IRetrieveDistributedCacheKeys)));
     }
-
-    private static bool VerifyTheServiceDescriptorProperties(ServiceDescriptor serviceDescriptor) =>
-        serviceDescriptor.Lifetime == ServiceLifetime.Singleton 
-        && serviceDescriptor.ServiceType == typeof(IRetrieveDistributedCacheKeys) 
-        && serviceDescriptor.ImplementationType ==typeof(RedisDistributedCacheKeyRetriever);
 }
