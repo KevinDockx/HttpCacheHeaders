@@ -13,6 +13,11 @@ namespace Marvin.Cache.Headers.DistributedStore.Redis.Extensions
             {
                 throw new ArgumentNullException(nameof(services));
             }
+
+            if (redisDistributedCacheKeyRetrieverOptionsAction == null)
+            {
+                throw new ArgumentNullException(nameof(redisDistributedCacheKeyRetrieverOptionsAction));
+            }
             
             throw new NotImplementedException();
         }
