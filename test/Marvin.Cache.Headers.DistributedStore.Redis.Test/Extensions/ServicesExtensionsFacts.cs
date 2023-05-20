@@ -1,4 +1,5 @@
-﻿using Marvin.Cache.Headers.DistributedStore.Redis.Options;
+﻿using Marvin.Cache.Headers.DistributedStore.Redis.Extensions;
+using Marvin.Cache.Headers.DistributedStore.Redis.Options;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using System;
