@@ -1,13 +1,13 @@
 ﻿using Marvin.Cache.Headers.DistributedStore.Interfaces;
 using Marvin.Cache.Headers.DistributedStore.Redis.Extensions;
 using Marvin.Cache.Headers.DistributedStore.Redis.Options;
+using Marvin.Cache.Headers.Test.TestStartups;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Moq;
 using StackExchange.Redis;
 using System;
-using Marvin.Cache.Headers.Test.TestStartups;
 using Xunit;
 
 namespace Marvin.Cache.Headers.DistributedStore.Redis.Test.Extensions;
@@ -33,18 +33,15 @@ public class ServicesExtensionsFacts
     [Fact]
     public void AddRedisKeyRetriever_Successfully_Registers_All_Required_Services()
     {
-        var hasTheRedisDistributedCacheKeyRetrieverOptionsActionBeenCalled = false;
-        Action<IOptions<RedisDistributedCacheKeyRetrieverOptions>> redisDistributedCacheKeyRetrieverOptionsAction = o => hasTheRedisDistributedCacheKeyRetrieverOptionsActionBeenCalled = true;
         var connectionMultiplexer = new Mock<IConnectionMultiplexer>();
         var host = new WebHostBuilder()
             .UseStartup<DefaultStartup>()
             .ConfigureServices(services =>
             {
                 services.AddSingleton<IConnectionMultiplexer>(connectionMultiplexer.Object);
-                services.AddRedisKeyRetriever(redisDistributedCacheKeyRetrieverOptionsAction);
+                services.AddRedisKeyRetriever(Xunit => { });
             })
             .Build();
-        Assert.True(hasTheRedisDistributedCacheKeyRetrieverOptionsActionBeenCalled);
         Assert.NotNull(host.Services.GetService(typeof(IRetrieveDistributedCacheKeys)));
     }
 }

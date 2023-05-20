@@ -1,5 +1,7 @@
 ﻿using System;
+using Marvin.Cache.Headers.DistributedStore.Interfaces;
 using Marvin.Cache.Headers.DistributedStore.Redis.Options;
+using Marvin.Cache.Headers.DistributedStore.Redis.Stores;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
@@ -18,8 +20,10 @@ namespace Marvin.Cache.Headers.DistributedStore.Redis.Extensions
             {
                 throw new ArgumentNullException(nameof(redisDistributedCacheKeyRetrieverOptionsAction));
             }
-            
-            throw new NotImplementedException();
+
+            services.Configure(redisDistributedCacheKeyRetrieverOptionsAction);
+            services.Add(ServiceDescriptor.Singleton(typeof(IRetrieveDistributedCacheKeys), typeof(RedisDistributedCacheKeyRetriever)));
+            return services;
         }
     }
 }
