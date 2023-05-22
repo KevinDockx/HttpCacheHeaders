@@ -11,6 +11,14 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Marvin.Cache.Headers.Test",
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Marvin.Cache.Headers", "src\Marvin.Cache.Headers\Marvin.Cache.Headers.csproj", "{CDE1E3DF-1161-494E-B910-7A99A3E8B0C0}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Marvin.Cache.Headers.DistributedStore", "src\Marvin.Cache.Headers.DistributedStore\Marvin.Cache.Headers.DistributedStore.csproj", "{179FDD1E-6510-4D34-AFCF-FD27F3DFA709}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Marvin.Cache.Headers.DistributedStore.Redis", "src\Marvin.Cache.Headers.DistributedStore.Redis\Marvin.Cache.Headers.DistributedStore.Redis.csproj", "{B88F1620-CF2C-4F6C-817B-D3528971A38C}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Marvin.Cache.Headers.DistributedStore.Test", "test\Marvin.Cache.Headers.DistributedStore.Test\Marvin.Cache.Headers.DistributedStore.Test.csproj", "{525ACFA2-4BDA-4BBF-A9E6-DC5B894CCDE6}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Marvin.Cache.Headers.DistributedStore.Redis.Test", "test\Marvin.Cache.Headers.DistributedStore.Redis.Test\Marvin.Cache.Headers.DistributedStore.Redis.Test.csproj", "{44258DC7-0EDA-4FFE-B020-FC74EE58631E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -29,6 +37,22 @@ Global
 		{CDE1E3DF-1161-494E-B910-7A99A3E8B0C0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CDE1E3DF-1161-494E-B910-7A99A3E8B0C0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CDE1E3DF-1161-494E-B910-7A99A3E8B0C0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{179FDD1E-6510-4D34-AFCF-FD27F3DFA709}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{179FDD1E-6510-4D34-AFCF-FD27F3DFA709}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{179FDD1E-6510-4D34-AFCF-FD27F3DFA709}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{179FDD1E-6510-4D34-AFCF-FD27F3DFA709}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B88F1620-CF2C-4F6C-817B-D3528971A38C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B88F1620-CF2C-4F6C-817B-D3528971A38C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B88F1620-CF2C-4F6C-817B-D3528971A38C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B88F1620-CF2C-4F6C-817B-D3528971A38C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{525ACFA2-4BDA-4BBF-A9E6-DC5B894CCDE6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{525ACFA2-4BDA-4BBF-A9E6-DC5B894CCDE6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{525ACFA2-4BDA-4BBF-A9E6-DC5B894CCDE6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{525ACFA2-4BDA-4BBF-A9E6-DC5B894CCDE6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{44258DC7-0EDA-4FFE-B020-FC74EE58631E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{44258DC7-0EDA-4FFE-B020-FC74EE58631E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{44258DC7-0EDA-4FFE-B020-FC74EE58631E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{44258DC7-0EDA-4FFE-B020-FC74EE58631E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

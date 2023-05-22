@@ -3,24 +3,20 @@
 	<PropertyGroup>
 		<TargetFrameworks>netcoreapp3.1;net50;net60;net70</TargetFrameworks>
 		<OutputType>Library</OutputType>
-		<AssemblyName>Marvin.Cache.Headers</AssemblyName>
-		<PackageId>Marvin.Cache.Headers</PackageId>
+		<AssemblyName>Marvin.Cache.Headers.DistributedStore</AssemblyName>
+		<PackageId>Marvin.Cache.Headers.DistributedStore</PackageId>
 		<GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
 		<GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
 		<GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
 		<Version>7.0.0</Version>
-		<Description>ASP.NET Core middleware that adds HttpCache headers to responses (Cache-Control, Expires, ETag, Last-Modified), and implements cache expiration &amp; validation models.</Description>
+		<Description>Provides an implementation of the IValidatorValueStore for use with the Marvin.Cache.Headers NuGet package allowing ValidatorValue instances to be stored in a cache that will support web properties that need to sscale out.</Description>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 		<Authors>KevinDockx, Kevin Dockx</Authors>
 		<PackageProjectUrl>https://github.com/KevinDockx/HttpCacheHeaders</PackageProjectUrl>
-		<PackageReleaseNotes>Bugfix for casing issue on cache invalidation.  Add option to choose whether to ignore casing or not.</PackageReleaseNotes>
+		<PackageReleaseNotes></PackageReleaseNotes>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 	</PropertyGroup>
 
-	<ItemGroup>
-		<FrameworkReference Include="Microsoft.AspNetCore.App" />
-	</ItemGroup>
-	
 	<PropertyGroup>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 	</PropertyGroup>
@@ -30,5 +26,15 @@
 	    <Pack>True</Pack>
 	    <PackagePath></PackagePath>
 	  </None>
+	</ItemGroup>
+	
+	<ItemGroup>
+	  <ProjectReference Include="..\Marvin.Cache.Headers\Marvin.Cache.Headers.csproj" />
+	</ItemGroup>
+	
+	<ItemGroup>
+	  <Reference Include="Microsoft.Extensions.Caching.Abstractions">
+	    <HintPath>..\..\..\..\..\..\Program Files\dotnet\shared\Microsoft.AspNetCore.App\6.0.13\Microsoft.Extensions.Caching.Abstractions.dll</HintPath>
+	  </Reference>
 	</ItemGroup> 
 </Project>

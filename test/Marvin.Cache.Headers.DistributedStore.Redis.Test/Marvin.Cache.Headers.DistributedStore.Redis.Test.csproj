@@ -1,0 +1,31 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <AssemblyName>Marvin.Cache.Headers.DistributedStore.Redis.Test</AssemblyName>
+    <PackageId>Marvin.Cache.Headers.DistributedStore.Redis.Test</PackageId>
+    <GenerateRuntimeConfigurationFiles>false</GenerateRuntimeConfigurationFiles>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="3.1.4" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.4.1" />
+    <PackageReference Include="StackExchange.Redis" Version="2.6.90" />
+    <PackageReference Include="System.Linq.Async" Version="6.0.1" />
+    <PackageReference Include="Xunit.Combinatorial" Version="1.5.25" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.3.1" />
+    <PackageReference Include="Moq" Version="4.7.142" />
+    <PackageReference Include="xunit" Version="2.3.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Properties\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\sample\Marvin.Cache.Headers.Sample\Marvin.Cache.Headers.Sample.csproj" />
+    <ProjectReference Include="..\..\src\Marvin.Cache.Headers.DistributedStore.Redis\Marvin.Cache.Headers.DistributedStore.Redis.csproj" />
+    <ProjectReference Include="..\..\src\Marvin.Cache.Headers\Marvin.Cache.Headers.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,13 +1,17 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.26730.3
+# Visual Studio Version 17
+VisualStudioVersion = 17.4.33213.308
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{006274C4-3D3A-4206-BF23-78582B4DADAD}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{26BCE0B1-AEE3-4814-8A00-841DDD25F7F4}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Marvin.Cache.Headers", "src\Marvin.Cache.Headers\Marvin.Cache.Headers.csproj", "{B06BDC10-2211-49C4-9D83-8C6B0C6BF70E}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Marvin.Cache.Headers.DistributedStore", "src\Marvin.Cache.Headers.DistributedStore\Marvin.Cache.Headers.DistributedStore.csproj", "{7CA27500-9102-4ECC-92F6-715F54B653ED}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Marvin.Cache.Headers.DistributedStore.Redis", "src\Marvin.Cache.Headers.DistributedStore.Redis\Marvin.Cache.Headers.DistributedStore.Redis.csproj", "{177C3CF0-BE0D-4162-957F-2143C0B71D7E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -19,12 +23,22 @@ Global
 		{B06BDC10-2211-49C4-9D83-8C6B0C6BF70E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B06BDC10-2211-49C4-9D83-8C6B0C6BF70E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B06BDC10-2211-49C4-9D83-8C6B0C6BF70E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7CA27500-9102-4ECC-92F6-715F54B653ED}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7CA27500-9102-4ECC-92F6-715F54B653ED}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7CA27500-9102-4ECC-92F6-715F54B653ED}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7CA27500-9102-4ECC-92F6-715F54B653ED}.Release|Any CPU.Build.0 = Release|Any CPU
+		{177C3CF0-BE0D-4162-957F-2143C0B71D7E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{177C3CF0-BE0D-4162-957F-2143C0B71D7E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{177C3CF0-BE0D-4162-957F-2143C0B71D7E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{177C3CF0-BE0D-4162-957F-2143C0B71D7E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{B06BDC10-2211-49C4-9D83-8C6B0C6BF70E} = {006274C4-3D3A-4206-BF23-78582B4DADAD}
+		{7CA27500-9102-4ECC-92F6-715F54B653ED} = {006274C4-3D3A-4206-BF23-78582B4DADAD}
+		{177C3CF0-BE0D-4162-957F-2143C0B71D7E} = {006274C4-3D3A-4206-BF23-78582B4DADAD}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {1DB7EC6B-6966-4A99-9FCA-F93364450822}
