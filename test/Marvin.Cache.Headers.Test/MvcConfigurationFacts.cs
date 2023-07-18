@@ -4,7 +4,6 @@
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.AspNetCore.TestHost;
 using Microsoft.Net.Http.Headers;
 using Xunit;
 
@@ -14,17 +13,10 @@ namespace Marvin.Cache.Headers.Test
     {
         private readonly WebApplicationFactory<Program> _webApplicationFactory =new WebApplicationFactory<Program>();
 
-        private readonly TestServer _server;
-
-        public MvcConfigurationFacts()
-        {
-            _server = _webApplicationFactory.Server;
-        }
-
         [Fact]
         public async Task Adds_Default_Validation_And_ExpirationHeaders()
         {
-            using (var client = _server.CreateClient())
+            using (var client = _webApplicationFactory.CreateDefaultClient())
             {
                 var response = await client.GetAsync("/api/values");
 
@@ -43,7 +35,7 @@ namespace Marvin.Cache.Headers.Test
         [Fact]
         public async Task Method_Level_Validation_And_ExpirationHeaders_Override_Class_Level()
         {
-            using (var client = _server.CreateClient())
+            using (var client = _webApplicationFactory.CreateDefaultClient())
             {
                 var response = await client.GetAsync("/api/morevalues");
 
