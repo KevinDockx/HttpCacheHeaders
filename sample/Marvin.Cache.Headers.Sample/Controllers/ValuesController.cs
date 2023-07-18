@@ -1,11 +1,8 @@
-﻿// Any comments, input: @KevinDockx
-// Any issues, requests: https://github.com/KevinDockx/HttpCacheHeaders
-
-using System.Collections.Generic;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Marvin.Cache.Headers.Sample.Controllers
 {
+
     [Route("api/values")]
     public class ValuesController : Controller
     {

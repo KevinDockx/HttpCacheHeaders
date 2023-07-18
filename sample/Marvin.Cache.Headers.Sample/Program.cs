@@ -1,21 +1,34 @@
-﻿// Any comments, input: @KevinDockx
-// Any issues, requests: https://github.com/KevinDockx/HttpCacheHeaders
+var builder = WebApplication.CreateBuilder(args);
 
-using Microsoft.AspNetCore;
-using Microsoft.AspNetCore.Hosting;
+// Add services to the container.
 
-namespace Marvin.Cache.Headers.Sample
-{
-    public class Program
+builder.Services.AddControllers();
+
+// Add HttpCacheHeaders services with custom options
+builder.Services.AddHttpCacheHeaders(
+    expirationModelOptions =>
     {
-        public static void Main(string[] args)
-        {
-            BuildWebHost(args).Run();
-        }
+        expirationModelOptions.MaxAge = 600;
+        expirationModelOptions.SharedMaxAge = 300;
+    },
+    validationModelOptions =>
+    {
+        validationModelOptions.MustRevalidate = true;
+        validationModelOptions.ProxyRevalidate = true;
+    });
 
-        public static IWebHost BuildWebHost(string[] args) =>
-            WebHost.CreateDefaultBuilder(args)
-                .UseStartup<Startup>()
-                .Build();
-    }
+var app = builder.Build();
+
+// Configure the HTTP request pipeline.
+
+app.UseAuthorization();
+
+app.UseHttpCacheHeaders();
+
+app.MapControllers();
+
+app.Run();
+
+public partial class Program
+{
 }
