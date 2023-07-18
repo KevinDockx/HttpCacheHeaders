@@ -5,8 +5,6 @@ VisualStudioVersion = 17.0.31919.166
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{26BCE0B1-AEE3-4814-8A00-841DDD25F7F4}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Marvin.Cache.Headers.Sample", "sample\Marvin.Cache.Headers.Sample\Marvin.Cache.Headers.Sample.csproj", "{EF9AFF36-5688-4818-A463-0F8AA6F80419}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Marvin.Cache.Headers.Test", "test\Marvin.Cache.Headers.Test\Marvin.Cache.Headers.Test.csproj", "{714C7259-D574-490C-A04F-9F9A47295CE7}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Marvin.Cache.Headers", "src\Marvin.Cache.Headers\Marvin.Cache.Headers.csproj", "{CDE1E3DF-1161-494E-B910-7A99A3E8B0C0}"
@@ -25,10 +23,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{EF9AFF36-5688-4818-A463-0F8AA6F80419}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{EF9AFF36-5688-4818-A463-0F8AA6F80419}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{EF9AFF36-5688-4818-A463-0F8AA6F80419}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{EF9AFF36-5688-4818-A463-0F8AA6F80419}.Release|Any CPU.Build.0 = Release|Any CPU
 		{714C7259-D574-490C-A04F-9F9A47295CE7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{714C7259-D574-490C-A04F-9F9A47295CE7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{714C7259-D574-490C-A04F-9F9A47295CE7}.Release|Any CPU.ActiveCfg = Release|Any CPU
