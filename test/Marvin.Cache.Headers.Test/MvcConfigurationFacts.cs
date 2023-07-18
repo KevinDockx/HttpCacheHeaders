@@ -3,8 +3,7 @@
 
 using System.Linq;
 using System.Threading.Tasks;
-using Marvin.Cache.Headers.Sample;
-using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Net.Http.Headers;
 using Xunit;
@@ -13,14 +12,13 @@ namespace Marvin.Cache.Headers.Test
 {
     public class MvcConfigurationFacts
     {
-        private readonly IWebHostBuilder _hostBuilder = new WebHostBuilder()
-            .UseStartup<Program>();
+        private readonly WebApplicationFactory<Program> _webApplicationFactory =new WebApplicationFactory<Program>();
 
         private readonly TestServer _server;
 
         public MvcConfigurationFacts()
         {
-            _server = new TestServer(_hostBuilder);
+            _server = _webApplicationFactory.Server;
         }
 
         [Fact]
