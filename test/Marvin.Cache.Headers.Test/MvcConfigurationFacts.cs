@@ -14,7 +14,7 @@ namespace Marvin.Cache.Headers.Test
     public class MvcConfigurationFacts
     {
         private readonly IWebHostBuilder _hostBuilder = new WebHostBuilder()
-            .UseStartup<Startup>();
+            .UseStartup<Program>();
 
         private readonly TestServer _server;
 
