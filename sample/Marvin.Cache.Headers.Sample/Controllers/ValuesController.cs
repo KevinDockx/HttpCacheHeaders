@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 
-namespace Marvin.Cache.Headers.Sample.NET6.Controllers
+namespace Marvin.Cache.Headers.Sample.Controllers
 {
 
     [Route("api/values")]
