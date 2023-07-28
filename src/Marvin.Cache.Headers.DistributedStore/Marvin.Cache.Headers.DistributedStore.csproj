@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFrameworks>net60;net70</TargetFrameworks>
+		<TargetFrameworks>net6.0;net7.0</TargetFrameworks>
 		<OutputType>Library</OutputType>
 		<AssemblyName>Marvin.Cache.Headers.DistributedStore</AssemblyName>
 		<PackageId>Marvin.Cache.Headers.DistributedStore</PackageId>
@@ -31,10 +31,4 @@
 	<ItemGroup>
 	  <ProjectReference Include="..\Marvin.Cache.Headers\Marvin.Cache.Headers.csproj" />
 	</ItemGroup>
-	
-	<ItemGroup>
-	  <Reference Include="Microsoft.Extensions.Caching.Abstractions">
-	    <HintPath>..\..\..\..\..\..\Program Files\dotnet\shared\Microsoft.AspNetCore.App\6.0.13\Microsoft.Extensions.Caching.Abstractions.dll</HintPath>
-	  </Reference>
-	</ItemGroup> 
 </Project>
