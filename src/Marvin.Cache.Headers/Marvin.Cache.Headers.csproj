@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFrameworks>net60;net70</TargetFrameworks>
+		<TargetFrameworks>net6.0;net7.0</TargetFrameworks>
 		<OutputType>Library</OutputType>
 		<AssemblyName>Marvin.Cache.Headers</AssemblyName>
 		<PackageId>Marvin.Cache.Headers</PackageId>
@@ -16,12 +16,25 @@
 		<PackageReleaseNotes>Bugfix for casing issue on cache invalidation.  Add option to choose whether to ignore casing or not.</PackageReleaseNotes>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 	</PropertyGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net6.0'">
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    </ItemGroup>
 
-	<ItemGroup>
-		<FrameworkReference Include="Microsoft.AspNetCore.App" />
-	</ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net7.0'">
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net6.0'">
+    <PackageReference Include="Microsoft.Extensions.Caching.Abstractions" Version="6.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Options" Version="7.0.0" />
+  </ItemGroup>
 	
-	<PropertyGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net7.0'">
+    <PackageReference Include="Microsoft.Extensions.Caching.Abstractions" Version="7.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Options" Version="7.0.1" />
+  </ItemGroup>
+  
+  <PropertyGroup>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 	</PropertyGroup>
 	
@@ -30,5 +43,5 @@
 	    <Pack>True</Pack>
 	    <PackagePath></PackagePath>
 	  </None>
-	</ItemGroup> 
-</Project>
+	</ItemGroup>
+	</Project>
