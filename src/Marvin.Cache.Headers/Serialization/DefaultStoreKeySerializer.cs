@@ -2,6 +2,7 @@
 // Any issues, requests: https://github.com/KevinDockx/HttpCacheHeaders
 
 using System;
+using System.Text.Json;
 using Marvin.Cache.Headers.Interfaces;
 
 namespace Marvin.Cache.Headers.Serialization
@@ -13,7 +14,8 @@ namespace Marvin.Cache.Headers.Serialization
         ///<inheritDoc/>
         public string SerializeStoreKey(StoreKey keyToSerialize)
         {
-            throw new NotImplementedException();
+            ArgumentNullException.ThrowIfNull(keyToSerialize);
+            return JsonSerializer.Serialize<StoreKey>(keyToSerialize);
         }
     }
 }
