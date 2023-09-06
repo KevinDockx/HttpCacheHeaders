@@ -22,12 +22,17 @@ namespace Marvin.Cache.Headers.Stores
         // store for storekeys - different store to speed up search 
         private readonly ConcurrentDictionary<string, StoreKey> _storeKeyStore
             = new ConcurrentDictionary<string, StoreKey>();
+        
+        //Serializer for StoreKeys.
+        private readonly IStoreKeySerializer _storeKeySerializer;
 
-        public InMemoryValidatorValueStore(IStoreKeySerializer storeKeySerializer)
+        public InMemoryValidatorValueStore(IStoreKeySerializer storeKeySerializer) => _storeKeySerializer = storeKeySerializer ?? throw new ArgumentNullException(nameof(storeKeySerializer));
+
+        public Task<ValidatorValue> GetAsync(StoreKey key)
         {
+            var keyJson = _storeKeySerializer.SerializeStoreKey(key);
+            return GetAsync(keyJson);
         }
-
-        public Task<ValidatorValue> GetAsync(StoreKey key) => GetAsync(key.ToString());
 
         private Task<ValidatorValue> GetAsync(string key)
         {
@@ -45,9 +50,10 @@ namespace Marvin.Cache.Headers.Stores
         public Task SetAsync(StoreKey key, ValidatorValue eTag)
         {
             // store the validator value
-            _store[key.ToString()] = eTag;
+            var keyJson = _storeKeySerializer.SerializeStoreKey(key);
+            _store[keyJson] = eTag;
             // save the key itself as well, with an easily searchable stringified key
-            _storeKeyStore[key.ToString()] = key;
+            _storeKeyStore[keyJson] = key;
             return Task.FromResult(0);
         }
 
@@ -58,7 +64,8 @@ namespace Marvin.Cache.Headers.Stores
         /// <returns></returns>
         public Task<bool> RemoveAsync(StoreKey key)
         {
-            _storeKeyStore.TryRemove(key.ToString(), out _);
+            var keyJson = _storeKeySerializer.SerializeStoreKey(key);
+            _storeKeyStore.TryRemove(keyJson, out _);
             return Task.FromResult(_store.TryRemove(key.ToString(), out _));
         }
 

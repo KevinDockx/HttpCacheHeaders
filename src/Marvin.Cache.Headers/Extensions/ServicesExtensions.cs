@@ -151,7 +151,7 @@ namespace Microsoft.Extensions.DependencyInjection
 
             services.Add(ServiceDescriptor.Singleton(typeof(IStoreKeyGenerator), storeKeyGeneratorFunc));
         }
-
+        
         private static void AddStoreKeySerializer(
             IServiceCollection services,
             Func<IServiceProvider, IStoreKeySerializer> storeKeySerializerFunc)

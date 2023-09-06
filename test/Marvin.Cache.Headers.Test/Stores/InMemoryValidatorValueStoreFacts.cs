@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Marvin.Cache.Headers.Interfaces;
 using Marvin.Cache.Headers.Stores;
@@ -14,9 +15,9 @@ namespace Marvin.Cache.Headers.Test.Stores
     public class InMemoryValidatorValueStoreFacts
     {
         [Fact]
-        public voic Ctor_ThrowsArgumentNullExcpeiton_WhenStoreKeySerializerIsNull()
+        public void Ctor_ThrowsArgumentNullExcpeiton_WhenStoreKeySerializerIsNull()
         {
-            StoreKeySerializer storeKeySerializer = null;
+            IStoreKeySerializer storeKeySerializer = null;
             Assert.Throws<ArgumentNullException>(() =>new InMemoryValidatorValueStore(storeKeySerializer));
         }
         
@@ -31,10 +32,15 @@ namespace Marvin.Cache.Headers.Test.Stores
                 { "queryString", string.Empty },
                 { "requestHeaderValues", string.Join("-", new List<string> {"text/plain", "gzip"})}
             };
-            var storeKeySerializer = new Mock<IStoreKeySerializer>();
-
-            var target = new InMemoryValidatorValueStore(storeKeySerializer.Object);
-            await target.SetAsync(requestKey, new ValidatorValue(new ETag(ETagType.Strong, "test"), referenceTime));
+            
+            var requestKeyJson =JsonSerializer.Serialize(requestKey);
+            var storeKeySerializer =new Mock<IStoreKeySerializer>();
+storeKeySerializer.Setup(x =>x.SerializeStoreKey(requestKey)).Returns(requestKeyJson);
+storeKeySerializer.Setup(x => x.DeserializeStoreKey(requestKeyJson)).Returns(requestKey);
+            
+var target = new InMemoryValidatorValueStore(storeKeySerializer.Object);
+            
+await target.SetAsync(requestKey, new ValidatorValue(new ETag(ETagType.Strong, "test"), referenceTime));
 
             // act
             var result = await target.GetAsync(requestKey);
@@ -63,9 +69,13 @@ namespace Marvin.Cache.Headers.Test.Stores
                 { "queryString", string.Empty },
                 { "requestHeaderValues", string.Join("-", new List<string> {"text/plain", "gzip"})}
             };
-
-            var storeKeySerializer = new Mock<IStoreKeySerializer>();
             
+            var storeKeySerializer = new Mock<IStoreKeySerializer>();
+            var requestKeyJson =JsonSerializer.Serialize(requestKey);
+            var requestKey2Json = JsonSerializer.Serialize(requestKey2);
+            storeKeySerializer.Setup(x =>x.SerializeStoreKey(requestKey)).Returns(requestKeyJson);
+            storeKeySerializer.Setup(x => x.SerializeStoreKey(requestKey2)).Returns(requestKey2Json);
+
             var target = new InMemoryValidatorValueStore(storeKeySerializer.Object);
             await target.SetAsync(requestKey, new ValidatorValue(new ETag(ETagType.Strong, "test"), referenceTime));
 
