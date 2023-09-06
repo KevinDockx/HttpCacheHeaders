@@ -4,7 +4,9 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Marvin.Cache.Headers.Interfaces;
 using Marvin.Cache.Headers.Stores;
+using Moq;
 using Xunit;
 
 namespace Marvin.Cache.Headers.Test.Stores
@@ -22,8 +24,9 @@ namespace Marvin.Cache.Headers.Test.Stores
                 { "queryString", string.Empty },
                 { "requestHeaderValues", string.Join("-", new List<string> {"text/plain", "gzip"})}
             };
+            var storeKeySerializer = new Mock<IStoreKeySerializer>();
 
-            var target = new InMemoryValidatorValueStore();
+            var target = new InMemoryValidatorValueStore(storeKeySerializer.Object);
             await target.SetAsync(requestKey, new ValidatorValue(new ETag(ETagType.Strong, "test"), referenceTime));
 
             // act
@@ -54,7 +57,9 @@ namespace Marvin.Cache.Headers.Test.Stores
                 { "requestHeaderValues", string.Join("-", new List<string> {"text/plain", "gzip"})}
             };
 
-            var target = new InMemoryValidatorValueStore();
+            var storeKeySerializer = new Mock<IStoreKeySerializer>();
+            
+            var target = new InMemoryValidatorValueStore(storeKeySerializer.Object);
             await target.SetAsync(requestKey, new ValidatorValue(new ETag(ETagType.Strong, "test"), referenceTime));
 
             // act

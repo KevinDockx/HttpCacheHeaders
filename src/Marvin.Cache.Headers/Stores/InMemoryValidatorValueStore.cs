@@ -23,6 +23,10 @@ namespace Marvin.Cache.Headers.Stores
         private readonly ConcurrentDictionary<string, StoreKey> _storeKeyStore
             = new ConcurrentDictionary<string, StoreKey>();
 
+        public InMemoryValidatorValueStore(IStoreKeySerializer storeKeySerializer)
+        {
+        }
+
         public Task<ValidatorValue> GetAsync(StoreKey key) => GetAsync(key.ToString());
 
         private Task<ValidatorValue> GetAsync(string key)
