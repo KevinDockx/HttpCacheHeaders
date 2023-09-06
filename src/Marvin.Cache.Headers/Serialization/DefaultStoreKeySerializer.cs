@@ -15,13 +15,22 @@ namespace Marvin.Cache.Headers.Serialization
         public string SerializeStoreKey(StoreKey keyToSerialize)
         {
             ArgumentNullException.ThrowIfNull(keyToSerialize);
-            return JsonSerializer.Serialize<StoreKey>(keyToSerialize);
+            return JsonSerializer.Serialize(keyToSerialize);
         }
         
         ///<inheritDoc/>
         public StoreKey DeserializeStoreKey(string storeKeyJson)
         {
-            throw new NotImplementedException();
+            if (storeKeyJson == null)
+            {
+                throw new ArgumentNullException(nameof(storeKeyJson));
+            }
+            else if (storeKeyJson.Length == 0)
+            {
+                throw new ArgumentException("The storeKeyJson parameter cannot be an empty string.", nameof(storeKeyJson));
+            }
+
+            return JsonSerializer.Deserialize<StoreKey>(storeKeyJson);
         }
     }
 }
