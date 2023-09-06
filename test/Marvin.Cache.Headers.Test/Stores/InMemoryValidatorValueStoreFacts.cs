@@ -14,6 +14,13 @@ namespace Marvin.Cache.Headers.Test.Stores
     public class InMemoryValidatorValueStoreFacts
     {
         [Fact]
+        public voic Ctor_ThrowsArgumentNullExcpeiton_WhenStoreKeySerializerIsNull()
+        {
+            StoreKeySerializer storeKeySerializer = null;
+            Assert.Throws<ArgumentNullException>(() =>new InMemoryValidatorValueStore(storeKeySerializer));
+        }
+        
+        [Fact]
         public async Task GetAsync_Returns_Stored_ValidatorValue()
         {
             // arrange
