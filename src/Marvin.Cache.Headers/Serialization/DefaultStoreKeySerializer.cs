@@ -17,5 +17,11 @@ namespace Marvin.Cache.Headers.Serialization
             ArgumentNullException.ThrowIfNull(keyToSerialize);
             return JsonSerializer.Serialize<StoreKey>(keyToSerialize);
         }
+        
+        ///<inheritDoc/>
+        public StoreKey DeserializeStoreKey(string storeKeyJson)
+        {
+            throw new NotImplementedException();
+        }
     }
 }
