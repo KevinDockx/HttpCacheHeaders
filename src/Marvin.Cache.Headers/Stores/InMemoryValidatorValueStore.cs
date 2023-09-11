@@ -22,11 +22,12 @@ namespace Marvin.Cache.Headers.Stores
         // store for storekeys - different store to speed up search 
         private readonly ConcurrentDictionary<string, StoreKey> _storeKeyStore
             = new ConcurrentDictionary<string, StoreKey>();
-        
+
         //Serializer for StoreKeys.
         private readonly IStoreKeySerializer _storeKeySerializer;
 
-        public InMemoryValidatorValueStore(IStoreKeySerializer storeKeySerializer) => _storeKeySerializer = storeKeySerializer ?? throw new ArgumentNullException(nameof(storeKeySerializer));
+        public InMemoryValidatorValueStore(IStoreKeySerializer storeKeySerializer) => _storeKeySerializer =
+            storeKeySerializer ?? throw new ArgumentNullException(nameof(storeKeySerializer));
 
         public Task<ValidatorValue> GetAsync(StoreKey key)
         {
@@ -85,32 +86,17 @@ namespace Marvin.Cache.Headers.Stores
             if (ignoreCase)
             {
                 valueToMatch = valueToMatch.ToLowerInvariant();
-
-                foreach (var key in _storeKeyStore.Keys
-                .Where(k => k.ToLowerInvariant().Contains(valueToMatch)))
-                {
-                    if (_storeKeyStore.TryGetValue(key, out StoreKey storeKey))
-                    {
-                        lstStoreKeysToReturn.Add(storeKey);
-                    }
-                }
-            }
-            else
-            {
-                foreach (var key in _storeKeyStore.Keys
-                 .Where(k => k.Contains(valueToMatch)))
-                {
-                    if (_storeKeyStore.TryGetValue(key, out StoreKey storeKey))
-                    {
-                        lstStoreKeysToReturn.Add(storeKey);
-                    }
-                }
             }
 
-            for (int i = 0; i < lstStoreKeysToReturn.Count; i++)
-            {
-                yield return lstStoreKeysToReturn[i];
-            } 
+            foreach (var key in _store.Keys)
+                {
+var deserializedKey =_storeKeySerializer.DeserializeStoreKey(key);
+var deserializedKeyValues = String.Join(',', ignoreCase ? deserializedKey.Values.Select(x => x.ToLower()) : deserializedKey.Values);
+if (deserializedKeyValues.Contains(valueToMatch))
+{
+yield return deserializedKey;
+}
+                }
         }
     }
-}
+    }
