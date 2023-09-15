@@ -17,6 +17,7 @@
   
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.6.3" />
+    <PackageReference Include="Quibble.Xunit" Version="0.3.1" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.5.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -26,6 +27,7 @@
   </ItemGroup>
   
   <ItemGroup>
+    <Folder Include="Serialization\" />
     <Folder Include="Properties\" />
   </ItemGroup>
 
