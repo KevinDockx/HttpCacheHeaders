@@ -17,7 +17,7 @@ namespace Marvin.Cache.Headers.DistributedStore.Stores
         private readonly IDistributedCache _distributedCache;
         private readonly IRetrieveDistributedCacheKeys _distributedCacheKeyRetriever;
 
-        public DistributedCacheValidatorValueStore(IDistributedCache distributedCache, IRetrieveDistributedCacheKeys distributedCacheKeyRetriever)
+        public DistributedCacheValidatorValueStore(IDistributedCache distributedCache, IRetrieveDistributedCacheKeys distributedCacheKeyRetriever, IStoreKeySerializer storeKeySerializer =null)
         {
             _distributedCache = distributedCache ?? throw new ArgumentNullException(nameof(distributedCache));
             _distributedCacheKeyRetriever = distributedCacheKeyRetriever ?? throw new ArgumentNullException(nameof(distributedCacheKeyRetriever));
