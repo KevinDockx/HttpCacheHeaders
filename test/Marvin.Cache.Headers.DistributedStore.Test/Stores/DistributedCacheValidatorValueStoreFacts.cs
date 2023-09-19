@@ -81,7 +81,7 @@ public class DistributedCacheValidatorValueStoreFacts
             { "queryString", string.Empty },
             { "requestHeaderValues", string.Join("-", new List<string> {"text/plain", "gzip"})}
         };
-        var storeKeyJson = JsonSerializer.Serialize(storeKeySerializer);
+        var storeKeyJson = JsonSerializer.Serialize(storeKey);
         storeKeySerializer.Setup(x =>x.SerializeStoreKey(storeKey)).Returns(storeKeyJson);
         distributedCache.Setup(x => x.GetAsync(storeKeyJson, CancellationToken.None)).Returns(Task.FromResult<byte[]?>(null));
         var distributedCacheValidatorValueStore = new DistributedCacheValidatorValueStore(distributedCache.Object, distributedCacheKeyRetriever.Object, storeKeySerializer.Object);
@@ -103,7 +103,7 @@ public class DistributedCacheValidatorValueStoreFacts
             { "queryString", string.Empty },
             { "requestHeaderValues", string.Join("-", new List<string> {"text/plain", "gzip"})}
         };
-        var storeKeyJson = JsonSerializer.Serialize(storeKeySerializer);
+        var storeKeyJson = JsonSerializer.Serialize(storeKey);
         storeKeySerializer.Setup(x => x.SerializeStoreKey(storeKey)).Returns(storeKeyJson);
         var referenceTime = new DateTimeOffset(2022, 1, 31, 0, 0, 0, TimeSpan.Zero);
         var eTag = new ValidatorValue(new ETag(ETagType.Strong, "Test"), referenceTime);
@@ -131,7 +131,7 @@ public class DistributedCacheValidatorValueStoreFacts
         var referenceTime = new DateTimeOffset(2022, 1, 31, 0, 0, 0, TimeSpan.Zero);
         var eTag = new ValidatorValue(new ETag(ETagType.Strong, "Test"), referenceTime);
         await Assert.ThrowsAsync<ArgumentNullException>(() => distributedCacheValidatorValueStore.SetAsync(storeKey, eTag));
-        storeKeySerializer.Verify(x => x.SerializeStoreKey(storeKey), Times.Exactly(1));
+        storeKeySerializer.Verify(x => x.SerializeStoreKey(storeKey), Times.Never);
         distributedCache.Verify(x => x.SetAsync(It.IsAny<string>(), It.IsAny<byte[]>(), It.IsAny<DistributedCacheEntryOptions>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
@@ -167,7 +167,7 @@ public class DistributedCacheValidatorValueStoreFacts
             { "queryString", string.Empty },
             { "requestHeaderValues", string.Join("-", new List<string> {"text/plain", "gzip"})}
         };
-        var storeKeyJson = JsonSerializer.Serialize(storeKeySerializer);
+        var storeKeyJson = JsonSerializer.Serialize(storeKey);
         storeKeySerializer.Setup(x => x.SerializeStoreKey(storeKey)).Returns(storeKeyJson);
         var referenceTime = new DateTimeOffset(2022, 1, 31, 0, 0, 0, TimeSpan.Zero);
         var eTag = new ValidatorValue(new ETag(ETagType.Strong, "Test"), referenceTime);
@@ -205,7 +205,7 @@ public class DistributedCacheValidatorValueStoreFacts
             { "queryString", string.Empty },
             { "requestHeaderValues", string.Join("-", new List<string> {"text/plain", "gzip"})}
         };
-        var storeKeyJson = JsonSerializer.Serialize(storeKeySerializer);
+        var storeKeyJson = JsonSerializer.Serialize(storeKey);
         storeKeySerializer.Setup(x => x.SerializeStoreKey(storeKey)).Returns(storeKeyJson);
         distributedCache.Setup(x => x.GetAsync(It.Is<string>(x => x.Equals(storeKeyJson, StringComparison.InvariantCulture)), It.IsAny<CancellationToken>())).ReturnsAsync((byte[])null);
 
@@ -213,7 +213,7 @@ public class DistributedCacheValidatorValueStoreFacts
             Assert.False(result);
         storeKeySerializer.Verify(x => x.SerializeStoreKey(storeKey), Times.Exactly(1));
         distributedCache.Verify(x => x.GetAsync(It.Is<string>(x => x.Equals(storeKeyJson, StringComparison.InvariantCulture)), It.IsAny<CancellationToken>()), Times.Exactly(1));
-        distributedCache.Verify(x => x.RemoveAsync(It.Is<string>(x => x.Equals(storeKeyJson, StringComparison.InvariantCulture)), It.IsAny<CancellationToken>()), Times.Once);
+        distributedCache.Verify(x => x.RemoveAsync(It.Is<string>(x => x.Equals(storeKeyJson, StringComparison.InvariantCulture)), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -222,7 +222,7 @@ public class DistributedCacheValidatorValueStoreFacts
         var distributedCache = new Mock<IDistributedCache>();
         var distributedCacheKeyRetriever = new Mock<IRetrieveDistributedCacheKeys>();
         var storeKeySerializer = new Mock<IStoreKeySerializer>();
-        var distributedCacheValidatorValueStore = new DistributedCacheValidatorValueStore(distributedCache.Object, distributedCacheKeyRetriever.Object);        
+        var distributedCacheValidatorValueStore = new DistributedCacheValidatorValueStore(distributedCache.Object, distributedCacheKeyRetriever.Object, storeKeySerializer.Object);        
         var storeKey = new StoreKey
         {
             { "resourcePath", "/v1/gemeenten/11057" },
@@ -239,7 +239,7 @@ public class DistributedCacheValidatorValueStoreFacts
         var result = await distributedCacheValidatorValueStore.RemoveAsync(storeKey);
         Assert.True(result);
         storeKeySerializer.Verify(x => x.SerializeStoreKey(storeKey), Times.Exactly(1));
-        distributedCache.Verify(x => x.GetAsync(It.Is<string>(x => x.Equals(storeKeyJson, StringComparison.InvariantCulture)), It.IsAny<CancellationToken>()), Times.Once);
+        distributedCache.Verify(x => x.GetAsync(It.Is<string>(x => x.Equals(storeKeyJson, StringComparison.InvariantCulture)), It.IsAny<CancellationToken>()), Times.Exactly(1));
         distributedCache.Verify(x => x.RemoveAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Exactly(1));
     }
 
@@ -249,7 +249,7 @@ public class DistributedCacheValidatorValueStoreFacts
         var distributedCache = new Mock<IDistributedCache>();
         var distributedCacheKeyRetriever = new Mock<IRetrieveDistributedCacheKeys>();
         var storeKeySerializer = new Mock<IStoreKeySerializer>();
-        var distributedCacheValidatorValueStore = new DistributedCacheValidatorValueStore(distributedCache.Object, distributedCacheKeyRetriever.Object);
+        var distributedCacheValidatorValueStore = new DistributedCacheValidatorValueStore(distributedCache.Object, distributedCacheKeyRetriever.Object, storeKeySerializer.Object);
         string valueToMatch = null;
         var ignoreCase = false;
         var exception = await CaptureTheExceptionIfOneIsThrownFromAnIAsyncEnumerable(() =>distributedCacheValidatorValueStore.FindStoreKeysByKeyPartAsync(valueToMatch, ignoreCase));
@@ -264,7 +264,7 @@ storeKeySerializer.Verify(x => x.DeserializeStoreKey(It.IsAny<string>()), Times.
         var distributedCache = new Mock<IDistributedCache>();
         var distributedCacheKeyRetriever = new Mock<IRetrieveDistributedCacheKeys>();
         var storeKeySerializer = new Mock<IStoreKeySerializer>();
-        var distributedCacheValidatorValueStore = new DistributedCacheValidatorValueStore(distributedCache.Object, distributedCacheKeyRetriever.Object);
+        var distributedCacheValidatorValueStore = new DistributedCacheValidatorValueStore(distributedCache.Object, distributedCacheKeyRetriever.Object, storeKeySerializer.Object);
         string valueToMatch = String.Empty;
         var ignoreCase = false;
         var exception = await CaptureTheExceptionIfOneIsThrownFromAnIAsyncEnumerable(() => distributedCacheValidatorValueStore.FindStoreKeysByKeyPartAsync(valueToMatch, ignoreCase));
@@ -273,7 +273,7 @@ storeKeySerializer.Verify(x => x.DeserializeStoreKey(It.IsAny<string>()), Times.
         storeKeySerializer.Verify(x => x.DeserializeStoreKey(It.IsAny<string>()), Times.Never);
     }
 
-    [Theory(Skip ="reenable later.")]
+    [Theory(Skip ="Reenable later.")]
     [InlineData("Test", true, "test")]
     [InlineData("Test", false, "Test")]
     public async Task FindStoreKeysByKeyPartAsync_AttemptsToFindTheKeysThatStartWithThePassedInKeyPrefix(string keyPrefix, bool ignoreCase, string expectedKeyPrefix)
