@@ -7,6 +7,8 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using Marvin.Cache.Headers.Interfaces;
 using Marvin.Cache.Headers.Stores;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Options;
 using Moq;
 using Xunit;
 
@@ -18,7 +20,16 @@ namespace Marvin.Cache.Headers.Test.Stores
         public void Ctor_ThrowsArgumentNullException_WhenStoreKeySerializerIsNull()
         {
             IStoreKeySerializer storeKeySerializer = null;
-            Assert.Throws<ArgumentNullException>(() =>new InMemoryValidatorValueStore(storeKeySerializer));
+            var cache = new Mock<IMemoryCache>();
+            Assert.Throws<ArgumentNullException>(() =>new InMemoryValidatorValueStore(storeKeySerializer, cache.Object));
+        }
+
+        [Fact]
+        public void Ctor_ThrowsArgumentNullException_WhenCacheIsNull()
+        {
+            var storeKeySerializer = new Mock<IStoreKeySerializer>();
+            IMemoryCache cache = null;
+            Assert.Throws<ArgumentNullException>(() => new InMemoryValidatorValueStore(storeKeySerializer.Object, cache));
         }
         
         [Fact]
@@ -37,8 +48,9 @@ namespace Marvin.Cache.Headers.Test.Stores
             var storeKeySerializer =new Mock<IStoreKeySerializer>();
 storeKeySerializer.Setup(x =>x.SerializeStoreKey(requestKey)).Returns(requestKeyJson);
 storeKeySerializer.Setup(x => x.DeserializeStoreKey(requestKeyJson)).Returns(requestKey);
+var cache = new MemoryCache(Options.Create(new MemoryCacheOptions()));
             
-var target = new InMemoryValidatorValueStore(storeKeySerializer.Object);
+var target = new InMemoryValidatorValueStore(storeKeySerializer.Object, cache);
             
 await target.SetAsync(requestKey, new ValidatorValue(new ETag(ETagType.Strong, "test"), referenceTime));
 
@@ -75,8 +87,8 @@ await target.SetAsync(requestKey, new ValidatorValue(new ETag(ETagType.Strong, "
             var requestKey2Json = JsonSerializer.Serialize(requestKey2);
             storeKeySerializer.Setup(x =>x.SerializeStoreKey(requestKey)).Returns(requestKeyJson);
             storeKeySerializer.Setup(x => x.SerializeStoreKey(requestKey2)).Returns(requestKey2Json);
-
-            var target = new InMemoryValidatorValueStore(storeKeySerializer.Object);
+            var cache = new MemoryCache(Options.Create(new MemoryCacheOptions()));
+            var target = new InMemoryValidatorValueStore(storeKeySerializer.Object, cache);
             await target.SetAsync(requestKey, new ValidatorValue(new ETag(ETagType.Strong, "test"), referenceTime));
 
             // act

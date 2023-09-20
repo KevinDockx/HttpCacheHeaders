@@ -2,8 +2,8 @@
 // Any issues, requests: https://github.com/KevinDockx/HttpCacheHeaders
 
 using Marvin.Cache.Headers.Interfaces;
+using Microsoft.Extensions.Caching.Memory;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -16,32 +16,25 @@ namespace Marvin.Cache.Headers.Stores
     public class InMemoryValidatorValueStore : IValidatorValueStore
     {
         // store for validatorvalues
-        private readonly ConcurrentDictionary<string, ValidatorValue> _store
-            = new ConcurrentDictionary<string, ValidatorValue>();
-
+        private readonly IMemoryCache _store;
+        
         // store for storekeys - different store to speed up search 
         private readonly HashSet<string> _storeKeyStore;
             
         //Serializer for StoreKeys.
         private readonly IStoreKeySerializer _storeKeySerializer;
 
-        public InMemoryValidatorValueStore(IStoreKeySerializer storeKeySerializer, HashSet<string>storeKeyStore =null)
+        public InMemoryValidatorValueStore(IStoreKeySerializer storeKeySerializer, IMemoryCache store, HashSet<string>storeKeyStore =null)
         {
             _storeKeySerializer =storeKeySerializer ?? throw new ArgumentNullException(nameof(storeKeySerializer));
+            _store = store ?? throw new ArgumentNullException(nameof(store));
             _storeKeyStore = storeKeyStore ?? new HashSet<string>();
         }
 
         public Task<ValidatorValue> GetAsync(StoreKey key)
         {
             var keyJson = _storeKeySerializer.SerializeStoreKey(key);
-            return GetAsync(keyJson);
-        }
-
-        private Task<ValidatorValue> GetAsync(string key)
-        {
-            return _store.ContainsKey(key) && _store[key] is ValidatorValue eTag
-                ? Task.FromResult(eTag)
-                : Task.FromResult<ValidatorValue>(null);
+            return Task.FromResult(!_store.TryGetValue(keyJson, out ValidatorValue eTag) ? null : eTag);
         }
 
         /// <summary>
@@ -54,10 +47,11 @@ namespace Marvin.Cache.Headers.Stores
         {
             // store the validator value
             var keyJson = _storeKeySerializer.SerializeStoreKey(key);
-            _store[keyJson] = eTag;
+            _store.Set(keyJson, eTag);
+            
             // save the key itself as well, with an easily searchable stringified key
             _storeKeyStore.Add(keyJson);
-            return Task.FromResult(0);
+            return Task.CompletedTask;
         }
 
         /// <summary>
@@ -68,8 +62,14 @@ namespace Marvin.Cache.Headers.Stores
         public Task<bool> RemoveAsync(StoreKey key)
         {
             var keyJson = _storeKeySerializer.SerializeStoreKey(key);
+            if (!_storeKeyStore.Contains(keyJson))
+            {
+                return Task.FromResult(false);
+            }
+            
+            _store.Remove(keyJson);
             _storeKeyStore.Remove(keyJson);
-            return Task.FromResult(_store.TryRemove(key.ToString(), out _));
+            return Task.FromResult(true);
         }
 
         /// <summary>
