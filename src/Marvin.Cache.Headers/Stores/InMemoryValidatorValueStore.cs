@@ -19,16 +19,16 @@ namespace Marvin.Cache.Headers.Stores
         private readonly IMemoryCache _store;
         
         // store for storekeys - different store to speed up search 
-        private readonly HashSet<string> _storeKeyStore;
+        private readonly IList<string> _storeKeyStore;
             
         //Serializer for StoreKeys.
         private readonly IStoreKeySerializer _storeKeySerializer;
 
-        public InMemoryValidatorValueStore(IStoreKeySerializer storeKeySerializer, IMemoryCache store, HashSet<string>storeKeyStore =null)
+        public InMemoryValidatorValueStore(IStoreKeySerializer storeKeySerializer, IMemoryCache store, IList<string>storeKeyStore =null)
         {
             _storeKeySerializer =storeKeySerializer ?? throw new ArgumentNullException(nameof(storeKeySerializer));
             _store = store ?? throw new ArgumentNullException(nameof(store));
-            _storeKeyStore = storeKeyStore ?? new HashSet<string>();
+            _storeKeyStore = storeKeyStore ?? new List<string>();
         }
 
         public Task<ValidatorValue> GetAsync(StoreKey key)
