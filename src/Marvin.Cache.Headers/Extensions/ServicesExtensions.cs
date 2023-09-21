@@ -182,7 +182,7 @@ namespace Microsoft.Extensions.DependencyInjection
 
             if (eTagGeneratorFunc == null)
             {
-                eTagGeneratorFunc = _ => new DefaultStrongETagGenerator();
+                eTagGeneratorFunc = services => new DefaultStrongETagGenerator(services.GetRequiredService<IStoreKeySerializer>());
             }
 
             services.Add(ServiceDescriptor.Singleton(typeof(IETagGenerator), eTagGeneratorFunc));
