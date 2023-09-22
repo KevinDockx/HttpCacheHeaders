@@ -11,13 +11,20 @@ namespace Marvin.Cache.Headers
 {
     public class DefaultStrongETagGenerator : IETagGenerator
     {
+        private IStoreKeySerializer _storeKeySerializer;
+
+        public DefaultStrongETagGenerator(IStoreKeySerializer storeKeySerializer)
+        {
+            _storeKeySerializer = storeKeySerializer;
+        }
+
         // Key = generated from request URI & headers (if VaryBy is set, only use those headers)
         // ETag itself is generated from the key + response body (strong ETag)
         public Task<ETag> GenerateETag(
             StoreKey storeKey,
             string responseBodyContent)
         {
-            var requestKeyAsBytes = Encoding.UTF8.GetBytes(storeKey.ToString());
+            var requestKeyAsBytes = Encoding.UTF8.GetBytes(_storeKeySerializer.SerializeStoreKey(storeKey));
             var responseBodyContentAsBytes = Encoding.UTF8.GetBytes(responseBodyContent);
 
             // combine both to generate an etag

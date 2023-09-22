@@ -7,6 +7,7 @@ using Marvin.Cache.Headers.Interfaces;
 using Marvin.Cache.Headers.Serialization;
 using Marvin.Cache.Headers.Stores;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Microsoft.Extensions.DependencyInjection
@@ -41,6 +42,7 @@ namespace Microsoft.Extensions.DependencyInjection
             Func<IServiceProvider, IETagGenerator> eTagGeneratorFunc = null,
             Func<IServiceProvider, ILastModifiedInjector> lastModifiedInjectorFunc = null)
         {
+            services.AddMemoryCache();
             if(expirationModelOptionsAction != null)
                 AddConfigureExpirationModelOptions(services, expirationModelOptionsAction);
             if(validationModelOptionsAction != null)
@@ -129,7 +131,7 @@ namespace Microsoft.Extensions.DependencyInjection
 
             if (validatorValueStoreFunc == null)
             {
-                validatorValueStoreFunc = services => new InMemoryValidatorValueStore(services.GetRequiredService<IStoreKeySerializer>());
+                validatorValueStoreFunc = services => new InMemoryValidatorValueStore(services.GetRequiredService<IStoreKeySerializer>(), services.GetRequiredService<IMemoryCache>());
             }
 
             services.Add(ServiceDescriptor.Singleton(typeof(IValidatorValueStore), validatorValueStoreFunc));
@@ -180,7 +182,7 @@ namespace Microsoft.Extensions.DependencyInjection
 
             if (eTagGeneratorFunc == null)
             {
-                eTagGeneratorFunc = _ => new DefaultStrongETagGenerator();
+                eTagGeneratorFunc = services => new DefaultStrongETagGenerator(services.GetRequiredService<IStoreKeySerializer>());
             }
 
             services.Add(ServiceDescriptor.Singleton(typeof(IETagGenerator), eTagGeneratorFunc));
