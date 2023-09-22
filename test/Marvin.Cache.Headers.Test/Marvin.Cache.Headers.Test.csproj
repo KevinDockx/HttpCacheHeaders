@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net6.0;net7.0</TargetFrameworks>
+    <TargetFrameworks>net6.0;net7.0;net8.0</TargetFrameworks>
     <AssemblyName>Marvin.Cache.Headers.Test</AssemblyName>
     <PackageId>Marvin.Cache.Headers.Test</PackageId>
     <GenerateRuntimeConfigurationFiles>false</GenerateRuntimeConfigurationFiles>
@@ -13,6 +13,10 @@
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net7.0'">
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="7.0.9" />
+      </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="8.0.0-rc.1.23421.29" />
       </ItemGroup>
   
   <ItemGroup>
