@@ -101,7 +101,8 @@ namespace Marvin.Cache.Headers.DistributedStore.Stores
             var foundKeys = _distributedCacheKeyRetriever.FindStoreKeysByKeyPartAsync(valueToMatch, ignoreCase);
             await foreach (var foundKey in foundKeys.ConfigureAwait(false))
             {
-                yield return new StoreKey();
+                var k = _storeKeySerializer.DeserializeStoreKey(foundKey);
+                yield return k;
             }
         }
     }

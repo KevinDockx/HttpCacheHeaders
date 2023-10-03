@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
@@ -273,19 +274,51 @@ storeKeySerializer.Verify(x => x.DeserializeStoreKey(It.IsAny<string>()), Times.
         storeKeySerializer.Verify(x => x.DeserializeStoreKey(It.IsAny<string>()), Times.Never);
     }
 
-    [Theory(Skip ="Reenable later.")]
-    [InlineData("Test", true, "test")]
-    [InlineData("Test", false, "Test")]
-    public async Task FindStoreKeysByKeyPartAsync_AttemptsToFindTheKeysThatStartWithThePassedInKeyPrefix(string keyPrefix, bool ignoreCase, string expectedKeyPrefix)
+    [Theory]
+    [InlineData("/V1", true)]
+    [InlineData("/V1", false)]
+    public async Task FindStoreKeysByKeyPartAsync_AttemptsToFindTheKeysThatStartWithThePassedInKeyPrefix(string keyPrefix, bool ignoreCase)
     {
         var distributedCache = new Mock<IDistributedCache>();
+        var storeKeySerializer = new Mock<IStoreKeySerializer>();
+        var storeKey = GenerateStoreKey(keyPrefix);
+        var serializedStoreKey=JsonSerializer.Serialize(storeKey);
+        storeKeySerializer
+            .Setup(x => x.DeserializeStoreKey(It.Is<string>(y => y == serializedStoreKey)))
+            .Returns(storeKey);
+        
         var distributedCacheKeyRetriever = new Mock<IRetrieveDistributedCacheKeys>();
-        distributedCacheKeyRetriever.Setup(x => x.FindStoreKeysByKeyPartAsync(keyPrefix, ignoreCase)).Returns(AsyncEnumerable.Empty<string>());
-        var distributedCacheValidatorValueStore = new DistributedCacheValidatorValueStore(distributedCache.Object, distributedCacheKeyRetriever.Object);
-        var exception = await CaptureTheExceptionIfOneIsThrownFromAnIAsyncEnumerable(() => distributedCacheValidatorValueStore.FindStoreKeysByKeyPartAsync(keyPrefix, ignoreCase));
-        Assert.Null(exception);
-        distributedCacheKeyRetriever.Verify(x => x.FindStoreKeysByKeyPartAsync(keyPrefix, ignoreCase), Times.Once);
+        distributedCacheKeyRetriever.Setup(x => x.FindStoreKeysByKeyPartAsync(keyPrefix, ignoreCase)).Returns(new[] {serializedStoreKey}.ToAsyncEnumerable);
+        var distributedCacheValidatorValueStore = new DistributedCacheValidatorValueStore(distributedCache.Object, distributedCacheKeyRetriever.Object, storeKeySerializer.Object);
+        var isKeyPrefixPresent = await distributedCacheValidatorValueStore.FindStoreKeysByKeyPartAsync(keyPrefix, ignoreCase).AnyAsync(key => IsKeyPrefixPresent(key, keyPrefix, ignoreCase));
+            Assert.True(isKeyPrefixPresent);
+        distributedCacheKeyRetriever.Verify(x => x.FindStoreKeysByKeyPartAsync(keyPrefix, ignoreCase), Times.Exactly(1));
+        storeKeySerializer.Verify(x => x.DeserializeStoreKey(It.Is<string>(y => y == serializedStoreKey)), Times.Exactly(1));
+        }
+
+    private bool IsKeyPrefixPresent(StoreKey storeKey, string keyPrefix, bool ignoreCase)
+    {
+        var result = false;
+        foreach (var value in storeKey.Values)
+        {
+            result = value.StartsWith(keyPrefix, ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal);
+
+            if (result)
+            {
+                break;
+            }
+        }
+
+        return result;
     }
+
+    private StoreKey GenerateStoreKey(string prefix) =>
+        new()
+        {
+            { "resourcePath", $"{prefix}/gemeenten/11758" },
+            { "queryString", string.Empty },
+            { "requestHeaderValues", string.Join("-", new List<string> {"text/plain", "gzip"})}
+        };
 
     private static async Task<Exception> CaptureTheExceptionIfOneIsThrownFromAnIAsyncEnumerable<T>(Func<IAsyncEnumerable<T>> sequenceGenerator)
     {
