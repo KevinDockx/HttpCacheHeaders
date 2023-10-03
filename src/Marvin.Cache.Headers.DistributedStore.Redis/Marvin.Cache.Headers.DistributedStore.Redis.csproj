@@ -30,7 +30,7 @@
 	
 	<ItemGroup>
 	  <PackageReference Include="StackExchange.Redis" Version="2.6.90" />
-	  <PackageReference Include="System.Linq.Async" Version="6.0.1" />
+	  <PackageReference Include="System.Interactive.Async" Version="6.0.1" />
 	</ItemGroup>
 	
 	<ItemGroup>
