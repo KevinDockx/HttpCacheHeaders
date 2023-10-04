@@ -47,15 +47,16 @@ namespace Marvin.Cache.Headers.DistributedStore.Redis.Stores
             }
 
             RedisValue valueToMatchWithRedisPattern = ignoreCase ? $"pattern: {valueToMatch.ToLower()}" : $"pattern: {valueToMatch}";
-            List<string> foundKeys =new List<string>();
+
             foreach (var server in servers)
             {
                 var keys = server.KeysAsync(_redisDistributedCacheKeyRetrieverOptions.Database, valueToMatchWithRedisPattern);
+                
                 await foreach (var key in keys)
                 {
                     yield return key;
                 }
-                }
             }
+        }
     }
 }

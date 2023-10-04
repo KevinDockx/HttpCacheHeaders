@@ -16,11 +16,13 @@ namespace Marvin.Cache.Headers.DistributedStore.Stores
     {
         private readonly IDistributedCache _distributedCache;
         private readonly IRetrieveDistributedCacheKeys _distributedCacheKeyRetriever;
+        private readonly IStoreKeySerializer _storeKeySerializer;
 
-        public DistributedCacheValidatorValueStore(IDistributedCache distributedCache, IRetrieveDistributedCacheKeys distributedCacheKeyRetriever)
+        public DistributedCacheValidatorValueStore(IDistributedCache distributedCache, IRetrieveDistributedCacheKeys distributedCacheKeyRetriever, IStoreKeySerializer storeKeySerializer =null)
         {
             _distributedCache = distributedCache ?? throw new ArgumentNullException(nameof(distributedCache));
             _distributedCacheKeyRetriever = distributedCacheKeyRetriever ?? throw new ArgumentNullException(nameof(distributedCacheKeyRetriever));
+            _storeKeySerializer = storeKeySerializer ?? throw new ArgumentNullException(nameof(storeKeySerializer));
         }
 
         public async Task<ValidatorValue> GetAsync(StoreKey key)
@@ -30,11 +32,12 @@ namespace Marvin.Cache.Headers.DistributedStore.Stores
                 throw new ArgumentNullException(nameof(key));
             }
 
-            var result = await _distributedCache.GetAsync(key.ToString(), CancellationToken.None);
+            var serializedKey = _storeKeySerializer.SerializeStoreKey(key);
+            var result = await _distributedCache.GetAsync(serializedKey, CancellationToken.None);
             return result == null ? null : CreateValidatorValue(result);
         }
 
-        private ValidatorValue CreateValidatorValue(byte[] validatorValueBytes)
+        private static ValidatorValue CreateValidatorValue(byte[] validatorValueBytes)
         {
             var validatorValueUtf8String = Encoding.UTF8.GetString(validatorValueBytes);
             var validatorValueETagTypeString = validatorValueUtf8String[..validatorValueUtf8String.IndexOf(" ", StringComparison.InvariantCulture)];
@@ -59,10 +62,11 @@ namespace Marvin.Cache.Headers.DistributedStore.Stores
             {
                 throw new ArgumentNullException(nameof(validatorValue));
             }
-            
+
+            var keyJson = _storeKeySerializer.SerializeStoreKey(key);
             var eTagString = $"{validatorValue.ETag.ETagType} Value=\"{validatorValue.ETag.Value}\" LastModified={validatorValue.LastModified.ToString(CultureInfo.InvariantCulture)}";
             var eTagBytes = Encoding.UTF8.GetBytes(eTagString);
-            return _distributedCache.SetAsync(key.ToString(), eTagBytes);
+            return _distributedCache.SetAsync(keyJson, eTagBytes);
         }
 
         public async Task<bool> RemoveAsync(StoreKey key)
@@ -72,8 +76,14 @@ namespace Marvin.Cache.Headers.DistributedStore.Stores
                 throw new ArgumentNullException(nameof(key));
             }
 
-            var keyString = key.ToString();
-            await _distributedCache.RemoveAsync(keyString);
+            var keyJson = _storeKeySerializer.SerializeStoreKey(key);
+            var cacheEntry = await _distributedCache.GetAsync(keyJson, CancellationToken.None);
+            if (cacheEntry is null)
+            {
+                return false;
+            }
+            
+            await _distributedCache.RemoveAsync(keyJson);
             return true;
         }
 
@@ -91,7 +101,8 @@ namespace Marvin.Cache.Headers.DistributedStore.Stores
             var foundKeys = _distributedCacheKeyRetriever.FindStoreKeysByKeyPartAsync(valueToMatch, ignoreCase);
             await foreach (var foundKey in foundKeys.ConfigureAwait(false))
             {
-                yield return new StoreKey();
+                var k = _storeKeySerializer.DeserializeStoreKey(foundKey);
+                yield return k;
             }
         }
     }

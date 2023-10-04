@@ -54,34 +54,30 @@ public class RedisDistributedCacheKeyRetrieverFacts
     }
 
     [Fact]
-    public void FindStoreKeysByKeyPartAsync_Throws_An_Argument_Null_Exception_When_The_valueToMatch_Passed_in_Is_null()
+    public async Task FindStoreKeysByKeyPartAsync_Throws_An_Argument_Null_Exception_When_The_valueToMatch_Passed_in_Is_null()
     {
         var connectionMultiplexer = new Mock<IConnectionMultiplexer>();
         var redisDistributedCacheKeyRetrieverOptions = new Mock<IOptions<RedisDistributedCacheKeyRetrieverOptions>>();
         redisDistributedCacheKeyRetrieverOptions.SetupGet(x => x.Value).Returns(new RedisDistributedCacheKeyRetrieverOptions());
         var redisDistributedCacheKeyRetriever = new RedisDistributedCacheKeyRetriever(connectionMultiplexer.Object, redisDistributedCacheKeyRetrieverOptions.Object);
         string? valueToMatch = null;
-        var result = redisDistributedCacheKeyRetriever.FindStoreKeysByKeyPartAsync(valueToMatch);
-        var enumerator = result.GetAsyncEnumerator();
-        Assert.ThrowsAsync<ArgumentNullException>(async () => await enumerator.MoveNextAsync());
-    }
+        var exception = await CaptureTheExceptionIfOneIsThrownFromAnIAsyncEnumerable(() => redisDistributedCacheKeyRetriever.FindStoreKeysByKeyPartAsync(valueToMatch));
+        Assert.IsType<ArgumentNullException>(exception);
+        }
 
     [Fact]
-    public void FindStoreKeysByKeyPartAsync_Throws_An_Argument_Exception_When_The_valueToMatch_Passed_in_Is_an_empty_string()
+    public async Task FindStoreKeysByKeyPartAsync_Throws_An_Argument_Exception_When_The_valueToMatch_Passed_in_Is_an_empty_string()
     {
         var connectionMultiplexer = new Mock<IConnectionMultiplexer>();
         var redisDistributedCacheKeyRetrieverOptions = new Mock<IOptions<RedisDistributedCacheKeyRetrieverOptions>>();
         redisDistributedCacheKeyRetrieverOptions.SetupGet(x => x.Value).Returns(new RedisDistributedCacheKeyRetrieverOptions());
         var redisDistributedCacheKeyRetriever = new RedisDistributedCacheKeyRetriever(connectionMultiplexer.Object, redisDistributedCacheKeyRetrieverOptions.Object);
         var valueToMatch = String.Empty;
-        var result = redisDistributedCacheKeyRetriever.FindStoreKeysByKeyPartAsync(valueToMatch);
-        var enumerator = result.GetAsyncEnumerator();
-        Assert.ThrowsAsync<ArgumentException>(async () =>await enumerator.MoveNextAsync());
-    }
+        var exception = await CaptureTheExceptionIfOneIsThrownFromAnIAsyncEnumerable(() => redisDistributedCacheKeyRetriever.FindStoreKeysByKeyPartAsync(valueToMatch));
+        Assert.IsType<ArgumentException>(exception);
+        }
 
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
+    [Theory, CombinatorialData]
     public async Task FindStoreKeysByKeyPartAsync_Returns_An_Empty_Collection_Of_Keys_When_No_Servers_Are_available(bool onlyUseReplicas)
     {
         var connectionMultiplexer = new Mock<IConnectionMultiplexer>();
@@ -140,11 +136,9 @@ public class RedisDistributedCacheKeyRetrieverFacts
     }
 
     [Theory, CombinatorialData]
-    public async Task
-        FindStoreKeysByKeyPartAsync_Returns_A_Collection_Of_Keys_When_At_Least_One_Server_Is_Available_And_At_Least_One_Key_Exists_On_Any_Of_The_Available_Servers_That_Match_The_Past_in_Value_To_Match_In_The_Database_Specified_In_The_Options_Passed_to_The_Constructor(
-            bool onlyUseReplicas, bool ignoreCase, [CombinatorialRange(1, 2)] int numberOfServers)
+    public async Task FindStoreKeysByKeyPartAsync_Returns_A_Collection_Of_Keys_When_At_Least_One_Server_Is_Available_And_At_Least_One_Key_Exists_On_Any_Of_The_Available_Servers_That_Match_The_Past_in_Value_To_Match_In_The_Database_Specified_In_The_Options_Passed_to_The_Constructor(bool onlyUseReplicas, bool ignoreCase, [CombinatorialRange(1, 2)] int numberOfServers)
     {
-        var rand = new Random();
+        var rand = Random.Shared;
         var valueToMatch = "TestKey";
         var valueToMatchWithPattern = GetValueToMatchWithPattern(valueToMatch, ignoreCase);
         var keyPostFixes = Enumerable.Range(0, numberOfServers * 2);
@@ -195,4 +189,20 @@ public class RedisDistributedCacheKeyRetrieverFacts
     }
 
     private static RedisValue GetValueToMatchWithPattern(string valueToMatch, bool ignoreCase) => ignoreCase ? $"pattern: {valueToMatch.ToLower()}" : $"pattern: {valueToMatch}";
+
+    private static async Task<Exception> CaptureTheExceptionIfOneIsThrownFromAnIAsyncEnumerable<T>(Func<IAsyncEnumerable<T>> sequenceGenerator)
+    {
+        try
+        {
+            await foreach (var _ in sequenceGenerator())
+            {
+            }
+        }
+        catch (Exception e)
+        {
+            return e;
+        }
+
+        return null;
+    }
 }
