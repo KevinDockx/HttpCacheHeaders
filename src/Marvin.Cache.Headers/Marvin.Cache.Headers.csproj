@@ -8,12 +8,12 @@
 		<GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
 		<GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
 		<GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
-		<Version>7.0.0-beta</Version>
+		<Version>7.0.0-rc</Version>
 		<Description>ASP.NET Core middleware that adds HttpCache headers to responses (Cache-Control, Expires, ETag, Last-Modified), and implements cache expiration &amp; validation models.</Description>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 		<Authors>KevinDockx, Kevin Dockx</Authors>
 		<PackageProjectUrl>https://github.com/KevinDockx/HttpCacheHeaders</PackageProjectUrl>
-		<PackageReleaseNotes>Bugfix for casing issue on cache invalidation.  Add option to choose whether to ignore casing or not.</PackageReleaseNotes>
+		<PackageReleaseNotes>Support .NET 8, internally use InMemoryCache, enable roundtrippable StoreKey, additional bug fixes.</PackageReleaseNotes>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 	</PropertyGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'net6.0'">
@@ -39,8 +39,8 @@
   </ItemGroup>
   
   <ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">
-    <PackageReference Include="Microsoft.Extensions.Caching.Abstractions" Version="8.0.0-rc.1.23419.4" />
-    <PackageReference Include="Microsoft.Extensions.Options" Version="8.0.0-rc.1.23419.4" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Abstractions" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Options" Version="8.0.0" />
   </ItemGroup>
 
   <PropertyGroup>

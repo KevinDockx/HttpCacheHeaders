@@ -8,25 +8,18 @@
 		<GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
 		<GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
 		<GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
-		<Version>7.0.0</Version>
-		<Description>Provides an implementation of the IValidatorValueStore for use with the Marvin.Cache.Headers NuGet package allowing ValidatorValue instances to be stored in a cache that will support web properties that need to sscale out.</Description>
+		<Version>1.0.0-beta</Version>
+		<Description>Provides an implementation of the IValidatorValueStore for use with the Marvin.Cache.Headers NuGet package that allows ValidatorValue instances to be stored in a distributed cache.</Description>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-		<Authors>KevinDockx, Kevin Dockx</Authors>
+		<Authors>Sean Farrow, Kevin Dockx</Authors>
 		<PackageProjectUrl>https://github.com/KevinDockx/HttpCacheHeaders</PackageProjectUrl>
-		<PackageReleaseNotes></PackageReleaseNotes>
-		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<PackageReleaseNotes>Initial release</PackageReleaseNotes>
+		<PackageReadmeFile></PackageReadmeFile>
 	</PropertyGroup>
 
 	<PropertyGroup>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 	</PropertyGroup>
-	
-	<ItemGroup>
-	  <None Include="..\..\README.md">
-	    <Pack>True</Pack>
-	    <PackagePath></PackagePath>
-	  </None>
-	</ItemGroup>
 	
 	<ItemGroup>
 	  <ProjectReference Include="..\Marvin.Cache.Headers\Marvin.Cache.Headers.csproj" />
