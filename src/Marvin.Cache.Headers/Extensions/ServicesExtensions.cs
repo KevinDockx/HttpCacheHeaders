@@ -30,6 +30,7 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <param name="storeKeySerializerFunc">Func to provide a custom <see cref="IStoreKeySerializer" /></param>
         /// <param name="eTagGeneratorFunc">Func to provide a custom <see cref="IETagGenerator" /></param>
         /// <param name="lastModifiedInjectorFunc">Func to provide a custom <see cref="ILastModifiedInjector" /></param>
+        /// <param name="eTagInjectorFunc">Func to provide a custom <see cref="IETagInjector" /></param>
         public static IServiceCollection AddHttpCacheHeaders(
             this IServiceCollection services,
             Action<ExpirationModelOptions> expirationModelOptionsAction = null,
@@ -40,7 +41,8 @@ namespace Microsoft.Extensions.DependencyInjection
             Func<IServiceProvider, IStoreKeyGenerator> storeKeyGeneratorFunc = null,
             Func<IServiceProvider, IStoreKeySerializer> storeKeySerializerFunc = null,
             Func<IServiceProvider, IETagGenerator> eTagGeneratorFunc = null,
-            Func<IServiceProvider, ILastModifiedInjector> lastModifiedInjectorFunc = null)
+            Func<IServiceProvider, ILastModifiedInjector> lastModifiedInjectorFunc = null,
+            Func<IServiceProvider, IETagInjector> eTagInjectorFunc = null)
         {
             services.AddMemoryCache();
             if(expirationModelOptionsAction != null)
@@ -57,7 +59,8 @@ namespace Microsoft.Extensions.DependencyInjection
                 storeKeyGeneratorFunc,
                 storeKeySerializerFunc,
                 eTagGeneratorFunc,
-                lastModifiedInjectorFunc);
+                lastModifiedInjectorFunc,
+                eTagInjectorFunc);
 
             return services;
         }
@@ -68,7 +71,8 @@ namespace Microsoft.Extensions.DependencyInjection
             Func<IServiceProvider, IStoreKeyGenerator> storeKeyGeneratorFunc,
             Func<IServiceProvider, IStoreKeySerializer> storeKeySerializerFunc,
             Func<IServiceProvider, IETagGenerator> eTagGeneratorFunc,
-            Func<IServiceProvider, ILastModifiedInjector> lastModifiedInjectorFunc)
+            Func<IServiceProvider, ILastModifiedInjector> lastModifiedInjectorFunc,
+            Func<IServiceProvider, IETagInjector> eTagInjectorFunc)
         {
             AddDateParser(services, dateParserFunc);
             AddValidatorValueStore(services, validatorValueStoreFunc);
@@ -76,6 +80,7 @@ namespace Microsoft.Extensions.DependencyInjection
             AddStoreKeySerializer(services, storeKeySerializerFunc);
             AddETagGenerator(services, eTagGeneratorFunc);
             AddLastModifiedInjector(services, lastModifiedInjectorFunc);
+            AddETagInjector(services, eTagInjectorFunc);
 
             // register dependencies for required services
             services.TryAddSingleton<IHttpContextAccessor, HttpContextAccessor>();
@@ -101,6 +106,24 @@ namespace Microsoft.Extensions.DependencyInjection
             }
 
             services.Add(ServiceDescriptor.Singleton(typeof(ILastModifiedInjector), lastModifiedInjectorFunc));
+        }
+
+        private static void AddETagInjector(
+            IServiceCollection services, 
+            Func<IServiceProvider, 
+                IETagInjector> eTagInjectorFunc)
+        {
+            if (services == null)
+            {
+                throw new ArgumentNullException(nameof(services));
+            }
+
+            if (eTagInjectorFunc == null)
+            {
+                eTagInjectorFunc = services => new DefaultETagInjector(services.GetRequiredService<IETagGenerator>());
+            }
+
+            services.Add(ServiceDescriptor.Singleton(typeof(IETagInjector), eTagInjectorFunc));
         }
 
         private static void AddDateParser(
