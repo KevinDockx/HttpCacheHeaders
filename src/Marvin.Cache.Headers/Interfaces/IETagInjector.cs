@@ -4,8 +4,8 @@ using Microsoft.AspNetCore.Http;
 namespace Marvin.Cache.Headers.Interfaces;
 
 /// <summary>
-///     Contract for a LastModifiedInjector, which can be used to inject custom eTags for resources
-///     of which may be injected in the request pipeline (eg: based on existing calculated eTag on resource and stored)
+///     Contract for a ETagInjector, which can be used to inject custom eTags for resources
+///     of which may be injected in the request pipeline (eg: based on existing calculated eTag on resource and store key)
 /// </summary>
 /// <remarks>
 ///     This injector will wrap the <see cref="IETagGenerator" /> to allow for eTag source to be swapped out
