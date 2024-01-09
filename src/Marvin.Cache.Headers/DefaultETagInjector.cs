@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using System.Threading.Tasks;
 using Marvin.Cache.Headers.Interfaces;
@@ -14,7 +15,7 @@ public class DefaultETagInjector : IETagInjector
     
     public DefaultETagInjector(IETagGenerator eTagGenerator)
     {
-        _eTagGenerator = eTagGenerator;
+        _eTagGenerator = eTagGenerator ?? throw new ArgumentNullException(nameof(eTagGenerator));
     }
 
     public async Task<ETag> RetrieveETag(ETagContext eTagContext)
