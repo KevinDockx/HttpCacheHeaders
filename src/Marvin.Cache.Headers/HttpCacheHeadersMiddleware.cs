@@ -28,6 +28,7 @@ namespace Marvin.Cache.Headers
         private readonly IValidatorValueStore _store;
         private readonly IStoreKeyGenerator _storeKeyGenerator;
         private readonly IETagGenerator _eTagGenerator;
+        private readonly IETagInjector _eTagInjector;
         private readonly ILastModifiedInjector _lastModifiedInjector;
         private readonly MiddlewareOptions _middlewareOptions;
         private readonly ValidationModelOptions _validationModelOptions;
@@ -42,9 +43,10 @@ namespace Marvin.Cache.Headers
             IValidatorValueStore store,
             IStoreKeyGenerator storeKeyGenerator,
             IETagGenerator eTagGenerator,
+            IETagInjector eTagInjector,
             ILastModifiedInjector lastModifiedInjector,
             IOptions<MiddlewareOptions> middlewareOptions,
-            IOptions<ExpirationModelOptions> expirationModelOptions, 
+            IOptions<ExpirationModelOptions> expirationModelOptions,
             IOptions<ValidationModelOptions> validationModelOptions)
         {
             if (loggerFactory == null)
@@ -52,7 +54,7 @@ namespace Marvin.Cache.Headers
                 throw new ArgumentNullException(nameof(loggerFactory));
             }
 
-            if (middlewareOptions ==null)
+            if (middlewareOptions == null)
             {
                 throw new ArgumentNullException(nameof(middlewareOptions));
             }
@@ -73,7 +75,9 @@ namespace Marvin.Cache.Headers
             _store = store ?? throw new ArgumentNullException(nameof(store));
             _storeKeyGenerator = storeKeyGenerator ?? throw new ArgumentNullException(nameof(storeKeyGenerator));
             _eTagGenerator = eTagGenerator ?? throw new ArgumentNullException(nameof(eTagGenerator));
-            _lastModifiedInjector = lastModifiedInjector ?? throw new ArgumentNullException(nameof(lastModifiedInjector));
+            _eTagInjector = eTagInjector ?? throw new ArgumentNullException(nameof(eTagInjector));
+            _lastModifiedInjector =
+                lastModifiedInjector ?? throw new ArgumentNullException(nameof(lastModifiedInjector));
             _middlewareOptions = middlewareOptions.Value;
             _expirationModelOptions = expirationModelOptions.Value;
             _validationModelOptions = validationModelOptions.Value;
@@ -87,10 +91,10 @@ namespace Marvin.Cache.Headers
             // services can be injected via constructor injection when working with middleware
 
             _validatorValueInvalidator = validatorValueInvalidator
-                ?? throw new ArgumentNullException(nameof(validatorValueInvalidator));
+                                         ?? throw new ArgumentNullException(nameof(validatorValueInvalidator));
 
             if (ShouldHeaderGenerationBeIgnored(httpContext))
-            {                
+            {
                 // continue with the next delegate in line
                 await _next.Invoke(httpContext);
                 return;
@@ -104,7 +108,7 @@ namespace Marvin.Cache.Headers
             }
 
             if (await PutOrPostIndicatesResourceHasChanged(httpContext))
-            {                
+            {
                 // don't continue with the next delegate in line, a response (412) has been generated
                 return;
             }
@@ -122,10 +126,11 @@ namespace Marvin.Cache.Headers
                 var hasHttpCacheExpirationOrValidationAttribute = httpContext.GetEndpoint()?.Metadata
                     .Any(m => m is HttpCacheExpirationAttribute || m is HttpCacheValidationAttribute);
 
-                if (!(hasHttpCacheExpirationOrValidationAttribute.HasValue && hasHttpCacheExpirationOrValidationAttribute.Value))
+                if (!(hasHttpCacheExpirationOrValidationAttribute.HasValue &&
+                      hasHttpCacheExpirationOrValidationAttribute.Value))
                 {
                     return true;
-                } 
+                }
             }
 
             var hasHttpCacheIgnoreAttribute = httpContext.GetEndpoint()?.Metadata
@@ -134,7 +139,7 @@ namespace Marvin.Cache.Headers
             if (hasHttpCacheIgnoreAttribute.HasValue && hasHttpCacheIgnoreAttribute.Value)
             {
                 return true;
-            }         
+            }
 
             return false;
         }
@@ -212,7 +217,8 @@ namespace Marvin.Cache.Headers
 
                     // Handle expiration: Expires & Cache-Control headers
                     // (these are also added for 304 / 412 responses)
-                    await GenerateExpirationHeadersOnResponse(httpContext, expirationModelOptions, validationModelOptions);
+                    await GenerateExpirationHeadersOnResponse(httpContext, expirationModelOptions,
+                        validationModelOptions);
 
                     // Handle validation: ETag and Last-Modified headers
                     await GenerateValidationHeadersOnResponse(httpContext);
@@ -220,7 +226,7 @@ namespace Marvin.Cache.Headers
                     // Generate Vary headers on the response
                     GenerateVaryHeadersOnResponse(httpContext, validationModelOptions);
                 }
-                
+
                 // reset the buffer, read out the contents & copy it to the original stream.  This
                 // will ensure our changes to the buffer are applied to the original stream.
                 buffer.Seek(0, SeekOrigin.Begin);
@@ -249,6 +255,7 @@ namespace Marvin.Cache.Headers
                 {
                     httpContext.Response.Body = stream;
                 }
+
                 if (buffer != null)
                 {
                     buffer.Dispose();
@@ -270,11 +277,12 @@ namespace Marvin.Cache.Headers
 
         private bool ShouldResponseBeIgnored(HttpContext httpContext)
         {
-            var isResponseStatusCodeIgnored = _middlewareOptions.IgnoredStatusCodes.Contains(httpContext.Response.StatusCode);
+            var isResponseStatusCodeIgnored =
+                _middlewareOptions.IgnoredStatusCodes.Contains(httpContext.Response.StatusCode);
 
             if (isResponseStatusCodeIgnored)
-            { 
-                return true; 
+            {
+                return true;
             }
 
             return false;
@@ -350,7 +358,8 @@ namespace Marvin.Cache.Headers
                 return true;
             }
 
-            var eTagsFromIfNoneMatchHeader = ifNoneMatchHeaderValue.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+            var eTagsFromIfNoneMatchHeader =
+                ifNoneMatchHeaderValue.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
 
             // check the ETag.  If one of the ETags matches, we're good to
             // go and can return a 304 Not Modified.
@@ -497,7 +506,8 @@ namespace Marvin.Cache.Headers
                 var ifUnmodifiedSinceValue = httpContext.Request.Headers[HeaderNames.IfUnmodifiedSince].ToString();
                 _logger.LogInformation($"Checking If-Unmodified-Since: {ifUnmodifiedSinceValue}");
 
-                var parsedIfUnmodifiedSince = await _dateParser.IfUnmodifiedSinceToDateTimeOffset(ifUnmodifiedSinceValue);
+                var parsedIfUnmodifiedSince =
+                    await _dateParser.IfUnmodifiedSinceToDateTimeOffset(ifUnmodifiedSinceValue);
 
                 if (parsedIfUnmodifiedSince.HasValue)
                 {
@@ -590,7 +600,8 @@ namespace Marvin.Cache.Headers
                 httpContext.Response.StatusCode != StatusCodes.Status208AlreadyReported &&
                 httpContext.Response.StatusCode != StatusCodes.Status226IMUsed)
             {
-                _logger.LogInformation("Not generating Validation headers as the response status code does not indicate success.");
+                _logger.LogInformation(
+                    "Not generating Validation headers as the response status code does not indicate success.");
                 return;
             }
 
@@ -624,17 +635,9 @@ namespace Marvin.Cache.Headers
             // get the request key
             var storeKey = await _storeKeyGenerator.GenerateStoreKey(
                 ConstructStoreKeyContext(httpContext.Request, _validationModelOptions));
-
-            // get the response bytes
-            if (httpContext.Response.Body.CanSeek)
-            {
-                httpContext.Response.Body.Position = 0;
-            }
-
-            var responseBodyContent = new StreamReader(httpContext.Response.Body).ReadToEnd();
-
-            // Calculate the ETag to store in the store.
-            var eTag = await _eTagGenerator.GenerateETag(storeKey, responseBodyContent);
+            
+            // Retrieve/calculate the ETag to store in the store
+            var eTag = await _eTagInjector.RetrieveETag(new ETagContext(storeKey, httpContext));
 
             var lastModified = await _lastModifiedInjector.CalculateLastModified(
                 new ResourceContext(httpContext.Request, storeKey));
@@ -647,10 +650,13 @@ namespace Marvin.Cache.Headers
             headers[HeaderNames.ETag] = eTag.ToString();
             headers[HeaderNames.LastModified] = lastModifiedValue;
 
-            _logger.LogInformation($"Validation headers generated. ETag: {eTag.ETagType}, {eTag}. Last-Modified: {lastModifiedValue}");
+            _logger.LogInformation(
+                $"Validation headers generated. ETag: {eTag.ETagType}, {eTag}. Last-Modified: {lastModifiedValue}");
         }
 
-        private void GenerateVaryHeadersOnResponse(HttpContext httpContext, ValidationModelOptions validationModelOptions)
+        private void GenerateVaryHeadersOnResponse(
+            HttpContext httpContext,
+            ValidationModelOptions validationModelOptions)
         {
             // cfr: https://tools.ietf.org/html/rfc7231#section-7.1.4
             // Generate Vary header for response
@@ -713,10 +719,12 @@ namespace Marvin.Cache.Headers
 
             headers[HeaderNames.CacheControl] = cacheControlHeaderValue;
 
-            _logger.LogInformation($"Expiration headers generated. Expires: {expiresValue}. Cache-Control: {cacheControlHeaderValue}.");
+            _logger.LogInformation(
+                $"Expiration headers generated. Expires: {expiresValue}. Cache-Control: {cacheControlHeaderValue}.");
         }
 
-        private StoreKeyContext ConstructStoreKeyContext(HttpRequest request,
+        private StoreKeyContext ConstructStoreKeyContext(
+            HttpRequest request,
             ValidationModelOptions validationModelOptions)
         {
             return new StoreKeyContext(request, validationModelOptions.Vary, validationModelOptions.VaryByAll);
