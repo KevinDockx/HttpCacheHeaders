@@ -42,9 +42,7 @@ public static class MinimalApiExtensions
     attribute.NoTransform = noTransform ?? attribute.NoTransform;
     attribute.SharedMaxAge = sharedMaxAge ?? attribute.SharedMaxAge;
 
-    WireMetadata(builder,
-      attribute,
-      HttpContextExtensions.ContextItemsExpirationModelOptions);
+    WireMetadata(builder, attribute);
 
     return builder;
   }
@@ -80,9 +78,7 @@ public static class MinimalApiExtensions
     attribute.MustRevalidate = mustRevalidate ?? attribute.MustRevalidate;
     attribute.ProxyRevalidate = proxyRevalidate ?? attribute.ProxyRevalidate;
 
-    WireMetadata(builder, 
-      attribute,
-      HttpContextExtensions.ContextItemsExpirationModelOptions);
+    WireMetadata(builder, attribute);
 
     return builder;
   }
@@ -104,28 +100,12 @@ public static class MinimalApiExtensions
   }
 
   static private void WireMetadata<T, TBuilder>(TBuilder builder,
-    T attribute,
-    string key = null) where T : Attribute
+    T attribute) where T : Attribute
                         where TBuilder : IEndpointConventionBuilder
   {
     builder.Add(endpointBuilder =>
     {
       endpointBuilder.Metadata.Add(attribute);
-
-      if (key is not null && attribute is IModelOptionsProvider provider)
-      {
-        var otherRequestDelegate = endpointBuilder.RequestDelegate;
-        endpointBuilder.RequestDelegate = async (context) =>
-        {
-          if (!context.Items.ContainsKey(key))
-          {
-            context.Items[HttpContextExtensions.ContextItemsExpirationModelOptions] = provider.GetModelOptions();
-          }
-
-          // Call the rest of the request
-          await otherRequestDelegate(context);
-        };
-      }
     });
   }
 
