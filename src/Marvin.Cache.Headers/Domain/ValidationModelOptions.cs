@@ -2,6 +2,7 @@
 // Any issues, requests: https://github.com/KevinDockx/HttpCacheHeaders
 
 using System.Collections.Generic;
+using Marvin.Cache.Headers.Interfaces;
 
 namespace Marvin.Cache.Headers
 {
@@ -9,7 +10,7 @@ namespace Marvin.Cache.Headers
     /// Options that have to do with the validation model, mainly related to ETag generation, Last-Modified on the response,
     /// but also to the Cache-Control header (as that is used for both expiration & validation requirements)
     /// </summary>
-    public class ValidationModelOptions
+    public class ValidationModelOptions : IModelOptions
     {
         /// <summary>
         /// A case-insensitive list of headers from the request to take into account as differentiator

@@ -1,13 +1,15 @@
 ﻿// Any comments, input: @KevinDockx
 // Any issues, requests: https://github.com/KevinDockx/HttpCacheHeaders
 
+using Marvin.Cache.Headers.Interfaces;
+
 namespace Marvin.Cache.Headers
 {
     /// <summary>
     /// Options that have to do with the expiration model, mainly related to Cache-Control & Expires headers on the response.
     /// </summary>
-    public class ExpirationModelOptions
-    {
+    public class ExpirationModelOptions : IModelOptions
+  {
         /// <summary>
         /// Maximum age, in seconds, after which a response expires. Has an effect on Expires & on the max-age directive
         /// of the Cache-Control header.

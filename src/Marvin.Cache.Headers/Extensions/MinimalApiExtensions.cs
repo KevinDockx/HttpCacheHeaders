@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Marvin.Cache.Headers.Interfaces;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
 namespace Marvin.Cache.Headers.Extensions;
@@ -27,7 +29,7 @@ public static class MinimalApiExtensions
       int? maxAge = null,
       bool? noStore = null,
       bool? noTransform = null,
-      int? sharedMaxAge = null) 
+      int? sharedMaxAge = null)
     where TBuilder : IEndpointConventionBuilder
   {
     ArgumentNullException.ThrowIfNull(builder);
@@ -40,10 +42,10 @@ public static class MinimalApiExtensions
     attribute.NoTransform = noTransform ?? attribute.NoTransform;
     attribute.SharedMaxAge = sharedMaxAge ?? attribute.SharedMaxAge;
 
-    builder.Add(endpointBuilder =>
-    {
-      endpointBuilder.Metadata.Add(attribute);
-    });
+    WireMetadata(builder,
+      attribute,
+      HttpContextExtensions.ContextItemsExpirationModelOptions);
+
     return builder;
   }
 
@@ -61,8 +63,8 @@ public static class MinimalApiExtensions
   /// <seealso cref="Marvin.Cache.Headers.HttpCacheValidationAttribute"/>
   /// <returns>The builder for chaining of commands.</returns>
   public static TBuilder AddHttpCacheValidation<TBuilder>(this TBuilder builder,
-    string[] vary = null, 
-    bool? varyByAll = null, 
+    string[] vary = null,
+    bool? varyByAll = null,
     bool? noCache = null,
     bool? mustRevalidate = null,
     bool? proxyRevalidate = null)
@@ -78,10 +80,10 @@ public static class MinimalApiExtensions
     attribute.MustRevalidate = mustRevalidate ?? attribute.MustRevalidate;
     attribute.ProxyRevalidate = proxyRevalidate ?? attribute.ProxyRevalidate;
 
-    builder.Add(endpointBuilder =>
-    {
-      endpointBuilder.Metadata.Add(attribute);
-    });
+    WireMetadata(builder, 
+      attribute,
+      HttpContextExtensions.ContextItemsExpirationModelOptions);
+
     return builder;
   }
 
@@ -96,12 +98,35 @@ public static class MinimalApiExtensions
   {
     ArgumentNullException.ThrowIfNull(builder);
 
-    builder.Add(endpointBuilder =>
-    {
-      endpointBuilder.Metadata.Add(new HttpCacheIgnoreAttribute());
-    });
+    WireMetadata(builder, new HttpCacheIgnoreAttribute());
 
     return builder;
+  }
+
+  static private void WireMetadata<T, TBuilder>(TBuilder builder,
+    T attribute,
+    string key = null) where T : Attribute
+                        where TBuilder : IEndpointConventionBuilder
+  {
+    builder.Add(endpointBuilder =>
+    {
+      endpointBuilder.Metadata.Add(attribute);
+
+      if (key is not null && attribute is IModelOptionsProvider provider)
+      {
+        var otherRequestDelegate = endpointBuilder.RequestDelegate;
+        endpointBuilder.RequestDelegate = async (context) =>
+        {
+          if (!context.Items.ContainsKey(key))
+          {
+            context.Items[HttpContextExtensions.ContextItemsExpirationModelOptions] = provider.GetModelOptions();
+          }
+
+          // Call the rest of the request
+          await otherRequestDelegate(context);
+        };
+      }
+    });
   }
 
 }
