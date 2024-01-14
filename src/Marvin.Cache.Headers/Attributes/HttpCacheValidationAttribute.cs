@@ -4,14 +4,15 @@
 using System;
 using System.Threading.Tasks;
 using Marvin.Cache.Headers.Extensions;
+using Marvin.Cache.Headers.Interfaces;
 using Microsoft.AspNetCore.Mvc.Filters;
 
 namespace Marvin.Cache.Headers
 {
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
-    public class HttpCacheValidationAttribute : Attribute, IAsyncResourceFilter
-    {
-        private readonly Lazy<ValidationModelOptions> _validationModelOptions;
+    public class HttpCacheValidationAttribute : Attribute, IAsyncResourceFilter, IModelOptionsProvider
+  {
+        internal readonly Lazy<ValidationModelOptions> _validationModelOptions;
 
         /// <summary>
         /// A case-insensitive list of headers from the request to take into account as differentiator
@@ -89,8 +90,13 @@ namespace Marvin.Cache.Headers
 
             if (!context.HttpContext.Items.ContainsKey(HttpContextExtensions.ContextItemsValidationModelOptions))
             {
-                context.HttpContext.Items[HttpContextExtensions.ContextItemsValidationModelOptions] = _validationModelOptions.Value;
+                context.HttpContext.Items[HttpContextExtensions.ContextItemsValidationModelOptions] = GetModelOptions();
             }
         }
+
+    public IModelOptions GetModelOptions()
+    {
+      return _validationModelOptions.Value;
     }
+  }
 }
