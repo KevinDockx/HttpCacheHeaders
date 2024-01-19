@@ -8,12 +8,12 @@
 		<GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
 		<GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
 		<GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
-		<Version>7.0.0</Version>
+		<Version>7.1.0-beta</Version>
 		<Description>ASP.NET Core middleware that adds HttpCache headers to responses (Cache-Control, Expires, ETag, Last-Modified), and implements cache expiration &amp; validation models.</Description>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 		<Authors>KevinDockx, Kevin Dockx</Authors>
 		<PackageProjectUrl>https://github.com/KevinDockx/HttpCacheHeaders</PackageProjectUrl>
-		<PackageReleaseNotes>Support .NET 8, internally use InMemoryCache, enable roundtrippable StoreKey, additional bug fixes.</PackageReleaseNotes>
+		<PackageReleaseNotes>Injectable ETagInjector for generating the eTag, extension methods for better minimal API support.</PackageReleaseNotes>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 	</PropertyGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'net6.0'">
