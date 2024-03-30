@@ -15,12 +15,9 @@
 		<PackageProjectUrl>https://github.com/KevinDockx/HttpCacheHeaders</PackageProjectUrl>
 		<PackageReleaseNotes>Initial release</PackageReleaseNotes>
 		<PackageReadmeFile></PackageReadmeFile>
-	</PropertyGroup>
-
-	<PropertyGroup>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 	</PropertyGroup>
-	
+
 	<ItemGroup>
 	  <ProjectReference Include="..\Marvin.Cache.Headers\Marvin.Cache.Headers.csproj" />
 	</ItemGroup>
