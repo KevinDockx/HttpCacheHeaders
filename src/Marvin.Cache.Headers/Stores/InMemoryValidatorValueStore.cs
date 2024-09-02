@@ -4,6 +4,7 @@
 using Marvin.Cache.Headers.Interfaces;
 using Microsoft.Extensions.Caching.Memory;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -17,18 +18,22 @@ namespace Marvin.Cache.Headers.Stores
     {
         // store for validatorvalues
         private readonly IMemoryCache _store;
-        
-        // store for storekeys - different store to speed up search 
-        private readonly IList<string> _storeKeyStore;
-            
+
+        // store for storekeys - different store to speed up search.  
+        //
+        // A ConcurrentList or ConcurrentHashSet would be slightly better, but they don't 
+        // exist out of the box.  ConcurrentBag doesn't safely allow removing a specific
+        // item, so: ConcurrentDictionary it is.
+        private readonly ConcurrentDictionary<string, string> _storeKeyStore;
+
         //Serializer for StoreKeys.
         private readonly IStoreKeySerializer _storeKeySerializer;
 
-        public InMemoryValidatorValueStore(IStoreKeySerializer storeKeySerializer, IMemoryCache store, IList<string>storeKeyStore =null)
+        public InMemoryValidatorValueStore(IStoreKeySerializer storeKeySerializer, IMemoryCache store, ConcurrentDictionary<string, string> storeKeyStore = null)
         {
-            _storeKeySerializer =storeKeySerializer ?? throw new ArgumentNullException(nameof(storeKeySerializer));
+            _storeKeySerializer = storeKeySerializer ?? throw new ArgumentNullException(nameof(storeKeySerializer));
             _store = store ?? throw new ArgumentNullException(nameof(store));
-            _storeKeyStore = storeKeyStore ?? new List<string>();
+            _storeKeyStore = storeKeyStore ?? new ConcurrentDictionary<string, string>();
         }
 
         public Task<ValidatorValue> GetAsync(StoreKey key)
@@ -48,9 +53,9 @@ namespace Marvin.Cache.Headers.Stores
             // store the validator value
             var keyJson = _storeKeySerializer.SerializeStoreKey(key);
             _store.Set(keyJson, eTag);
-            
+
             // save the key itself as well, with an easily searchable stringified key
-            _storeKeyStore.Add(keyJson);
+            _storeKeyStore[keyJson] = keyJson;
             return Task.CompletedTask;
         }
 
@@ -62,13 +67,14 @@ namespace Marvin.Cache.Headers.Stores
         public Task<bool> RemoveAsync(StoreKey key)
         {
             var keyJson = _storeKeySerializer.SerializeStoreKey(key);
-            if (!_storeKeyStore.Contains(keyJson))
+
+            if (!_storeKeyStore.ContainsKey(keyJson))
             {
                 return Task.FromResult(false);
-            }
-            
+            }             
+
             _store.Remove(keyJson);
-            _storeKeyStore.Remove(keyJson);
+            _ = _storeKeyStore.TryRemove(keyJson, out string _);
             return Task.FromResult(true);
         }
 
@@ -90,15 +96,15 @@ namespace Marvin.Cache.Headers.Stores
                 valueToMatch = valueToMatch.ToLowerInvariant();
             }
 
-            foreach (var key in _storeKeyStore)
+            foreach (var keyValuePair in _storeKeyStore)
+            {
+                var deserializedKey = _storeKeySerializer.DeserializeStoreKey(keyValuePair.Key);
+                var deserializedKeyValues = String.Join(',', ignoreCase ? deserializedKey.Values.Select(x => x.ToLower()) : deserializedKey.Values);
+                if (deserializedKeyValues.Contains(valueToMatch))
                 {
-var deserializedKey =_storeKeySerializer.DeserializeStoreKey(key);
-var deserializedKeyValues = String.Join(',', ignoreCase ? deserializedKey.Values.Select(x => x.ToLower()) : deserializedKey.Values);
-if (deserializedKeyValues.Contains(valueToMatch))
-{
-yield return deserializedKey;
-}
+                    yield return deserializedKey;
                 }
+            }
         }
     }
-    }
+}
