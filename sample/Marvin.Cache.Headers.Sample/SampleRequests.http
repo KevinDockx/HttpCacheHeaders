@@ -1,0 +1,14 @@
+@HostAddressRoot = http://localhost:5246
+
+GET {{HostAddressRoot}}/api/morevalues
+Accept: application/json
+
+###
+
+GET {{HostAddressRoot}}/api/values
+Accept: application/json
+
+###
+
+GET {{HostAddressRoot}}/api/values/1
+Accept: application/json
