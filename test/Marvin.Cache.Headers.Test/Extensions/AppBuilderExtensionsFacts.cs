@@ -9,32 +9,31 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
-namespace Marvin.Cache.Headers.Test.Extensions
+namespace Marvin.Cache.Headers.Test.Extensions;
+
+public class AppBuilderExtensionsFacts
 {
-    public class AppBuilderExtensionsFacts
+    [Fact]
+    public void Correctly_register_HttpCacheHeadersMiddleware()
     {
-        [Fact]
-        public void Correctly_register_HttpCacheHeadersMiddleware()
-        {
-            var hostBuilder = new WebHostBuilder().Configure(app => app.UseHttpCacheHeaders())
-                .ConfigureServices(service =>
-                {
-                    service.AddControllers();
-                    service.AddHttpCacheHeaders();
-                });
-            var testServer = new TestServer(hostBuilder);
+        var hostBuilder = new WebHostBuilder().Configure(app => app.UseHttpCacheHeaders())
+            .ConfigureServices(service =>
+            {
+                service.AddControllers();
+                service.AddHttpCacheHeaders();
+            });
+        var testServer = new TestServer(hostBuilder);
 
-            // not sure this is the correct way to test if the middleware is registered
-            var middleware = testServer.Host.Services.GetService(typeof(IValidatorValueStore));
-            Assert.NotNull(middleware);
-        }
+        // not sure this is the correct way to test if the middleware is registered
+        var middleware = testServer.Host.Services.GetService(typeof(IValidatorValueStore));
+        Assert.NotNull(middleware);
+    }
 
-        [Fact]
-        public void When_no_ApplicationBuilder_expect_ArgumentNullException()
-        {
-            IApplicationBuilder appBuilder = null;
+    [Fact]
+    public void When_no_ApplicationBuilder_expect_ArgumentNullException()
+    {
+        IApplicationBuilder appBuilder = null;
 
-            Assert.Throws<ArgumentNullException>(() => appBuilder.UseHttpCacheHeaders());
-        }
+        Assert.Throws<ArgumentNullException>(() => appBuilder.UseHttpCacheHeaders());
     }
 }

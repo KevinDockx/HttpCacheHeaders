@@ -1,32 +1,31 @@
 ﻿// Any comments, input: @KevinDockx
 // Any issues, requests: https://github.com/KevinDockx/HttpCacheHeaders
 
-namespace Marvin.Cache.Headers
+namespace Marvin.Cache.Headers;
+
+public class ETag
 {
-    public class ETag
+    public ETagType ETagType { get; }
+    public string Value { get; }
+
+    public ETag(ETagType eTagType, string value)
     {
-        public ETagType ETagType { get; }
-        public string Value { get; }
+        ETagType = eTagType;
+        Value = value;
+    }
 
-        public ETag(ETagType eTagType, string value)
+    public override string ToString()
+    {
+        switch (ETagType)
         {
-            ETagType = eTagType;
-            Value = value;
-        }
+            case ETagType.Strong:
+                return  $"\"{Value}\"";
 
-        public override string ToString()
-        {
-            switch (ETagType)
-            {
-                case ETagType.Strong:
-                    return  $"\"{Value}\"";
+            case ETagType.Weak:
+                return  $"W\"{Value}\"";
 
-                case ETagType.Weak:
-                    return  $"W\"{Value}\"";
-
-                default:
-                    return $"\"{Value}\"";
-            }
+            default:
+                return $"\"{Value}\"";
         }
     }
 }

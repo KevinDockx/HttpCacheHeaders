@@ -5,52 +5,50 @@ using Marvin.Cache.Headers.Interfaces;
 using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 
-namespace Marvin.Cache.Headers
+namespace Marvin.Cache.Headers;
+
+/// <summary>
+/// An accessor for finding <see cref="StoreKey" />(s)
+/// </summary>    
+public class StoreKeyAccessor : IStoreKeyAccessor
 {
-    /// <summary>
-    /// An accessor for finding <see cref="StoreKey" />(s)
-    /// </summary>    
-    public class StoreKeyAccessor : IStoreKeyAccessor
+    private readonly IValidatorValueStore _validatorValueStore;
+    private readonly IHttpContextAccessor _httpContextAccessor;
+
+    public StoreKeyAccessor(IValidatorValueStore validatorValueStore,
+        IStoreKeyGenerator storeKeyGenerator,
+        IHttpContextAccessor httpContextAccessor)
     {
-        private readonly IValidatorValueStore _validatorValueStore;
-        private readonly IHttpContextAccessor _httpContextAccessor;
-
-        public StoreKeyAccessor(IValidatorValueStore validatorValueStore,
-            IStoreKeyGenerator storeKeyGenerator,
-            IHttpContextAccessor httpContextAccessor)
-        {
-            _validatorValueStore = validatorValueStore
-                ?? throw new ArgumentNullException(nameof(validatorValueStore));
-            _httpContextAccessor = httpContextAccessor 
-                ?? throw new ArgumentNullException(nameof(httpContextAccessor));
-        }
-
-        /// <summary>
-        /// Find a  <see cref="StoreKey" /> by part of the key
-        /// </summary>
-        /// <param name="valueToMatch">The value to match as part of the key</param>
-        /// <returns></returns>
-        public async IAsyncEnumerable<StoreKey> FindByKeyPart(string valueToMatch, bool ignoreCase = true)
-        {
-            await foreach (var value in  _validatorValueStore.FindStoreKeysByKeyPartAsync(valueToMatch, ignoreCase))
-            {
-                yield return value;
-            }             
-        }
-
-        /// <summary>
-        /// Find a  <see cref="StoreKey" /> of which the current resource path is part of the key
-        /// </summary>
-        /// <returns></returns>
-        public async IAsyncEnumerable<StoreKey> FindByCurrentResourcePath(bool ignoreCase = true)
-        {
-            string path = _httpContextAccessor.HttpContext.Request.Path.ToString();
-            await foreach (var value in _validatorValueStore.FindStoreKeysByKeyPartAsync(path, ignoreCase))
-            {
-                yield return value;
-            } 
-        }         
+        _validatorValueStore = validatorValueStore
+            ?? throw new ArgumentNullException(nameof(validatorValueStore));
+        _httpContextAccessor = httpContextAccessor 
+            ?? throw new ArgumentNullException(nameof(httpContextAccessor));
     }
+
+    /// <summary>
+    /// Find a  <see cref="StoreKey" /> by part of the key
+    /// </summary>
+    /// <param name="valueToMatch">The value to match as part of the key</param>
+    /// <returns></returns>
+    public async IAsyncEnumerable<StoreKey> FindByKeyPart(string valueToMatch, bool ignoreCase = true)
+    {
+        await foreach (var value in  _validatorValueStore.FindStoreKeysByKeyPartAsync(valueToMatch, ignoreCase))
+        {
+            yield return value;
+        }             
+    }
+
+    /// <summary>
+    /// Find a  <see cref="StoreKey" /> of which the current resource path is part of the key
+    /// </summary>
+    /// <returns></returns>
+    public async IAsyncEnumerable<StoreKey> FindByCurrentResourcePath(bool ignoreCase = true)
+    {
+        string path = _httpContextAccessor.HttpContext.Request.Path.ToString();
+        await foreach (var value in _validatorValueStore.FindStoreKeysByKeyPartAsync(path, ignoreCase))
+        {
+            yield return value;
+        } 
+    }         
 }

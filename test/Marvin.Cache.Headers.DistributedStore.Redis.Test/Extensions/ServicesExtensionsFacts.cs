@@ -4,7 +4,6 @@ using Marvin.Cache.Headers.DistributedStore.Redis.Options;
 using Marvin.Cache.Headers.Test.TestStartups;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
 using Moq;
 using StackExchange.Redis;
 using System;

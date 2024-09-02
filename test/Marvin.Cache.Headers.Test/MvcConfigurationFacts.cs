@@ -7,42 +7,41 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Net.Http.Headers;
 using Xunit;
 
-namespace Marvin.Cache.Headers.Test
+namespace Marvin.Cache.Headers.Test;
+
+public class MvcConfigurationFacts
 {
-    public class MvcConfigurationFacts
+    private readonly WebApplicationFactory<Program> _webApplicationFactory =new WebApplicationFactory<Program>();
+
+    [Fact]
+    public async Task Adds_Default_Validation_And_ExpirationHeaders()
     {
-        private readonly WebApplicationFactory<Program> _webApplicationFactory =new WebApplicationFactory<Program>();
-
-        [Fact]
-        public async Task Adds_Default_Validation_And_ExpirationHeaders()
+        using (var client = _webApplicationFactory.CreateDefaultClient())
         {
-            using (var client = _webApplicationFactory.CreateDefaultClient())
-            {
-                var response = await client.GetAsync("/api/values");
+            var response = await client.GetAsync("/api/values");
 
-                Assert.True(response.IsSuccessStatusCode);
+            Assert.True(response.IsSuccessStatusCode);
 
-                Assert.Contains(response.Headers, pair => pair.Key == HeaderNames.CacheControl && pair.Value.First() == "public, must-revalidate, max-age=99999");
+            Assert.Contains(response.Headers, pair => pair.Key == HeaderNames.CacheControl && pair.Value.First() == "public, must-revalidate, max-age=99999");
 
-                var response2 = await client.GetAsync("/api/values/1");
+            var response2 = await client.GetAsync("/api/values/1");
 
-                Assert.True(response2.IsSuccessStatusCode);
+            Assert.True(response2.IsSuccessStatusCode);
 
-                Assert.Contains(response2.Headers, pair => pair.Key == HeaderNames.CacheControl && pair.Value.First() == "max-age=1337, private");
-            }
+            Assert.Contains(response2.Headers, pair => pair.Key == HeaderNames.CacheControl && pair.Value.First() == "max-age=1337, private");
         }
+    }
 
-        [Fact]
-        public async Task Method_Level_Validation_And_ExpirationHeaders_Override_Class_Level()
+    [Fact]
+    public async Task Method_Level_Validation_And_ExpirationHeaders_Override_Class_Level()
+    {
+        using (var client = _webApplicationFactory.CreateDefaultClient())
         {
-            using (var client = _webApplicationFactory.CreateDefaultClient())
-            {
-                var response = await client.GetAsync("/api/morevalues");
+            var response = await client.GetAsync("/api/morevalues");
 
-                Assert.True(response.IsSuccessStatusCode);
+            Assert.True(response.IsSuccessStatusCode);
 
-                Assert.Contains(response.Headers, pair => pair.Key == HeaderNames.CacheControl && pair.Value.First() == "must-revalidate, max-age=99999, private");
-            }
+            Assert.Contains(response.Headers, pair => pair.Key == HeaderNames.CacheControl && pair.Value.First() == "must-revalidate, max-age=99999, private");
         }
     }
 }

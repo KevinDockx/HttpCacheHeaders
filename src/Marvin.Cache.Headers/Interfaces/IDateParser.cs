@@ -4,19 +4,18 @@
 using System;
 using System.Threading.Tasks;
 
-namespace Marvin.Cache.Headers.Interfaces
+namespace Marvin.Cache.Headers.Interfaces;
+
+/// <summary>
+/// Contract for a date parser, used to parse Last-Modified, Expires, If-Modified-Since and If-Unmodified-Since headers.
+/// </summary>
+public interface IDateParser
 {
-    /// <summary>
-    /// Contract for a date parser, used to parse Last-Modified, Expires, If-Modified-Since and If-Unmodified-Since headers.
-    /// </summary>
-    public interface IDateParser
-    {
-        Task<string> LastModifiedToString(DateTimeOffset lastModified);
+    Task<string> LastModifiedToString(DateTimeOffset lastModified);
 
-        Task<string> ExpiresToString(DateTimeOffset lastModified);
+    Task<string> ExpiresToString(DateTimeOffset lastModified);
 
-        Task<DateTimeOffset?> IfModifiedSinceToDateTimeOffset(string ifModifiedSince);
+    Task<DateTimeOffset?> IfModifiedSinceToDateTimeOffset(string ifModifiedSince);
 
-        Task<DateTimeOffset?> IfUnmodifiedSinceToDateTimeOffset(string ifUnmodifiedSince);
-    }
+    Task<DateTimeOffset?> IfUnmodifiedSinceToDateTimeOffset(string ifUnmodifiedSince);
 }

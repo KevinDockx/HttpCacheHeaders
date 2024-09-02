@@ -7,68 +7,67 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Marvin.Cache.Headers.Test.TestStartups
+namespace Marvin.Cache.Headers.Test.TestStartups;
+
+public class ConfiguredStartup
 {
-    public class ConfiguredStartup
+    private readonly Action<ValidationModelOptions> _validationModelOptions;
+    private readonly Action<ExpirationModelOptions> _expirationModelOptions;
+    private readonly Action<MiddlewareOptions> _middlewareOptions;
+
+    public ConfiguredStartup(Action<ValidationModelOptions> validationModelOptions, Action<ExpirationModelOptions> expirationModelOptions, Action<MiddlewareOptions> middlewareOptions)
     {
-        private readonly Action<ValidationModelOptions> _validationModelOptions;
-        private readonly Action<ExpirationModelOptions> _expirationModelOptions;
-        private readonly Action<MiddlewareOptions> _middlewareOptions;
+        _validationModelOptions = validationModelOptions;
+        _expirationModelOptions = expirationModelOptions;
+        _middlewareOptions = middlewareOptions;
+        
+        var builder = new ConfigurationBuilder()
+            .AddEnvironmentVariables();
 
-        public ConfiguredStartup(Action<ValidationModelOptions> validationModelOptions, Action<ExpirationModelOptions> expirationModelOptions, Action<MiddlewareOptions> middlewareOptions)
+        Configuration = builder.Build();
+    }
+
+    public IConfigurationRoot Configuration { get; }
+
+    public void ConfigureServices(IServiceCollection services)
+    {
+        services.AddControllers();
+
+        services.AddHttpCacheHeaders(_expirationModelOptions, _validationModelOptions, _middlewareOptions);
+    }
+
+    public void Configure(IApplicationBuilder app)
+    {
+        app.UseRouting();
+
+        app.UseHttpCacheHeaders();
+
+        app.UseEndpoints(endpoints =>
         {
-            _validationModelOptions = validationModelOptions;
-            _expirationModelOptions = expirationModelOptions;
-            _middlewareOptions = middlewareOptions;
+            endpoints.MapControllerRoute(
+                name: "default",
+                pattern: "{controller=Home}/{action=Index}/{id?}");
+        });
+
+        app.Run(async context =>
+        {
+            switch (context.Request.Path)
+            {
+                case "/bad-request":
+                    context.Response.StatusCode = 400;
+                    break;
+                case "/server-error":
+                    context.Response.StatusCode = 500;
+                    break;
+                case "/not-found":
+                    context.Response.StatusCode = 404;
+                    break;
+                default:
+                    context.Response.StatusCode = 200;
+                    break;
+            }
             
-            var builder = new ConfigurationBuilder()
-                .AddEnvironmentVariables();
-
-            Configuration = builder.Build();
-        }
-
-        public IConfigurationRoot Configuration { get; }
-
-        public void ConfigureServices(IServiceCollection services)
-        {
-            services.AddControllers();
-
-            services.AddHttpCacheHeaders(_expirationModelOptions, _validationModelOptions, _middlewareOptions);
-        }
-
-        public void Configure(IApplicationBuilder app)
-        {
-            app.UseRouting();
-
-            app.UseHttpCacheHeaders();
-
-            app.UseEndpoints(endpoints =>
-            {
-                endpoints.MapControllerRoute(
-                    name: "default",
-                    pattern: "{controller=Home}/{action=Index}/{id?}");
-            });
-
-            app.Run(async context =>
-            {
-                switch (context.Request.Path)
-                {
-                    case "/bad-request":
-                        context.Response.StatusCode = 400;
-                        break;
-                    case "/server-error":
-                        context.Response.StatusCode = 500;
-                        break;
-                    case "/not-found":
-                        context.Response.StatusCode = 404;
-                        break;
-                    default:
-                        context.Response.StatusCode = 200;
-                        break;
-                }
-                
-                await context.Response.WriteAsync($"Hello from {nameof(DefaultStartup)}");
-            });
-        }
+            await context.Response.WriteAsync($"Hello from {nameof(DefaultStartup)}");
+        });
     }
 }

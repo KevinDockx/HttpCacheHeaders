@@ -6,44 +6,43 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Marvin.Cache.Headers.Test.TestStartups
+namespace Marvin.Cache.Headers.Test.TestStartups;
+
+public class DefaultStartup
 {
-    public class DefaultStartup
+    public DefaultStartup()
     {
-        public DefaultStartup()
+        var builder = new ConfigurationBuilder()
+            .AddEnvironmentVariables();
+
+        Configuration = builder.Build();
+    }
+
+    public IConfigurationRoot Configuration { get; }
+
+    public void ConfigureServices(IServiceCollection services)
+    {
+        services.AddControllers();
+
+        services.AddHttpCacheHeaders();
+    }
+
+    public void Configure(IApplicationBuilder app)
+    {
+        app.UseRouting();
+
+        app.UseHttpCacheHeaders();
+
+        app.UseEndpoints(endpoints =>
         {
-            var builder = new ConfigurationBuilder()
-                .AddEnvironmentVariables();
+            endpoints.MapControllerRoute(
+                name: "default",
+                pattern: "{controller=Home}/{action=Index}/{id?}");
+        });
 
-            Configuration = builder.Build();
-        }
-
-        public IConfigurationRoot Configuration { get; }
-
-        public void ConfigureServices(IServiceCollection services)
+        app.Run(async context =>
         {
-            services.AddControllers();
-
-            services.AddHttpCacheHeaders();
-        }
-
-        public void Configure(IApplicationBuilder app)
-        {
-            app.UseRouting();
-
-            app.UseHttpCacheHeaders();
-
-            app.UseEndpoints(endpoints =>
-            {
-                endpoints.MapControllerRoute(
-                    name: "default",
-                    pattern: "{controller=Home}/{action=Index}/{id?}");
-            });
-
-            app.Run(async context =>
-            {
-                await context.Response.WriteAsync($"Hello from {nameof(DefaultStartup)}");
-            });
-        }
+            await context.Response.WriteAsync($"Hello from {nameof(DefaultStartup)}");
+        });
     }
 }

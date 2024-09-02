@@ -1,9 +1,8 @@
 ﻿using System.Collections.Generic;
 
-namespace Marvin.Cache.Headers.DistributedStore.Interfaces
+namespace Marvin.Cache.Headers.DistributedStore.Interfaces;
+
+public interface IRetrieveDistributedCacheKeys
 {
-    public interface IRetrieveDistributedCacheKeys
-    {
-        IAsyncEnumerable<string> FindStoreKeysByKeyPartAsync(string valueToMatch, bool ignoreCase =true);
-    }
+    IAsyncEnumerable<string> FindStoreKeysByKeyPartAsync(string valueToMatch, bool ignoreCase =true);
 }

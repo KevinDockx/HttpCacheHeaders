@@ -1,109 +1,106 @@
-﻿using System;
+﻿using Marvin.Cache.Headers.DistributedStore.Interfaces;
+using Marvin.Cache.Headers.Interfaces;
+using Microsoft.Extensions.Caching.Distributed;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Marvin.Cache.Headers.DistributedStore.Interfaces;
-using Marvin.Cache.Headers.Interfaces;
-using Microsoft.Extensions.Caching.Distributed;
 
-namespace Marvin.Cache.Headers.DistributedStore.Stores
+namespace Marvin.Cache.Headers.DistributedStore.Stores;
+
+public class DistributedCacheValidatorValueStore : IValidatorValueStore
 {
-    public class DistributedCacheValidatorValueStore : IValidatorValueStore
+    private readonly IDistributedCache _distributedCache;
+    private readonly IRetrieveDistributedCacheKeys _distributedCacheKeyRetriever;
+    private readonly IStoreKeySerializer _storeKeySerializer;
+
+    public DistributedCacheValidatorValueStore(IDistributedCache distributedCache, IRetrieveDistributedCacheKeys distributedCacheKeyRetriever, IStoreKeySerializer storeKeySerializer =null)
     {
-        private readonly IDistributedCache _distributedCache;
-        private readonly IRetrieveDistributedCacheKeys _distributedCacheKeyRetriever;
-        private readonly IStoreKeySerializer _storeKeySerializer;
+        _distributedCache = distributedCache ?? throw new ArgumentNullException(nameof(distributedCache));
+        _distributedCacheKeyRetriever = distributedCacheKeyRetriever ?? throw new ArgumentNullException(nameof(distributedCacheKeyRetriever));
+        _storeKeySerializer = storeKeySerializer ?? throw new ArgumentNullException(nameof(storeKeySerializer));
+    }
 
-        public DistributedCacheValidatorValueStore(IDistributedCache distributedCache, IRetrieveDistributedCacheKeys distributedCacheKeyRetriever, IStoreKeySerializer storeKeySerializer =null)
+    public async Task<ValidatorValue> GetAsync(StoreKey key)
+    {
+        if (key == null)
         {
-            _distributedCache = distributedCache ?? throw new ArgumentNullException(nameof(distributedCache));
-            _distributedCacheKeyRetriever = distributedCacheKeyRetriever ?? throw new ArgumentNullException(nameof(distributedCacheKeyRetriever));
-            _storeKeySerializer = storeKeySerializer ?? throw new ArgumentNullException(nameof(storeKeySerializer));
+            throw new ArgumentNullException(nameof(key));
         }
 
-        public async Task<ValidatorValue> GetAsync(StoreKey key)
-        {
-            if (key == null)
-            {
-                throw new ArgumentNullException(nameof(key));
-            }
+        var serializedKey = _storeKeySerializer.SerializeStoreKey(key);
+        var result = await _distributedCache.GetAsync(serializedKey, CancellationToken.None);
+        return result == null ? null : CreateValidatorValue(result);
+    }
 
-            var serializedKey = _storeKeySerializer.SerializeStoreKey(key);
-            var result = await _distributedCache.GetAsync(serializedKey, CancellationToken.None);
-            return result == null ? null : CreateValidatorValue(result);
+    private static ValidatorValue CreateValidatorValue(byte[] validatorValueBytes)
+    {
+        var validatorValueUtf8String = Encoding.UTF8.GetString(validatorValueBytes);
+        var validatorValueETagTypeString = validatorValueUtf8String[..validatorValueUtf8String.IndexOf(" ", StringComparison.InvariantCulture)];
+        var validatorValueETagType = Enum.Parse<ETagType>(validatorValueETagTypeString);
+        var validatorValueETagValueWithLastModifiedDate = validatorValueUtf8String[(validatorValueETagTypeString.Length+7)..];
+        var lastModifiedIndex = validatorValueETagValueWithLastModifiedDate.LastIndexOf("LastModified=", StringComparison.InvariantCulture);
+        var validatorValueETagValueWithQuotes = validatorValueETagValueWithLastModifiedDate.Substring(0, lastModifiedIndex-1);
+        var validatorValueETagValue = validatorValueETagValueWithQuotes.Substring(1, validatorValueETagValueWithQuotes.Length - 2); //We can't use String.Replace here as we may have embedded quotes.
+        var lastModifiedDateString = validatorValueETagValueWithLastModifiedDate.Substring(validatorValueETagValueWithLastModifiedDate.LastIndexOf("=", StringComparison.InvariantCulture)+1);
+        DateTimeOffset parsedDateTime =DateTimeOffset.Parse(lastModifiedDateString, CultureInfo.InvariantCulture);
+        return new ValidatorValue(new ETag(validatorValueETagType, validatorValueETagValue), parsedDateTime);
+    }
+
+    public Task SetAsync(StoreKey key, ValidatorValue validatorValue)
+    {
+        if (key == null)
+        {
+            throw new ArgumentNullException(nameof(key));
         }
 
-        private static ValidatorValue CreateValidatorValue(byte[] validatorValueBytes)
+        if (validatorValue == null)
         {
-            var validatorValueUtf8String = Encoding.UTF8.GetString(validatorValueBytes);
-            var validatorValueETagTypeString = validatorValueUtf8String[..validatorValueUtf8String.IndexOf(" ", StringComparison.InvariantCulture)];
-            var validatorValueETagType = Enum.Parse<ETagType>(validatorValueETagTypeString);
-            var validatorValueETagValueWithLastModifiedDate = validatorValueUtf8String[(validatorValueETagTypeString.Length+7)..];
-            var lastModifiedIndex = validatorValueETagValueWithLastModifiedDate.LastIndexOf("LastModified=", StringComparison.InvariantCulture);
-            var validatorValueETagValueWithQuotes = validatorValueETagValueWithLastModifiedDate.Substring(0, lastModifiedIndex-1);
-            var validatorValueETagValue = validatorValueETagValueWithQuotes.Substring(1, validatorValueETagValueWithQuotes.Length - 2); //We can't use String.Replace here as we may have embedded quotes.
-            var lastModifiedDateString = validatorValueETagValueWithLastModifiedDate.Substring(validatorValueETagValueWithLastModifiedDate.LastIndexOf("=", StringComparison.InvariantCulture)+1);
-            DateTimeOffset parsedDateTime =DateTimeOffset.Parse(lastModifiedDateString, CultureInfo.InvariantCulture);
-            return new ValidatorValue(new ETag(validatorValueETagType, validatorValueETagValue), parsedDateTime);
+            throw new ArgumentNullException(nameof(validatorValue));
         }
 
-        public Task SetAsync(StoreKey key, ValidatorValue validatorValue)
+        var keyJson = _storeKeySerializer.SerializeStoreKey(key);
+        var eTagString = $"{validatorValue.ETag.ETagType} Value=\"{validatorValue.ETag.Value}\" LastModified={validatorValue.LastModified.ToString(CultureInfo.InvariantCulture)}";
+        var eTagBytes = Encoding.UTF8.GetBytes(eTagString);
+        return _distributedCache.SetAsync(keyJson, eTagBytes);
+    }
+
+    public async Task<bool> RemoveAsync(StoreKey key)
+    {
+        if (key == null)
         {
-            if (key == null)
-            {
-                throw new ArgumentNullException(nameof(key));
-            }
-
-            if (validatorValue == null)
-            {
-                throw new ArgumentNullException(nameof(validatorValue));
-            }
-
-            var keyJson = _storeKeySerializer.SerializeStoreKey(key);
-            var eTagString = $"{validatorValue.ETag.ETagType} Value=\"{validatorValue.ETag.Value}\" LastModified={validatorValue.LastModified.ToString(CultureInfo.InvariantCulture)}";
-            var eTagBytes = Encoding.UTF8.GetBytes(eTagString);
-            return _distributedCache.SetAsync(keyJson, eTagBytes);
+            throw new ArgumentNullException(nameof(key));
         }
 
-        public async Task<bool> RemoveAsync(StoreKey key)
+        var keyJson = _storeKeySerializer.SerializeStoreKey(key);
+        var cacheEntry = await _distributedCache.GetAsync(keyJson, CancellationToken.None);
+        if (cacheEntry is null)
         {
-            if (key == null)
-            {
-                throw new ArgumentNullException(nameof(key));
-            }
+            return false;
+        }
+        
+        await _distributedCache.RemoveAsync(keyJson);
+        return true;
+    }
 
-            var keyJson = _storeKeySerializer.SerializeStoreKey(key);
-            var cacheEntry = await _distributedCache.GetAsync(keyJson, CancellationToken.None);
-            if (cacheEntry is null)
-            {
-                return false;
-            }
-            
-            await _distributedCache.RemoveAsync(keyJson);
-            return true;
+    public async IAsyncEnumerable<StoreKey> FindStoreKeysByKeyPartAsync(string valueToMatch, bool ignoreCase)
+    {
+        if (valueToMatch == null)
+        {
+            throw new ArgumentNullException(nameof(valueToMatch));
+        }
+        else if (valueToMatch.Length is 0)
+        {
+            throw new ArgumentException();
         }
 
-        public async IAsyncEnumerable<StoreKey> FindStoreKeysByKeyPartAsync(string valueToMatch, bool ignoreCase)
+        var foundKeys = _distributedCacheKeyRetriever.FindStoreKeysByKeyPartAsync(valueToMatch, ignoreCase);
+        await foreach (var foundKey in foundKeys.ConfigureAwait(false))
         {
-            if (valueToMatch == null)
-            {
-                throw new ArgumentNullException(nameof(valueToMatch));
-            }
-            else if (valueToMatch.Length is 0)
-            {
-                throw new ArgumentException();
-            }
-
-            var foundKeys = _distributedCacheKeyRetriever.FindStoreKeysByKeyPartAsync(valueToMatch, ignoreCase);
-            await foreach (var foundKey in foundKeys.ConfigureAwait(false))
-            {
-                var k = _storeKeySerializer.DeserializeStoreKey(foundKey);
-                yield return k;
-            }
+            var k = _storeKeySerializer.DeserializeStoreKey(foundKey);
+            yield return k;
         }
     }
 }
