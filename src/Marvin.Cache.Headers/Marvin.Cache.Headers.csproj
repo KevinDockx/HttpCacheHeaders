@@ -13,7 +13,7 @@
         <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
         <Authors>KevinDockx, Kevin Dockx</Authors>
         <PackageProjectUrl>https://github.com/KevinDockx/HttpCacheHeaders</PackageProjectUrl>
-        <PackageReleaseNotes>Injectable ETagInjector for generating the eTag, extension methods for better minimal API support.</PackageReleaseNotes>
+        <PackageReleaseNotes>See milestone 7.2.0: https://github.com/KevinDockx/HttpCacheHeaders/milestone/17</PackageReleaseNotes>
         <PackageReadmeFile>README.md</PackageReadmeFile>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
     </PropertyGroup>

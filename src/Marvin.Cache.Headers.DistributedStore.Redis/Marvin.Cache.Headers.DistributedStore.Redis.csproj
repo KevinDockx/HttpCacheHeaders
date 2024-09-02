@@ -13,7 +13,7 @@
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 		<Authors>Sean Farrow, Kevin Dockx</Authors>
 		<PackageProjectUrl>https://github.com/KevinDockx/HttpCacheHeaders</PackageProjectUrl>
-		<PackageReleaseNotes>Initial release</PackageReleaseNotes>
+		<PackageReleaseNotes>Threading issue fix, see https://github.com/KevinDockx/HttpCacheHeaders/milestone/17</PackageReleaseNotes>
 		<PackageReadmeFile></PackageReadmeFile>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 	</PropertyGroup>
