@@ -8,7 +8,7 @@
 		<GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
 		<GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
 		<GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
-		<Version>1.1.0-rc</Version>
+		<Version>1.1.0</Version>
 		<Description>Provides an implementation of the IValidatorValueStore for use with the Marvin.Cache.Headers NuGet package that allows ValidatorValue instances to be stored in a distributed cache.</Description>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 		<Authors>Sean Farrow, Kevin Dockx</Authors>
